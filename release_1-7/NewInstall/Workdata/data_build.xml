@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+$Id: data_build.xml,v 1.1 2013/01/05 13:53:58 lcp5 Exp $
+-->
+<project name="Workplace data" basedir=".">
+
+	<property environment="env" />
+
+	<property file="./db.properties" />
+
+	<!-- =================================================================== -->
+	<!-- 								INIT 								 -->
+	<!-- =================================================================== -->
+	<target name="init"  description="Prepare for build">
+		<path id="classpath">
+			<pathelement location="../ojdbc14.jar" />
+			<pathelement location="../sqljdbc.jar"/>
+			<pathelement location="../postgresql-9.2-1002.jdbc4.jar"/>
+		</path>
+	</target>
+
+	
+
+	<!-- =================================================================== -->
+	<!-- 			DATABASE SETUP TARGETS						 			 -->
+	<!-- =================================================================== -->
+
+	<target name="create_workdata_tables_release_1-7" depends="init">
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true">
+			<transaction src="./scripts/create_${db.type}_i2b2workdata_tables.sql" />
+		</sql>
+	</target>
+	
+	<target name="db_workdata_load_data" depends="init">
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true">
+			<transaction src="./scripts/workplace_access_${db.project}_insert_data.sql" />
+		</sql>
+	</target>
+
+</project>
+
+
