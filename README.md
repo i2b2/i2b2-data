@@ -1,5 +1,4 @@
-# i2b2 Data Repository - DEVELOPMENT
-
+# i2b2 Data Repository
 
 The scripts to create a new i2b2 database as well as upgrade an existing database are found in *i2b2-data* repository. This repository also contains the scripts to insert the i2b2 demo data into the i2b2demo domain. The demo data is intended to provide an example of how you may want to setup your ontology, dimension and facts tables.
 
