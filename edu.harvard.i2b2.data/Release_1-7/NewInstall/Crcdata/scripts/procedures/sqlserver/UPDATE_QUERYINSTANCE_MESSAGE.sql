@@ -1,4 +1,4 @@
-create procedure UPDATE_QUERYINSTANCE_MESSAGE (@message text, @instanceId int , @errorMsg varchar(max) = NULL OUTPUT) as 
+create procedure UPDATE_QUERYINSTANCE_MESSAGE (@message varchar(max), @instanceId int , @errorMsg varchar(max) = NULL OUTPUT) as 
 begin 
 declare @ptrval binary(16), @i int
 
