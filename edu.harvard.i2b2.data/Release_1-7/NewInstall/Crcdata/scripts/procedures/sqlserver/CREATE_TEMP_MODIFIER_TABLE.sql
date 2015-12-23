@@ -13,7 +13,7 @@ set @exec_str = ' create table '  + @tempModifierTableName  +' (
         MODIFIER_CD VARCHAR(50) NOT NULL , 
 	MODIFIER_PATH VARCHAR(700) NOT NULL , 
 	NAME_CHAR VARCHAR(2000), 
-	MODIFIER_BLOB text, 
+	MODIFIER_BLOB VARCHAR(MAX), 
 	UPDATE_DATE datetime, 
 	DOWNLOAD_DATE DATEtime, 
 	IMPORT_DATE DATEtime, 

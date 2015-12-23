@@ -25,7 +25,7 @@ BEGIN TRANSACTION
 	   Units_Cd       	varchar(50) NULL,
 	   End_Date       	datetime NULL,
 	   Location_Cd    	varchar(50) NULL,
-	   Observation_Blob text NULL,
+	   Observation_Blob VARCHAR(MAX) NULL,
 	   Confidence_Num 	decimal(18,5) NULL,
  	   update_date  DATETIME,
 	   download_date DATETIME,

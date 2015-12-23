@@ -13,7 +13,7 @@ set @exec_str = ' create table '  + @tempConceptTableName  +' (
     CONCEPT_CD VARCHAR(50) NOT NULL , 
 	CONCEPT_PATH VARCHAR(700) NOT NULL , 
 	NAME_CHAR VARCHAR(2000), 
-	CONCEPT_BLOB text, 
+	CONCEPT_BLOB VARCHAR(MAX), 
 	UPDATE_DATE datetime, 
 	DOWNLOAD_DATE DATEtime, 
 	IMPORT_DATE DATEtime, 

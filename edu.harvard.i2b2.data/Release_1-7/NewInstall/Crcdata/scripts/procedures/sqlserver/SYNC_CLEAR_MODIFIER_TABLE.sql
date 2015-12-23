@@ -22,7 +22,7 @@ set @exec_str = ' create table '  + @interModifierDimensionTableName  +' (
     modifier_path   	varchar(700) NOT NULL,
     modifier_cd     	varchar(50) NULL,
 	name_char      	varchar(2000) NULL,
-	modifier_blob   	text NULL,
+	modifier_blob   	VARCHAR(MAX) NULL,
 	update_date    	datetime NULL,
 	download_date  	datetime NULL,
 	import_date    	datetime NULL,

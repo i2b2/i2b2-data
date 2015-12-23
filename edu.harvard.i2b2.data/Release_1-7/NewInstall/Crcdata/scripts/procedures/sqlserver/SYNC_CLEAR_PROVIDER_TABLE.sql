@@ -22,7 +22,7 @@ set @exec_str = ' create table '  + @interProviderDimensionTableName  +' (
    Provider_Id    	varchar(50) NOT NULL,
 	Provider_Path  	varchar(700) NOT NULL,
 	Name_Char      	varchar(850) NULL,
-	Provider_Blob  	text NULL,
+	Provider_Blob  	VARCHAR(MAX) NULL,
 	Update_Date    	datetime NULL,
 	Download_Date  	datetime NULL,
 	Import_Date    	datetime NULL,

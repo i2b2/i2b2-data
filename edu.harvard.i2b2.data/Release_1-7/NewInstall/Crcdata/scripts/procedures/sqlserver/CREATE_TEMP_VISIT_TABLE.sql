@@ -18,7 +18,7 @@ BEGIN TRANSACTION
 		location_path 			VARCHAR(900),
  		start_date   			DATETIME, 
  		end_date    			DATETIME,
- 		visit_blob 				TEXT,
+ 		visit_blob 				VARCHAR(MAX),
  		update_date  			DATETIME,
 		download_date 			DATETIME,
  		import_date 			DATETIME,

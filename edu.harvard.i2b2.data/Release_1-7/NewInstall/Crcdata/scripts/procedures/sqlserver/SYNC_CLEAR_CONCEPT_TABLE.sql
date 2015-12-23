@@ -22,7 +22,7 @@ set @exec_str = ' create table '  + @interConceptDimensionTableName  +' (
     concept_path   	varchar(700) NOT NULL,
 	concept_cd     	varchar(50) NULL,
 	name_char      	varchar(2000) NULL,
-	concept_blob   	text NULL,
+	concept_blob   	VARCHAR(MAX) NULL,
 	update_date    	datetime NULL,
 	download_date  	datetime NULL,
 	import_date    	datetime NULL,
