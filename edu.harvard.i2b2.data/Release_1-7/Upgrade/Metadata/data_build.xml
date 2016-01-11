@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+$Id: data_build.xml,v 1.3 2010/05/24 15:39:23 rk903 Exp $
+-->
+<project name="Metadata" basedir=".">
+
+	<property environment="env" />
+
+	<property file="./db.properties" />
+
+	<!-- =================================================================== -->
+	<!-- 								INIT 								 -->
+	<!-- =================================================================== -->
+	<target name="init"  description="Prepare for build">
+		<path id="classpath">
+			<pathelement location="../ojdbc14.jar" />
+			<pathelement location="../sqljdbc.jar"/>
+		</path>
+	</target>
+
+	
+
+	<!-- =================================================================== -->
+	<!-- 			DATABASE SETUP TARGETS						 			 -->
+	<!-- =================================================================== -->
+
+	<target name="upgrade_metadata_tables_release_1-7" depends="init">
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true">
+			<transaction src="./scripts/${db.type}/create_icd10_icd9_table.sql" />
+			<transaction src="./scripts/schemes_insert_data.sql" />
+			<transaction src="./scripts/table_access_insert_data.sql" />
+			<transaction src="./scripts/${db.type}/icd10_icd9_diagnoses_insert_data1.sql" />
+			<transaction src="./scripts/${db.type}/icd10_icd9_diagnoses_insert_data2.sql" />
+			<transaction src="./scripts/${db.type}/icd10_icd9_diagnoses_insert_data3.sql" />
+			<transaction src="./scripts/${db.type}/icd10_icd9_diagnoses_insert_data4.sql" />
+			<transaction src="./scripts/${db.type}/icd10_icd9_modifiers_insert_data.sql" />
+		
+			
+		</sql>
+	</target>
+
+</project>
+
+
