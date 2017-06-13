@@ -21,7 +21,7 @@ BEGIN
     EXECUTE 'CREATE INDEX idx_' || tempPatientMappingTableName || '_stateid_eid_id ON ' || tempPatientMappingTableName || '  (PROCESS_STATUS_FLAG)';  
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE '%%%', SQLSTATE,  ' - ' , SQLERRM;
+        RAISE NOTICE '%%%', SQLSTATE || ' - ' || SQLERRM;
 END;
 $body$
 LANGUAGE PLPGSQL;
