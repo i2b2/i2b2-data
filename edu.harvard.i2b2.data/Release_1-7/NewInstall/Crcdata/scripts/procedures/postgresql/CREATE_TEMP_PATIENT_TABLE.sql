@@ -27,7 +27,7 @@ BEGIN
     EXECUTE 'CREATE INDEX idx_' || tempPatientDimensionTableName || '_pat_id ON ' || tempPatientDimensionTableName || '  (patient_id, patient_id_source,patient_num)';
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE '%%%', SQLSTATE,  ' - ' , SQLERRM;
+        RAISE NOTICE '%%%', SQLSTATE || ' - ' || SQLERRM;
 END;
 $body$
 LANGUAGE PLPGSQL;
