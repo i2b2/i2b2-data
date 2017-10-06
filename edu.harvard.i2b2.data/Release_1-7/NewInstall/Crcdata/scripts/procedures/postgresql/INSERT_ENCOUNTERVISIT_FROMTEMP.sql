@@ -35,14 +35,13 @@ BEGIN
         , distinctTemp.patient_id_source
         , ''A''
         ,  '|| upload_id ||'
-        , distinctTemp.project_id
+        , ''@''  project_id
         FROM 
         (SELECT 
             distinct encounter_id
             , encounter_id_source
             , patient_id
             , patient_id_source 
-            , project_id
             FROM ' || tempTableName || '  temp
             WHERE 
             NOT EXISTS (SELECT encounter_ide 

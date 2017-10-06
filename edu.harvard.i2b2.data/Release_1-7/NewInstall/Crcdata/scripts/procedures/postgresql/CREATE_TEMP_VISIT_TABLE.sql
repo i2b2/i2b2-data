@@ -5,7 +5,6 @@ BEGIN
     EXECUTE 'create table ' ||  tempTableName || ' (
         encounter_id                    varchar(200) not null,
         encounter_id_source             varchar(50) not null, 
-        project_id                      varchar(50) not null,
         patient_id                      varchar(200) not null,
         patient_id_source               varchar(50) not null,
         encounter_num                   numeric(38,0), 
