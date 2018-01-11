@@ -71,3 +71,10 @@ CREATE  INDEX EM_IDX_UPLOADID ON ENCOUNTER_MAPPING(UPLOAD_ID)
 CREATE INDEX EM_ENCNUM_IDX ON ENCOUNTER_MAPPING(ENCOUNTER_NUM)
 
 
+--==============================================================
+-- Database Script to upgrade CRC from 1.7.09c to 1.7.10                  
+--==============================================================
+
+alter table QT_QUERY_RESULT_TYPE add USER_ROLE_CD VARCHAR(255)
+;
+

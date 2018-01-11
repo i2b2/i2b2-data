@@ -101,3 +101,12 @@ alter table ENCOUNTER_MAPPING modify (PATIENT_IDE_SOURCE VARCHAR2(50) NOT NULL)
 ALTER TABLE ENCOUNTER_MAPPING
 ADD CONSTRAINT ENCOUNTER_MAPPING_PK PRIMARY KEY(ENCOUNTER_IDE, ENCOUNTER_IDE_SOURCE, PROJECT_ID, PATIENT_IDE, PATIENT_IDE_SOURCE)
 ;
+
+
+--==============================================================
+-- Database Script to upgrade CRC from 1.7.09c to 1.7.10                  
+--==============================================================
+
+alter table QT_QUERY_RESULT_TYPE add (USER_ROLE_CD VARCHAR2(255))
+;
+
