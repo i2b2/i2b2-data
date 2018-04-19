@@ -10,9 +10,15 @@ ALTER TABLE PM_USER_LOGIN
 	ADD ( PRIMARY KEY (ENTRY_DATE, USER_ID)
 	NOT DEFERRABLE INITIALLY IMMEDIATE );
     
-    
 
 --==============================================================
--- Database Script to upgrade CRC from 1.7.09c to 1.7.10                  
+-- Oracle Database Script to upgrade CRC from 1.7.09c to 1.7.10                  
 --==============================================================
-Alter table PM_USER_LOGIN drop primary key;
+
+-- Drop primary key and add new index
+
+ALTER TABLE PM_USER_LOGIN 
+DROP PRIMARY KEY;
+
+CREATE INDEX PM_USER_LOGIN_IDX ON PM_USER_LOGIN(USER_ID, ENTRY_DATE) ONLINE
+
