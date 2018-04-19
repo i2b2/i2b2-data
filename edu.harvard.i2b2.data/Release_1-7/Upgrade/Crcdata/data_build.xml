@@ -1,76 +1,71 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!--
 $Id: data_build.xml,v 1.6 2010/06/01 18:13:30 rk903 Exp $
 -->
 <project name="Crcdata data" basedir=".">
 
-	<property environment="env" />
+    <property environment="env" />
 
-	<property file="./db.properties" />
+    <property file="./db.properties" />
 
-	<!-- =================================================================== -->
-	<!-- 								INIT 								 -->
-	<!-- =================================================================== -->
-	<target name="init"  description="Prepare for build">
-		<path id="classpath">
-			<pathelement location="../../ojdbc8.jar" />
-			<pathelement location="../../mssql-jdbc-6.2.2.jre8.jar"/>
-			<pathelement location="../../postgresql-42.1.4.jar"/>
-		</path>
-	</target>
-
-	
-
-	<!-- =================================================================== -->
-	<!-- 			DATABASE SETUP TARGETS						 			 -->
-	<!-- =================================================================== -->
-	<target name="upgrade_procedures_release_1-7" depends="init">
-			<sql delimiter=";" driver="${db.driver}" url="${db.url}" 
-				userid="${db.username}" password="${db.password}" 
-				classpathref="classpath" onerror="continue" 
-				print="true"
-				delimitertype="row"
-				keepformat="true"
-				>
-				<transaction src="./scripts/${db.type}/delete_all_procedures.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_CONCEPT_TABLE.sql" />
-	            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_PATIENT_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_PID_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_EID_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_PROVIDER_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_VISIT_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_CONCEPT_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_ENCOUNTERVISIT_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_PATIENT_MAP_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_PID_MAP_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_EID_MAP_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_PROVIDER_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/REMOVE_TEMP_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/UPDATE_OBSERVATION_FACT.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/SYNC_CLEAR_CONCEPT_TABLE.sql" />
-			    <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/SYNC_CLEAR_PROVIDER_TABLE.sql" />				
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_MODIFIER_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_MODIFIER_FROMTEMP.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/SYNC_CLEAR_MODIFIER_TABLE.sql" />
-				<transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/UPDATE_QUERYINSTANCE_MESSAGE.sql" />
-				
-				</sql>
-		</target>
-	
-	<target name="upgrade_table_release_1-7" depends="init">
-				<sql delimiter=";" driver="${db.driver}" url="${db.url}" 
-					userid="${db.username}" password="${db.password}" 
-					classpathref="classpath" onerror="continue" 
-					print="true"
-					delimitertype="row"
-					keepformat="true" autocommit="true"
-					>
-					<transaction src="./scripts/crc_create_query_${db.type}.sql" />
-					</sql>
-		</target>
-	
-	
-	</project>
+    <!-- =================================================================== -->
+    <!-- 								INIT 								 -->
+    <!-- =================================================================== -->
+    <target name="init" description="Prepare for build">
+        <path id="classpath">
+            <pathelement location="../../ojdbc8.jar" />
+            <pathelement location="../../mssql-jdbc-6.2.2.jre8.jar" />
+            <pathelement location="../../postgresql-42.1.4.jar" />
+        </path>
+    </target>
 
 
+
+    <!-- =================================================================== -->
+    <!-- 			DATABASE SETUP TARGETS						 			 -->
+    <!-- =================================================================== -->
+    <target name="upgrade_procedures_release_1-7" depends="init">
+        <sql delimiter=";" driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimitertype="row" keepformat="true">
+            <transaction src="./scripts/${db.type}/delete_all_procedures.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_CONCEPT_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_PATIENT_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_PID_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_EID_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_PROVIDER_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_VISIT_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_CONCEPT_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_ENCOUNTERVISIT_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_PATIENT_MAP_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_PID_MAP_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_EID_MAP_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_PROVIDER_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/REMOVE_TEMP_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/UPDATE_OBSERVATION_FACT.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/SYNC_CLEAR_CONCEPT_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/SYNC_CLEAR_PROVIDER_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/CREATE_TEMP_MODIFIER_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/INSERT_MODIFIER_FROMTEMP.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/SYNC_CLEAR_MODIFIER_TABLE.sql" />
+            <transaction src="../../NewInstall/Crcdata/scripts/procedures/${db.type}/UPDATE_QUERYINSTANCE_MESSAGE.sql" />
+
+        </sql>
+    </target>
+
+    <target name="upgrade_table_release_1-7" depends="init">
+        <sql delimiter=";" driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimitertype="row" keepformat="true" autocommit="true">
+            <transaction src="./scripts/crc_create_query_${db.type}.sql" />
+        </sql>
+    </target>
+
+    <target name="update_demodata_load_data" depends="init">
+        <echo message="Updating demodata -- may take a few minutes" />
+        <parallel>
+
+            <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
+                <transaction src="./scripts/${db.type}/query_${db.project}_insert_data.sql" />
+            </sql>
+        </parallel>
+    </target>
+
+</project>
