@@ -15,6 +15,7 @@ ALTER TABLE PM_USER_LOGIN
 --==============================================================
 
 -- Drop primary key and add new index
+-- If the DROP primary key fails, than use Sql Server Management Studio and manually drop the index.
 
 ALTER TABLE PM_USER_LOGIN 
 DROP PRIMARY KEY;
