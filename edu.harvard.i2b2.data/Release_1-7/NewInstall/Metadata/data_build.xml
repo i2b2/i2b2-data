@@ -38,7 +38,7 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
 
 	<target name="db_metadata_load_identified_data" depends="init">
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
-			<transaction src="./${db.project}/scripts/i2b2_metadata_identified_data.sql" />
+			<transaction src="./${db.project}/scripts/${db.type}/i2b2_metadata_identified_data.sql" />
 		</sql>
 	</target>
 
