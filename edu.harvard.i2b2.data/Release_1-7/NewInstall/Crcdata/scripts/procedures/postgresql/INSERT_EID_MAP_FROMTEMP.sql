@@ -98,7 +98,7 @@ and coalesce(encounter_mapping.update_date,to_date(''01-JAN-1900'',''DD-MON-YYYY
 
     -- insert new mapping records i.e flagged P
     EXECUTE ' insert into encounter_mapping (encounter_ide,encounter_ide_source,encounter_ide_status,encounter_num,patient_ide,patient_ide_source,update_date,download_date,import_date,sourcesystem_cd,upload_id,project_id) 
-    SELECT encounter_map_id,encounter_map_id_source,encounter_map_id_status,encounter_num,patient_map_id,patient_map_id_source,update_date,download_date,Now(),sourcesystem_cd,' || upload_id || ' , project_id
+    SELECT encounter_map_id,encounter_map_id_source,encounter_map_id_status,encounter_num,patient_map_id,patient_map_id_source,update_date,download_date,Now(),sourcesystem_cd,' || upload_id || ' , ''@'' project_id
     FROM ' || tempEidTableName || '  
     WHERE process_status_flag = ''P'' ' ; 
     EXCEPTION
