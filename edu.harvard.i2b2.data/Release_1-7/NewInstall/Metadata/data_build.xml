@@ -44,13 +44,27 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
 
 	<target name="db_metadata_load_data" depends="init">
 		<echo message="Loading metadata -- may take a while; over 10 min" />
-		<parallel>
+
+		<unzip src="./${db.project}/scripts/${db.type}/metadata.zip" dest="./${db.project}/scripts/${db.type}" />
+  		
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./${db.project}/scripts/schemes_insert_data.sql" />
 		</sql>
                 <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
                         <transaction src="./${db.project}/scripts/table_access_insert_data.sql" />
 		</sql>
+			
+        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" autocommit="true" classpathref="classpath" onerror="continue">
+			 <path>
+			 	<sort>
+				    <fileset dir="./${db.project}/scripts/${db.type}">
+				      <include name="*.sql"/>
+				    </fileset>
+			 	</sort>
+			  </path>
+		</sql>
+
+			  	<!--			
                 <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./${db.project}/scripts/${db.type}/birn_insert_data.sql" />
 		</sql>
@@ -105,7 +119,8 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
                 <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./${db.project}/scripts/${db.type}/icd10_icd9_modifiers_insert_data.sql" />
 		</sql>
-		</parallel>
+		-->
+		
 	</target>
 	
 	

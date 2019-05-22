@@ -53,6 +53,15 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 			delimitertype="row"
 			keepformat="true"
 			>
+
+                         <path>
+                                <sort>
+                                    <fileset dir="./scripts/${db.project}/${db.type}">
+                                      <include name="*.sql"/>
+                                    </fileset>
+                                </sort>
+                          </path>
+<!--
 			<transaction src="./scripts/procedures/${db.type}/CREATE_TEMP_CONCEPT_TABLE.sql" />
             <transaction src="./scripts/procedures/${db.type}/CREATE_TEMP_PATIENT_TABLE.sql" />
 			<transaction src="./scripts/procedures/${db.type}/CREATE_TEMP_PID_TABLE.sql" />
@@ -75,6 +84,7 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 			<transaction src="./scripts/procedures/${db.type}/CREATE_TEMP_MODIFIER_TABLE.sql" />
 			<transaction src="./scripts/procedures/${db.type}/INSERT_MODIFIER_FROMTEMP.sql" />
 			<transaction src="./scripts/procedures/${db.type}/SYNC_CLEAR_MODIFIER_TABLE.sql" />
+-->
   		</sql>
 	</target>
 
@@ -82,6 +92,28 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 		<echo message="Loading demodata -- may take a while; over 10 min" />
 		<parallel>
 
+	<unzip src="./scripts/${db.project}/${db.type}/crcdata.zip" dest="./scripts/${db.project}/${db.type}" />
+        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" escapeprocessing="true">
+			 <path>
+			 	<sort>
+				    <fileset dir="./scripts/${db.project}/${db.type}">
+				      <include name="*.sql"/>
+				    </fileset>
+			 	</sort>
+			  </path>
+		</sql>
+<!--
+        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
+			 <path>
+			 	<sort>
+				    <fileset dir="./scripts/demodata/${db.type}">
+				      <include name="*.sql"/>
+				    </fileset>
+			 	</sort>
+			  </path>
+		</sql>
+-->
+<!--
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./scripts/${db.type}/dim_code_lookup_insert_data.sql" />	
 		</sql>
@@ -133,6 +165,8 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./scripts/${db.type}/concept_dimension_ICD10_ICD9_insert_data.sql" />
 		</sql>
+		
+		-->
 		</parallel>
 
 	</target>
