@@ -90,9 +90,11 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 
 	<target name="db_demodata_load_data" depends="init">
 		<echo message="Loading demodata -- may take a while; over 10 min" />
-		<parallel>
 
 	<unzip src="./scripts/${db.project}/${db.type}/crcdata.zip" dest="./scripts/${db.project}/${db.type}" />
+
+		<parallel>
+
         <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" escapeprocessing="true">
 			 <path>
 			 	<sort>
