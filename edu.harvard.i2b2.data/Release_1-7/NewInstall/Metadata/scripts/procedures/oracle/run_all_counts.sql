@@ -1,4 +1,4 @@
-create or replace PROCEDURE              run_all_counts  (observationTable IN VARCHAR, 
+create or replace PROCEDURE              runtotalnum  (observationTable IN VARCHAR, 
    errorMsg OUT VARCHAR)
 IS
 
