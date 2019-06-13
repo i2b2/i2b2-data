@@ -14,8 +14,6 @@ BEGIN
  sql_stmt := 'select distinct c_table_name from TABLE_ACCESS where c_visualattributes like ''%A%''  ';
  
 
-    -- rather than creating cursor and fetching rows into local variables, instead using record variable type to 
-    -- access each element of the current row of the cursor
  open curRecord for sql_stmt ;
  
    loop
@@ -30,5 +28,4 @@ BEGIN
 
  END LOOP;
 
- -- :ERRORMSG := ERRORMSG;
 END;
