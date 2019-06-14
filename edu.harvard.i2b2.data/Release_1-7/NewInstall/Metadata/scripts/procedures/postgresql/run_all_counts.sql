@@ -26,11 +26,11 @@ BEGIN
 	sqlstr := 'update ' || tablename || ' set c_totalnum=null';
 	execute sqlstr;
 
-    perform PAT_VISIT_COUNTS(tablename);
-    perform PAT_COUNT_BY_CONCEPT(tablename);
-    perform PAT_COUNT_BY_PROVIDER(tablename);
-    perform PAT_COUNT_IN_EQUAL(tablename);
-    perform PAT_COUNT_MODIFIERS(tablename);
+    perform PAT_VISIT_COUNTS(tablename,'''');
+    perform PAT_COUNT_BY_CONCEPT(tablename,''observation_fact'');
+   -- perform PAT_COUNT_BY_PROVIDER(tablename,''observation_fact'');
+   -- perform PAT_COUNT_IN_EQUAL(tablename,''observation_fact'');
+   -- perform PAT_COUNT_MODIFIERS(tablename,''observation_fact'');
 
 	sqlstr := 'update ' || tablename || ' set c_totalnum=null where c_visualattributes = ''CA'' and c_totalnum = 0';
 	execute sqlstr;

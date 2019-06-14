@@ -6,7 +6,7 @@
 
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'RunTotalnum') AND type in (N'P', N'PC'))
 DROP PROCEDURE RunTotalnum
-GO
+;
 
 create procedure dbo.RunTotalnum as 
 
@@ -15,9 +15,9 @@ DECLARE @sqlcurs NVARCHAR(4000);
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
---select 'exec run_all_counts '+c_table_name+','+c_obsfact from TABLE_ACCESS where c_visualattributes like '%A%' and c_table_cd like 'PCORI%'
+--select 'exec run_all_counts '+c_table_name+','+c_obsfact from TABLE_ACCESS where c_visualattributes like '%A%' 
 --ELSE 
-declare getsql cursor local for select 'exec run_all_counts '+c_table_name  from TABLE_ACCESS where c_visualattributes like '%A%' and c_table_cd like 'PCORI%'
+declare getsql cursor local for select 'exec run_all_counts '+c_table_name  from TABLE_ACCESS where c_visualattributes like '%A%'
 
 
 begin
@@ -33,7 +33,7 @@ END
 CLOSE getsql;
 DEALLOCATE getsql;
 end
-GO
+;
 
 -----------------------------------------------------------------------------------------------------------------
 -- Procedure to CLEAR totalnum counts on all tables in table_access that have a key like PCORI_
@@ -42,14 +42,14 @@ GO
 
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'ClearTotalnum') AND type in (N'P', N'PC'))
 DROP PROCEDURE ClearTotalnum
-GO
+;
 
 create procedure dbo.ClearTotalnum as 
 
 DECLARE @sqltext NVARCHAR(4000);
 DECLARE @sqlcurs NVARCHAR(4000);
 
-declare getsql cursor local for select 'update '+c_table_name+' set c_totalnum=NULL' from TABLE_ACCESS where c_visualattributes like '%A%' and c_table_cd like 'PCORI%'
+declare getsql cursor local for select 'update '+c_table_name+' set c_totalnum=NULL' from TABLE_ACCESS where c_visualattributes like '%A%'
 
 
 begin
@@ -65,4 +65,4 @@ END
 CLOSE getsql;
 DEALLOCATE getsql;
 end
-GO
+;

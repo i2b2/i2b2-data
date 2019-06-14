@@ -5,7 +5,7 @@
 --- 1) If your fact table is in a different database or schema, search and replace 'observation_fact' with your database name, e.g.,
 --   i2b2_facts.dbo.observation_fact. 
 --  2) Run this script, which will create the stored procedures and execute them on pcornet_lab.
---  3) EXEC RUN_ALL_COUNTS <mymetadata_table>[, <myobsfact_table>] GO , replacing <mymetadata_table> with whichever table you want to update the totalnums,
+--  3) EXEC RUN_ALL_COUNTS <mymetadata_table>[, <myobsfact_table>] ; , replacing <mymetadata_table> with whichever table you want to update the totalnums,
 --      and optionally including <myobsfact_table>
 
 -- Developed by Griffin Weber, Harvard Medical School
@@ -13,7 +13,7 @@
 -- Minor edits to support modifiers by Jeff Klann, Harvard Medical School
 -- Additional changes to PAT_COUNT_BY_CONCEPT for multiple fact tables
 -- May 2018
--- Bugfix: pat_count_in_equal got messed up somehow, reverted
+-- Bugfix: pat_count_in_equal ;t messed up somehow, reverted
 -- Bugfix in modifiers counts 12/11/15
 -- Support multiple fact tables 11/3/16- BUT NOW USES *GLOBAL TEMP TABLES* SO BE CAREFUL!
 -- Speedup to not run irrelevant count procedures - 12/19/16
@@ -21,22 +21,22 @@
 
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PAT_COUNT_MODIFIERS]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[PAT_COUNT_MODIFIERS]
-GO
+;
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PAT_COUNT_BY_CONCEPT]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[PAT_COUNT_BY_CONCEPT]
-GO
+;
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PAT_COUNT_BY_PROVIDER]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[PAT_COUNT_BY_PROVIDER]
-GO
+;
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PAT_COUNT_IN_EQUAL]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[PAT_COUNT_IN_EQUAL]
-GO
+;
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PAT_VISIT_COUNTS]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[PAT_VISIT_COUNTS]
-GO
+;
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RUN_ALL_COUNTS]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[RUN_ALL_COUNTS]
-GO
+;
 
 -- Modified from PAT_COUNT_BY_CONCEPT by Jeff Klann, PhD
 -- Note: This is somewhat "quick and dirty" - it assumes modifier_cd is unique and does not check that modifier modifies a valid concept code
@@ -145,14 +145,14 @@ select o.*, isnull(c.num_patients,0) num_patients into finalCountsByConcept
     END
 
 END;
-GO
+;
 
 -- Run PAT_COUNT_BY_CONCEPT on all multifact tables referenced in a given metadata table. Also works if only concept_cd is specified, but it will NOT work if using a single fact table but not using
 -- concept_cd for your fact column!
 -- Jeff Klann, PhD 05-2018
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'PAT_COUNT_BY_CONCEPT_ALLMULTIFACT') AND type in (N'P', N'PC'))
 DROP PROCEDURE PAT_COUNT_BY_CONCEPT_ALLMULTIFACT
-GO
+;
 
 create procedure dbo.PAT_COUNT_BY_CONCEPT_ALLMULTIFACT(@metadataTable varchar(50)) as 
 
@@ -180,7 +180,7 @@ end'
 begin
 exec sp_executesql @sqldyn
 end
-GO
+;
 
 -- Count by concept
 -- Multifact support by Jeff Klann, PhD 05-18
@@ -299,7 +299,7 @@ select o.*, isnull(c.num_patients,0) num_patients into finalCountsByConcept
     END
 
 END;
-GO
+;
 
 -- Based on similar script created by Griffin Weber, Harvard Medical School
 -- Modified by Lori Phillips, Partners HealthCare
@@ -414,7 +414,7 @@ select o.*, isnull(c.num_patients,0) num_patients into finalProviderCounts
 END
 
 END;
-GO
+;
 
 -- Modified by Lori Phillips, Partners HealthCare
 -- Feb 2015
@@ -490,7 +490,7 @@ declare @sqlstr nvarchar(4000),
   END
 
 END;
-GO
+;
 
 -- Modified by Lori Phillips, Partners HealthCare
 -- Feb 2015
@@ -572,7 +572,7 @@ declare @sqlstr nvarchar(4000),
 END
 
 END;
-GO
+;
 
 -- Created by Lori Phillips, Partners HealthCare
 -- Modified by Jeff Klann, PhD
@@ -602,5 +602,5 @@ exec dbo.PAT_COUNT_MODIFIERS @tablename
 
 
 END;
-GO
+;
 

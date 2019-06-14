@@ -30,7 +30,7 @@ begin
         select 'select run_all_counts(' || quote_literal(''||c_table_name) || ')' as sqltext
              , c_table_name
         from i2b2metadata.TABLE_ACCESS 
-        where c_visualattributes like '%A%' and c_table_cd like 'PCORI%'
+        where c_visualattributes like '%A%' 
     LOOP 
         raise info 'At %: Running: %',clock_timestamp(), curRecord.sqltext;
         execute curRecord.sqltext;
