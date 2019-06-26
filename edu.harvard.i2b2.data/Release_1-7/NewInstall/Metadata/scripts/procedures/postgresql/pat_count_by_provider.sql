@@ -41,9 +41,9 @@ BEGIN
     v_sqlstr := ' create temp table finalProviderCounts AS '
         || ' select p1.c_fullname, count(distinct patient_num) as num_patients '
         || ' from providerOntWithFolders p1 '
-        || ' left join ' || observationtable || ' o 
+        || ' left join ' || observationtable ||  '  o '
         || '     on p1.c_basecode = o.provider_id ' --provider id
-        || '     and coalesce(p1.c_basecode, '''') <> ''''
+        || '     and coalesce(p1.c_basecode, '''') <> '''' '
         || ' group by p1.c_fullname';
 
 	execute v_sqlstr;
