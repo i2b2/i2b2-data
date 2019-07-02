@@ -3,7 +3,7 @@
 -- DISCLAIMER: assumes that the default value for missing sex_cd is lower('not recorded')
 -- adjust the function if a different value is used
 -----------------------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION pat_visit_counts(tabname character varying, tableschema character varying)
+CREATE OR REPLACE FUNCTION pat_count_visits(tabname character varying, tableschema character varying)
   RETURNS void AS
 $BODY$
 declare 
@@ -13,8 +13,7 @@ declare
     v_num integer;
 BEGIN
     --display count and timing information to the user
-    raise info 'At %, running PAT_VISIT_COUNTS(''%'')',clock_timestamp(), tabname;
-
+  
     --using all temporary tables instead of creating and dropping tables
     DISCARD TEMP;
     --checking each text fields for forced lowercase values since DB defaults to case sensitive 
@@ -43,13 +42,14 @@ BEGIN
 	For curRecord IN 
 		select c_fullname, c_facttablecolumn, c_tablename, c_columnname, c_operator, c_dimcode from ontPatVisitDims
     LOOP 
+ raise info 'At %: Running: %',curRecord.c_tablename, curRecord.c_columnname;
         -- check first to determine if current columns of current table actually exist in the schema
-        if exists(select 1 from information_schema.columns 
-                  where table_catalog = current_catalog 
-                    and table_schema = 'i2b2demodata'
-                    and table_name = lower(curRecord.c_tablename)
-                    and column_name = lower(curRecord.c_columnname)
-                 ) then 
+   --     if exists(select 1 from information_schema.columns 
+   --               where table_catalog = current_catalog 
+   --                 and table_schema = ' || tableschema || '
+   --                 and table_name = lower(curRecord.c_tablename)
+   --                 and column_name = lower(curRecord.c_columnname)
+   --              ) then 
 
             -- simplified query to directly query distinct patient_num instead of querying list of patien_num to feed into outer query for the same
             -- result.  New style runs in approximately half the time as tested with all patients with a particular sex_cd value.  Since all rows 
@@ -68,7 +68,7 @@ BEGIN
                      --||         ' select ' || curRecord.c_facttablecolumn 
                      --||         ' from ' || tableschema || '.' || curRecord.c_tablename 
                      ||         ' where '|| curRecord.c_columnname || ' '  ;
-
+--Running: update ontPatVisitDims  set numpats =  (  select count(distinct(patient_num))  from public.PATIENT_DIMENSION where RACE_CD = es ) 
             CASE 
             WHEN lower(curRecord.c_columnname) = 'birth_date' 
                  and lower(curRecord.c_tablename) = 'patient_dimension'
@@ -82,10 +82,11 @@ BEGIN
                 -- could be listed in the query if it is known for certain that that character will never be found in any c_dimcode value accessed by this 
                 -- function
                 v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' || '''' || replace(replace(curRecord.c_dimcode,'\','\\'),'''','''''') || '%''' ;
-            WHEN lower(curRecord.c_operator) = 'in' then 
+           WHEN lower(curRecord.c_operator) = 'in' then 
                 v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  '(' || curRecord.c_dimcode || ')';
             WHEN lower(curRecord.c_operator) = '=' then 
-                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  replace(curRecord.c_dimcode,'''','''''') ;
+           --     v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  replace(curRecord.c_dimcode,'''','''''') ;
+                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ''' ||  replace(curRecord.c_dimcode,'''','''''') || '''';
             ELSE 
                 -- A mistake in WUSM data existed, requiring special handling in this function.  
                 -- The original note is listed next for reference purposes only and the IF THEN 
@@ -110,16 +111,24 @@ BEGIN
                      || ' where c_fullname = ' || '''' || curRecord.c_fullname || '''' 
                      || ' and numpats is null';
 
-            execute v_sqlstr;
-		else
+    
+			begin
+            	execute v_sqlstr;
+			EXCEPTION WHEN OTHERS THEN
+				raise info 'At %: EROR: %',clock_timestamp()e, v_sqlstr;
+		      -- keep looping
+   			END;
+		--else
             -- do nothing since we do not have the column in our schema
-        end if;
+     --   end if;
     END LOOP;
 
 	v_sqlstr := 'update ' || tabname || ' a set c_totalnum=b.numpats '
              || ' from ontPatVisitDims b '
              || ' where a.c_fullname=b.c_fullname ';
 
+    raise info 'At %: Running: %',clock_timestamp()e, v_sqlstr;
+ 
     --display count and timing information to the user
     select count(*) into v_num from ontPatVisitDims where numpats is not null and numpats <> 0;
     raise info 'At %, updating c_totalnum in % for % records',clock_timestamp(), tabname, v_num;
