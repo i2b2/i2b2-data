@@ -49,15 +49,15 @@ v_sqlstr := 'insert into providerOntWithFolders select  c_fullname , c_basecode 
 
 v_sqlstr := 'insert into providerOntWithFolders '
        || '   select distinct p1.c_fullname, p2.c_basecode '
-       || '   from provider_ont2 p1 '
-       || '   inner join provider_ont2 p2 '
+       || '   from provider_ont p1 '
+       || '   inner join provider_ont p2 '
          || '     on p2.c_fullname like p1.c_fullname || ''%''  '
          || '     where p2.c_fullname like  ''' || replace(curRecord.c_fullname,'\','\\') || '%'' '
           || '       and p1.c_fullname like  ''' || replace(curRecord.c_fullname,'\','\\') || '%'' ';
 
 
 
-// raise info 'At %', v_sqlstr;
+-- raise info 'At %', v_sqlstr;
   /*  create temp table providerOntWithFolders AS
         select distinct p1.c_fullname, p2.c_basecode
         from provider_ont p1
@@ -68,8 +68,8 @@ v_sqlstr := 'insert into providerOntWithFolders '
 	execute v_sqlstr;
 
 
-   //select count(*) into v_num from providerOntWithFolders;
-   // raise info 'At %, updating c_totalnum in % %',clock_timestamp(), metadataTable, v_num;
+   --select count(*) into v_num from providerOntWithFolders;
+   -- raise info 'At %, updating c_totalnum in % %',clock_timestamp(), metadataTable, v_num;
  
  end if;
 
@@ -95,9 +95,9 @@ v_sqlstr := 'insert into providerOntWithFolders '
   -- select c_fullname, num_patients from finalProviderCounts;
   --  raise info 'At %, updating c_totalnum 3 in % %',clock_timestamp(),  c_fullname, num_patients limit 1000;
  
-// FOR curRecord IN  select * from finalProviderCounts where num_patients != 0 limit 100 LOOP
-//        RAISE NOTICE 'col1: %, col2: %',  curRecord.c_fullname, curRecord.num_patients ;
-//    END LOOP;
+-- FOR curRecord IN  select * from finalProviderCounts where num_patients != 0 limit 100 LOOP
+--        RAISE NOTICE 'col1: %, col2: %',  curRecord.c_fullname, curRecord.num_patients ;
+--    END LOOP;
 
     create index on finalProviderCounts using btree (c_fullname);
 
