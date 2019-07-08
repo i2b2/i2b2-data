@@ -39,7 +39,7 @@ BEGIN
 
 --v_sqlstr := 'select c_fullname from table_access where c_table_name = ''' || metadataTable || ''' ';
 -- raise info 'At %: Running: ',v_sqlstr;
-For curRecord IN //v_sqlstr
+For curRecord IN 
 		select c_fullname,c_table_name from table_access //where c_table_name = ''' || metadataTable || '''
     LOOP 
 if metadataTable = curRecord.c_table_name then
