@@ -8,6 +8,7 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
 
 	<property file="./db.properties" />
 
+
 	<!-- =================================================================== -->
 	<!-- 								INIT 								 -->
 	<!-- =================================================================== -->
@@ -51,7 +52,36 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
 	</target>
 
 
-	<target name="db_metadata_run_total_count" depends="init">
+	<target name="db_metadata_run_total_count_postgresql" depends="init">
+
+
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" 
+					print="true"
+			delimitertype="row"
+			keepformat="true"  
+		autocommit="true" classpathref="classpath" onerror="continue">
+
+		select runtotalnum(${db.dimension},${db.schemaname});
+
+		</sql>
+
+	</target>
+	<target name="db_metadata_run_total_count_sqlserver" depends="init">
+  <echo message="Running GO target" />
+  
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" 
+					print="true"
+			delimitertype="row"
+			keepformat="true"  
+		autocommit="true" classpathref="classpath" onerror="continue">
+
+		exec RunTotalnum ${db.dimension},'${db.schemaname}'
+
+		</sql>
+
+	</target>
+
+	<target name="db_metadata_run_total_count_oracle"  depends="init">
 
 
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" 
