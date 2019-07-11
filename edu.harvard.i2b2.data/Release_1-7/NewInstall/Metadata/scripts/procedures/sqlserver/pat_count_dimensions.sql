@@ -1,6 +1,6 @@
 -- Count by concept
 -- Multifact support by Jeff Klann, PhD 05-18
-CREATE PROCEDURE [dbo].[PAT_COUNT_BY_CONCEPT]  (@metadataTable varchar(50), @schemaName varchar(50),
+CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @schemaName varchar(50),
 @observationTable varchar(50), 
  @facttablecolumn varchar(50), @tablename varchar(50), @columnname varchar(50)
 
