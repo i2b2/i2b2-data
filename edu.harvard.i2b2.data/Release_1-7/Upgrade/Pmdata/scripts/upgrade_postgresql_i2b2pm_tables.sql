@@ -1,13 +1,12 @@
-create table pm_user_login 
-	(
-		user_id varchar(50) not null,
-		attempt_cd varchar(50) not null,
-		entry_date timestamp not null,
-		changeby_char varchar(50),
-		status_cd varchar(50) constraint pm_user_login_pk primary key(entry_date, user_id) 
-	)
-;
-
+CREATE TABLE PM_USER_LOGIN ( 
+	USER_ID 		VARCHAR(50) NOT NULL,
+	ATTEMPT_CD		VARCHAR(50) NOT NULL,
+    ENTRY_DATE      timestamp NOT NULL,
+	CHANGEBY_CHAR   VARCHAR(50),
+    STATUS_CD       VARCHAR(50)   
+    );    
+    	
+CREATE INDEX PM_USER_LOGIN_IDX ON PM_USER_LOGIN(USER_ID, ENTRY_DATE);	
 
 --==================================================================
 -- PostgreSQL Database Script to upgrade CRC from 1.7.09c to 1.7.10                  
