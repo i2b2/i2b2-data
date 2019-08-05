@@ -22,7 +22,7 @@ alter table QT_QUERY_RESULT_TYPE add column CLASSNAME VARCHAR(200)
 ;
 
 -- Run the delete if you have not created your own custom result types
-truncate table QT_QUERY_RESULT_TYPE
+delete from table QT_QUERY_RESULT_TYPE
 ;
 
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(1,'PATIENTSET','Patient set','LIST','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSetGenerator')
