@@ -6,7 +6,7 @@ CREATE TABLE PM_USER_LOGIN (
     STATUS_CD       VARCHAR(50)   
     );    
     	
-CREATE INDEX PM_USER_LOGIN_IDX ON PM_USER_LOGIN(USER_ID, ENTRY_DATE);	
+-- CREATE INDEX PM_USER_LOGIN_IDX ON PM_USER_LOGIN(USER_ID, ENTRY_DATE);	
 
 --==================================================================
 -- PostgreSQL Database Script to upgrade CRC from 1.7.09c to 1.7.10                  
