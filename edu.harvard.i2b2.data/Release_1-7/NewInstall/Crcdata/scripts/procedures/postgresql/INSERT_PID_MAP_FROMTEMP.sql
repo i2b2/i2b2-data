@@ -73,8 +73,7 @@ BEGIN
 				,update_date
 				,download_date
 				,import_date
-				,sourcesystem_cd
-				,project_id) 
+				,sourcesystem_cd) 
 			values(
 				$1
 				,''HIVE''
@@ -87,7 +86,6 @@ BEGIN
 				,Now()
 				,Now()
 				,''edu.harvard.i2b2.crc''
-			,''HIVE''
 			)' using maxPatientNum,maxPatientNum,maxPatientNum; 
 			EXECUTE 'update ' || tempPidTableName ||' set patient_num =  $1 , process_status_flag = ''P'' 
 			where patient_id = $2 and  not exists (select 1 from 
@@ -118,7 +116,7 @@ and coalesce(patient_mapping.update_date,to_date(''01-JAN-1900'',''DD-MON-YYYY''
 ';
 	-- insert new mapping records i.e flagged P
 	EXECUTE ' insert into patient_mapping (patient_ide,patient_ide_source,patient_ide_status,patient_num,update_date,download_date,import_date,sourcesystem_cd,upload_id,project_id)
-	SELECT patient_map_id,patient_map_id_source,patient_map_id_status,patient_num,update_date,download_date,Now(),sourcesystem_cd,' || upload_id ||', project_id from '|| tempPidTableName || ' 
+	SELECT patient_map_id,patient_map_id_source,patient_map_id_status,patient_num,update_date,download_date,Now(),sourcesystem_cd,' || upload_id ||', ''@'' project_id from '|| tempPidTableName || ' 
 	where process_status_flag = ''P'' ' ; 
 	EXCEPTION WHEN OTHERS THEN
 		RAISE EXCEPTION 'An error was encountered - % -ERROR- %',SQLSTATE,SQLERRM;

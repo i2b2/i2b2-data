@@ -4,7 +4,6 @@ BEGIN
     EXECUTE 'create table ' ||  tempPatientMappingTableName || ' (
         ENCOUNTER_MAP_ID        varchar(200) NOT NULL,
         ENCOUNTER_MAP_ID_SOURCE     varchar(50) NOT NULL,
-        PROJECT_ID              VARCHAR(50) NOT NULL,
         PATIENT_MAP_ID          varchar(200), 
         PATIENT_MAP_ID_SOURCE   varchar(50), 
         ENCOUNTER_ID            varchar(200) NOT NULL,

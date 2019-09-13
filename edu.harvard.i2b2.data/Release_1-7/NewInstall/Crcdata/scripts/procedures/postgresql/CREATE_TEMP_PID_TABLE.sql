@@ -8,7 +8,6 @@ BEGIN
 		PATIENT_ID_STATUS varchar(50), 
 		PATIENT_ID  varchar(200),
 		PATIENT_ID_SOURCE varchar(50),
-		PROJECT_ID   VARCHAR(50) ,
 		PATIENT_NUM numeric(38,0),
 		PATIENT_MAP_ID_STATUS varchar(50), 
 		PROCESS_STATUS_FLAG char(1), 
