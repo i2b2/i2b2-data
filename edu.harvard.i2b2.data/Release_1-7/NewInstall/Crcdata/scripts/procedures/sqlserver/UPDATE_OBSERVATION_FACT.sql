@@ -63,11 +63,11 @@ exec sp_executesql @updateSql;
 IF @appendFlag = 0 BEGIN
 --Archive records which are to be deleted in observation_fact table
 set @insertSql =  'INSERT  INTO  archive_observation_fact (encounter_num,patient_num,concept_Cd,provider_id,start_date, 
-modifier_cd,valtype_cd,tval_char,nval_num,valueflag_cd,quantity_num,units_cd,end_date,location_cd,confidence_num,
+modifier_cd,valtype_cd,tval_char,nval_num,valueflag_cd,quantity_num,units_cd,end_date,location_cd,confidence_num,instance_num,
 observation_blob,update_date,download_date,import_date,sourcesystem_cd,archive_upload_id)
 		SELECT obsfact.encounter_num,obsfact.patient_num,obsfact.concept_Cd,obsfact.provider_id,obsfact.start_date, 
 obsfact.modifier_cd,obsfact.valtype_cd,obsfact.tval_char,obsfact.nval_num,obsfact.valueflag_cd,obsfact.quantity_num,
-obsfact.units_cd,obsfact.end_date,obsfact.location_cd,obsfact.confidence_num,
+obsfact.units_cd,obsfact.end_date,obsfact.location_cd,obsfact.confidence_num,obsfact.instance_num,
 obsfact.observation_blob,obsfact.update_date,obsfact.download_date,obsfact.import_date,obsfact.sourcesystem_cd, ' + convert(nvarchar,@upload_id) +' archive_upload_id 
 		FROM observation_fact obsfact
 		WHERE obsfact.encounter_num IN 
