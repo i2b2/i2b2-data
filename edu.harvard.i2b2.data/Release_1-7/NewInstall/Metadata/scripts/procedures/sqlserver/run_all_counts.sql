@@ -1,3 +1,8 @@
+-----------------------------------------------------------------------------------------------------------------
+-- Function to run totalnum counts on all tables in table_access 
+-- By Mike Mendis and Jeff Klann, PhD
+-----------------------------------------------------------------------------------------------------------------
+
 CREATE PROCEDURE [dbo].[RunTotalnum]  (@observationTable varchar(50) = 'observation_fact', @schemaname varchar(50) = 'dbo') as  
 
 DECLARE @sqlstr NVARCHAR(4000);

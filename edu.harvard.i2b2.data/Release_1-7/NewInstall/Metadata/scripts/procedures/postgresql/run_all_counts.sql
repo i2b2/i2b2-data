@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------------------------------------------------
+-- Function to run totalnum counts on all tables in table_access 
+-- 6/8/2016 - modified for PostgreSQL by Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
+-- 2019 - Modified for i2b2 1.7.12 release by Mike Mendis, Partners Healthcare
+-----------------------------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION runtotalnum(observationTable text, schemaName text)
   RETURNS void AS
 $BODY$

@@ -2,7 +2,10 @@
 -- pat_visit_counts(tabname)
 -- DISCLAIMER: assumes that the default value for missing sex_cd is lower('not recorded')
 -- adjust the function if a different value is used
------------------------------------------------------------------------------------------
+-- By Mike Mendis, Partners Healthcare
+-- Based on code from Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
+-----------------------------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION pat_count_visits(tabname character varying, tableschema character varying)
   RETURNS void AS
 $BODY$

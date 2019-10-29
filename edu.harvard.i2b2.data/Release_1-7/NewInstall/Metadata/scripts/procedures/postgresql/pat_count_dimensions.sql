@@ -1,3 +1,6 @@
+-- By Mike Mendis, Partners Healthcare
+-- Based on code from Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
+
 CREATE OR REPLACE FUNCTION pat_count_dimensions(metadataTable character varying, schemaName character varying, observationTable character varying, facttablecolumn character varying,tablename character varying,columnname character varying )
   RETURNS void AS
 $BODY$

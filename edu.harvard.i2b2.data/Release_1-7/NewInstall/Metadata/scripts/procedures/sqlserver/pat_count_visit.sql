@@ -1,7 +1,6 @@
--- Modified by Lori Phillips, Partners HealthCare
--- Feb 2015
-
-
+-- Originally Developed by Griffin Weber, Harvard Medical School
+-- Contributors: Mike Mendis, Jeff Klann, Lori Phillips
+ 
 CREATE PROCEDURE [dbo].[PAT_COUNT_VISITS] (@tabname varchar(50), @schemaName varchar(50))
 AS BEGIN
 

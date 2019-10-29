@@ -1,3 +1,6 @@
+-- Originally Developed by Griffin Weber, Harvard Medical School
+-- Contributors: Mike Mendis, Jeff Klann, Lori Phillips
+
 -- Count by concept
 -- Multifact support by Jeff Klann, PhD 05-18
 CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @schemaName varchar(50),
