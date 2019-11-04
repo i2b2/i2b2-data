@@ -2,6 +2,11 @@
 -- Function to run totalnum counts on all tables in table_access 
 -- 6/8/2016 - modified for PostgreSQL by Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
 -- 2019 - Modified for i2b2 1.7.12 release by Mike Mendis, Partners Healthcare
+
+-- Usage example:
+--     select runtotalnum('observation_fact','public')
+--   (replace 'public' by the schema name for the fact table)
+-- If using a schema other than public for metadata, you might need to run "set search_path to 'i2b2metadata','public' " first as well
 -----------------------------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION runtotalnum(observationTable text, schemaName text)
