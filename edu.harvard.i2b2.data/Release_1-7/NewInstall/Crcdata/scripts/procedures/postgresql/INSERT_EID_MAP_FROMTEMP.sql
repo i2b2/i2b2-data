@@ -8,6 +8,8 @@ maxEncounterNum bigint;
 distinctEidCur REFCURSOR;
 disEncounterId varchar(100); 
 disEncounterIdSource varchar(100);
+disPatiendId varchar(100);
+disPatiendIdSource varchar(100);
 
 BEGIN
     EXECUTE ' delete  from ' || tempEidTableName ||  ' t1  where 
@@ -21,7 +23,7 @@ BEGIN
     if coalesce(maxEncounterNum::text, '') = '' then 
         maxEncounterNum := 0;
     end if;
-    open distinctEidCur for EXECUTE 'SELECT distinct encounter_id,encounter_id_source from ' || tempEidTableName ||' ' ;
+    open distinctEidCur for EXECUTE 'SELECT distinct encounter_id,encounter_id_source,patient_map_id,patient_map_id_source  from ' || tempEidTableName ||' ' ;
     loop
         FETCH distinctEidCur INTO disEncounterId, disEncounterIdSource, disPatiendId, disPatiendIdSource;
         IF NOT FOUND THEN EXIT; END IF; -- apply on distinctEidCur
