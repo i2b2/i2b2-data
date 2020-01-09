@@ -128,7 +128,7 @@ END;
                         <transaction src="./${db.project}/scripts/table_access_insert_data.sql" />
 		</sql>
 			
-        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" autocommit="true" classpathref="classpath" onerror="continue">
+        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" autocommit="true" classpathref="classpath" onerror="continue" keepformat="true">
 			 <path>
 			 	<sort>
 				    <fileset dir="./${db.project}/scripts/${db.type}">
