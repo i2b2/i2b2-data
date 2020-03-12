@@ -2,6 +2,8 @@ create or replace PROCEDURE              pat_count_dimensions  (metadataTable IN
  facttablecolumn in VARCHAR, tablename in VARCHAR, columnname in VARCHAR, 
    errorMsg OUT VARCHAR)
 IS
+    v_startime timestamp;
+    v_duration varchar2(30);
 BEGIN
 -- EXECUTE IMMEDIATE 'drop table dimCountOnt';
 -- EXECUTE IMMEDIATE 'drop table dimOntWithFolders';
@@ -12,6 +14,8 @@ BEGIN
 
 -- Modify this query to select a list of all your ontology paths and basecodes.
 
+v_startime := CURRENT_TIMESTAMP;
+ 
 execute immediate 'create table dimCountOnt as select c_fullname, c_basecode
 	from '  || metadataTable  || ' where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
 		and lower(c_tablename) = ''' || tablename || '''
@@ -42,6 +46,10 @@ execute immediate 'create table dimOntWithFolders  as
 
 execute immediate 'create index  dimFldBasecode on dimOntWithFolders (c_basecode)';
         
+ v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
+ DBMS_OUTPUT.PUT_LINE('(BENCH) '||metadataTable||',collected ontology,'||v_duration); 
+ v_startime := CURRENT_TIMESTAMP;
+ 
     -- original method consisted on pulling all fullnames, assigning numbers to them, pulling all basecodes
     -- that related to the fullname or to fullname that was a child record of the fullname to get a list
     -- of basecodes and numbers.  Separately a full list of distinct concept codes and patient numbers was
@@ -67,6 +75,10 @@ execute immediate 'create  table finalDimCounts AS
     --creating indexes rather than primary keys on temporary tables to speed up joining between them
 execute immediate 'create index finalDimCounts_fullname on finalDimCounts  (c_fullname)';
 
+ v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
+ DBMS_OUTPUT.PUT_LINE('(BENCH) '||metadataTable||',counted facts,'||v_duration); 
+ v_startime := CURRENT_TIMESTAMP;
+
 execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
         (select 
         b.num_patients 
@@ -81,5 +93,9 @@ execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
  EXECUTE IMMEDIATE 'drop table dimCountOnt';
  EXECUTE IMMEDIATE 'drop table finalDimCounts';
  EXECUTE IMMEDIATE 'drop table dimOntWithFolders';
+ 
+  v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
+ DBMS_OUTPUT.PUT_LINE('(BENCH) '||metadataTable||',cleanup,'||v_duration); 
+ v_startime := CURRENT_TIMESTAMP;
  
 END;

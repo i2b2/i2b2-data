@@ -9,6 +9,34 @@
 -- If using a schema other than public for metadata, you might need to run "set search_path to 'i2b2metadata','public' " first as well
 -----------------------------------------------------------------------------------------------------------------
 
+-- Thanks to http://www.sqlines.com/postgresql/how-to/datediff
+CREATE OR REPLACE FUNCTION DateDiff (units VARCHAR(30), start_t TIME, end_t TIME) 
+     RETURNS INT AS $$
+   DECLARE
+     diff_interval INTERVAL; 
+     diff INT = 0;
+   BEGIN
+     -- Minus operator for TIME returns interval 'HH:MI:SS'  
+     diff_interval = end_t - start_t;
+ 
+     diff = DATE_PART('hour', diff_interval);
+ 
+     IF units IN ('hh', 'hour') THEN
+       RETURN diff;
+     END IF;
+ 
+     diff = diff * 60 + DATE_PART('minute', diff_interval);
+ 
+     IF units IN ('mi', 'n', 'minute') THEN
+        RETURN diff;
+     END IF;
+ 
+     diff = diff * 60 + DATE_PART('second', diff_interval);
+ 
+     RETURN diff;
+   END;
+   $$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION runtotalnum(observationTable text, schemaName text)
   RETURNS void AS
 $BODY$
@@ -17,8 +45,11 @@ DECLARE
     v_sqlstring text = '';
     v_union text = '';
     v_numpats integer;
+    v_startime timestamp;
+    v_duration text = '';
 begin
     raise info 'At %, running RunTotalnum()',clock_timestamp();
+    v_startime := clock_timestamp();
 
     for curRecord IN 
         select distinct c_table_name as sqltext
@@ -29,15 +60,32 @@ begin
 
         v_sqlstring := 'select  PAT_COUNT_VISITS( '''||curRecord.sqltext||''' ,'''||schemaName||'''   )';
 		execute v_sqlstring;
+		v_duration := clock_timestamp()-v_startime;
+		raise info '(BENCH) %,PAT_COUNT_VISITS,%',curRecord,v_duration;
+		v_startime := clock_timestamp();
+		
         v_sqlstring := 'select PAT_COUNT_DIMENSIONS( '''||curRecord.sqltext||''' ,'''||schemaName||''' , '''||observationTable||''' ,  ''concept_cd'', ''concept_dimension'', ''concept_path''  )';
 		execute v_sqlstring;
+        v_duration := SELECT DATEDIFF('second', clock_timestamp(), v_startime); --clock_timestamp()-v_startime;
+		raise info '(BENCH) %,PAT_COUNT_concept_dimension,%',curRecord,v_duration;
+		v_startime := clock_timestamp();
+        
         v_sqlstring := 'select PAT_COUNT_DIMENSIONS( '''||curRecord.sqltext||''' ,'''||schemaName||''' , '''||observationTable||''' ,  ''provider_id'', ''provider_dimension'', ''provider_path''  )';
 		execute v_sqlstring;
+		v_duration := clock_timestamp()-v_startime;
+		raise info '(BENCH) %,PAT_COUNT_provider_dimension,%',curRecord,v_duration;
+		v_startime := clock_timestamp();
+		
         v_sqlstring := 'select PAT_COUNT_DIMENSIONS( '''||curRecord.sqltext||''' ,'''||schemaName||''' , '''||observationTable||''' ,  ''modifier_cd'', ''modifier_dimension'', ''modifier_path''  )';
 		execute v_sqlstring;
+		v_duration := clock_timestamp()-v_startime;
+		raise info '(BENCH) %,PAT_COUNT_modifier_dimension,%',curRecord,v_duration;
+		v_startime := clock_timestamp();
 
     END LOOP;
 end; 
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;
+  
+  --select runtotalnum('observation_fact','i2b2demodata')

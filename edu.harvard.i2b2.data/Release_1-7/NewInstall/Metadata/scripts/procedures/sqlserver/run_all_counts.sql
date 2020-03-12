@@ -3,11 +3,21 @@
 -- By Mike Mendis and Jeff Klann, PhD
 -----------------------------------------------------------------------------------------------------------------
 
+CREATE PROCEDURE EndTime @startime datetime,@label varchar(100),@label2 varchar(100)
+AS
+    declare @duration varchar(30);
+    set @duration = format(getdate()-@startime, 'ss.fff'); // OLD MSSQL VERSIONS - ONVERT( VARCHAR(24), getdate()-@startime, 121) ;
+    RAISERROR('(BENCH) %s,%s,%s',0,1,@label,@label2,@duration) WITH NOWAIT;
+--END 
+
+GO
+
 CREATE PROCEDURE [dbo].[RunTotalnum]  (@observationTable varchar(50) = 'observation_fact', @schemaname varchar(50) = 'dbo') as  
 
 DECLARE @sqlstr NVARCHAR(4000);
 DECLARE @sqltext NVARCHAR(4000);
 DECLARE @sqlcurs NVARCHAR(4000);
+DECLARE @startime datetime;
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
@@ -27,10 +37,19 @@ BEGIN
 	print @sqltext
     SET @sqlstr = 'update '+ @sqltext +' set c_totalnum=null';
     EXEC sp_executesql @sqlstr;
-    exec PAT_COUNT_VISITS @sqltext , @schemaName   
-    exec PAT_COUNT_DIMENSIONS @sqltext , @schemaName, @observationTable ,  'concept_cd', 'concept_dimension', 'concept_path'  
-    exec PAT_COUNT_DIMENSIONS  @sqltext , @schemaName,  @observationTable ,  'provider_id', 'provider_dimension', 'provider_path'  
-    exec PAT_COUNT_DIMENSIONS  @sqltext , @schemaName, @observationTable ,  'modifier_cd', 'modifier_dimension', 'modifier_path'  
+    set @startime = getdate();
+    exec PAT_COUNT_VISITS @sqltext , @schemaName  
+    EXEC EndTime @startime,@sqltext,'PAT_COUNT_VISITS';
+    set @startime = getdate();    
+    exec PAT_COUNT_DIMENSIONS @sqltext , @schemaName, @observationTable ,  'concept_cd', 'concept_dimension', 'concept_path';
+    EXEC EndTime @startime,@sqltext,'PAT_COUNT_concept_dimension';
+    set @startime = getdate(); 
+    exec PAT_COUNT_DIMENSIONS  @sqltext , @schemaName,  @observationTable ,  'provider_id', 'provider_dimension', 'provider_path';
+    EXEC EndTime @startime,@sqltext,'PAT_COUNT_provider_dimension';
+    set @startime = getdate(); 
+    exec PAT_COUNT_DIMENSIONS  @sqltext , @schemaName, @observationTable ,  'modifier_cd', 'modifier_dimension', 'modifier_path';
+    EXEC EndTime @startime,@sqltext,'PAT_COUNT_modifier_dimension';
+    set @startime = getdate(); 
 
 --	exec sp_executesql @sqltext
 	FETCH NEXT FROM getsql INTO @sqltext;	

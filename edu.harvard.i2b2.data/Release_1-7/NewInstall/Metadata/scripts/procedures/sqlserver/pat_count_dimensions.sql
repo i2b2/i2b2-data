@@ -11,6 +11,7 @@ CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @sch
 
 AS BEGIN
 declare @sqlstr nvarchar(4000)
+declare @startime datetime
 
 
     if exists (select 1 from sysobjects where name='conceptCountOnt') drop table conceptCountOnt
@@ -38,7 +39,8 @@ print @sqlstr
 
 if exists(select top 1 NULL from conceptCountOnt)
 BEGIN
-
+    set @startime = getdate(); 
+    
 -- Convert the ontology paths to integers to save space
 
 select c_fullname, isnull(row_number() over (order by c_fullname),-1) path_num
@@ -67,6 +69,9 @@ select distinct c_basecode, path_num
 			on b.c_fullname like a.c_fullname+'%'
 
 alter table #ConceptPath add primary key (c_basecode, path_num)
+
+    EXEC EndTime @startime,'dimension','ontology';
+    set @startime = getdate(); 
 
 -- Create a list of distinct concept-patient pairs
 
@@ -101,6 +106,9 @@ select path_num, count(*) num_patients
 	group by path_num
 
 alter table #PathCounts add primary key (path_num)
+
+    EXEC EndTime @startime,'dimension','patients';
+    set @startime = getdate(); 
 
 -- This is the final counts per ont path
 
