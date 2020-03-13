@@ -1,8 +1,21 @@
 -- Originally Developed by Griffin Weber, Harvard Medical School
--- Contributors: Mike Mendis, Jeff Klann, Lori Phillips
+-- Contributors: Mike Mendis, Jeff Klann, Lori Phillips, Jeff Green
 
 -- Count by concept
 -- Multifact support by Jeff Klann, PhD 05-18
+-- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
+
+IF OBJECT_ID('conceptCountOnt', 'U') IS NOT NULL 
+  DROP TABLE conceptCountOnt; 
+GO
+
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'PAT_COUNT_DIMENSIONS')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE PAT_COUNT_DIMENSIONS
+GO
+
 CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @schemaName varchar(50),
 @observationTable varchar(50), 
  @facttablecolumn varchar(50), @tablename varchar(50), @columnname varchar(50)
@@ -20,7 +33,7 @@ declare @startime datetime
 
 -- Modify this query to select a list of all your ontology paths and basecodes.
 
-set @sqlstr = 'select c_fullname, c_basecode
+set @sqlstr = 'select c_fullname, c_basecode, c_hlevel
 	into conceptCountOnt
 	from ' + @metadataTable + 
 ' where lower(c_facttablecolumn)= ''' + @facttablecolumn + '''
@@ -30,8 +43,10 @@ set @sqlstr = 'select c_fullname, c_basecode
 		and lower(c_columndatatype) = ''t''
 		and lower(c_operator) = ''like''
 		and m_applied_path = ''@''
-        and c_fullname is not null'
-
+        and c_fullname is not null
+        and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from observation_fact))'
+        -- ^ NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology.
+        -- From 1.47M entries to 100k entries!
 		
 execute sp_executesql @sqlstr;
 
@@ -55,6 +70,27 @@ alter table #Path2Num add primary key (c_fullname)
 
 -- Create a list of all the c_basecode values under each ontology path
 
+-- Based on Jeff Green's optimized code
+;with concepts (c_fullname, c_hlevel, c_basecode) as
+	(
+	select c_fullname, c_hlevel, c_basecode
+	from conceptCountOnt
+	where isnull(c_fullname,'') <> '' and isnull(c_basecode,'') <> ''
+	union all
+	select 
+			left(c_fullname, len(c_fullname)-charindex('\', right(reverse(c_fullname), len(c_fullname)-1)))
+		   	 c_fullname,
+	c_hlevel-1 c_hlevel, c_basecode
+	from concepts
+	where concepts.c_hlevel>0
+	)
+select distinct path_num, isnull(c_basecode,'') c_basecode into #ConceptPath
+from concepts
+inner join #path2num
+ on concepts.c_fullname=#path2num.c_fullname
+
+/*
+THIS VERSION IS DEPRECATED BECAUSE IT IS VERY SLOW ON DEEP ONTOLOGIES
 select distinct isnull(c_fullname,'') c_fullname, isnull(c_basecode,'') c_basecode
 	into #PathConcept
 	from conceptCountOnt
@@ -67,8 +103,9 @@ select distinct c_basecode, path_num
 	from #Path2Num a
 		inner join #PathConcept b
 			on b.c_fullname like a.c_fullname+'%'
-
+*/
 alter table #ConceptPath add primary key (c_basecode, path_num)
+
 
     EXEC EndTime @startime,'dimension','ontology';
     set @startime = getdate(); 
