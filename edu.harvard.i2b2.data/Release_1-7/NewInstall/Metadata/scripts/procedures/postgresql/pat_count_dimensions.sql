@@ -33,8 +33,11 @@ BEGIN
              || ' and lower(c_columndatatype) = ''t'' '
              || ' and lower(c_operator) = ''like'' '
              || ' and m_applied_path = ''@'' '
-		     || ' and coalesce(c_fullname, '''') <> '''' ';
-             
+		     || ' and coalesce(c_fullname, '''') <> '''' '
+		     || ' and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from observation_fact)) ';
+		-- NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology (10x speedup).
+        -- From 1.47M entries to 300k entries!
+           
     raise info 'SQL: %',v_sqlstr;
     execute v_sqlstr;
 
@@ -84,7 +87,7 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
 || '  where c_fullname like ''' || replace(curRecord.c_fullname,'\','\\') || '%'' '
 || '  order by c_fullname, c_basecode ';
 
-    raise info 'SQL: %',v_sqlstr;
+    raise info 'SQL_dimOntWithFolders: %',v_sqlstr;
 	execute v_sqlstr;
 	
 
@@ -137,8 +140,6 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
            on p.path_num=c.path_num
         order by p.c_fullname;
 
-    raise info 'SQL: %',v_sqlstr;
-	execute v_sqlstr;
 
     --raise notice 'At %, done counting.',clock_timestamp();
 	v_duration := clock_timestamp()-v_startime;
