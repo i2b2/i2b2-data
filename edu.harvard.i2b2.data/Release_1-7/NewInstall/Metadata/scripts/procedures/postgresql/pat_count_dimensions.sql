@@ -89,16 +89,15 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
 
     raise info 'SQL_dimOntWithFolders: %',v_sqlstr;
 	execute v_sqlstr;
-	
-
- end if;
-
-    END LOOP;
 
 	--raise notice 'At %, collected concepts for % %',clock_timestamp(),curRecord.c_table_name,curRecord.c_fullname;
 	v_duration := clock_timestamp()-v_startime;
 	raise info '(BENCH) %,collected_concepts,%',curRecord,v_duration;
 	v_startime := clock_timestamp();
+
+ end if;
+
+    END LOOP;
 
     -- Too slow version
     --v_sqlstr := ' create temp table finalDimCounts AS '
