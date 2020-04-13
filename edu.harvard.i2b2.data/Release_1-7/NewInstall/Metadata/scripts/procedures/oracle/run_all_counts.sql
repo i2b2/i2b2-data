@@ -1,9 +1,14 @@
-
+-- By Mike Mendis, Partners Healthcare based on SQL Server code by Griffin Weber, MD, PhD at Harvard Medical School
+-- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
+ 
+-- Count totalnumbers of patients for all metadata tables in table access.
 -- Run the procedure like this (but with your schema name instead of i2b2demodata):
 --begin
 --  runtotalnum('observation_fact','i2b2demodata');
 -- end;
+
 create or replace PROCEDURE                           runtotalnum  (observationTable IN VARCHAR, schemaName in VARCHAR)
+AUTHID CURRENT_USER
 IS
 
 
