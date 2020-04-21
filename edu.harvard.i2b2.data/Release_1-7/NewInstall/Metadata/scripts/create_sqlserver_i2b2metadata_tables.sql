@@ -217,3 +217,15 @@ CREATE TABLE ONT_PROCESS_STATUS (
 ;
   CREATE INDEX META_SYNONYM_ICD10_IDX ON ICD10_ICD9(C_SYNONYM_CD)
 ;
+
+ --------------------------------------------------------
+--  DDL for totalnum table to track counts over time
+--------------------------------------------------------
+
+-- New 04-20: Create totalnum table to track changes over time
+CREATE TABLE [totalnum]  ( 
+    [c_fullname]	varchar(850) NULL,
+    [agg_date]  	datetime NULL,
+    [agg_count] 	int NULL 
+    );
+CREATE INDEX totalnum_idx ON totalnum([c_fullname], [agg_date], [agg_count]);

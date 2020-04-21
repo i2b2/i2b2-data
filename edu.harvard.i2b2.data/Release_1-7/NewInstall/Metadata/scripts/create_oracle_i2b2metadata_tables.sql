@@ -225,3 +225,17 @@ CREATE INDEX META_HLEVEL_ICD10_ICD9_IDX ON ICD10_ICD9(C_HLEVEL)
 ;
 CREATE INDEX META_SYNONYM_ICD10_ICD9_IDX ON ICD10_ICD9(C_SYNONYM_CD)
 ;
+
+ --------------------------------------------------------
+--  DDL for totalnum table to track counts over time
+--------------------------------------------------------
+
+-- New 04-20: Create totalnum table to track changes over time
+CREATE TABLE totalnum  ( 
+    C_FULLNAME	varchar2(850) NULL,
+    AGG_DATE  	date NULL,
+    AGG_COUNT 	NUMBER(22,0) NULL 
+    )
+;
+CREATE INDEX totalnum_idx ON totalnum(c_fullname, agg_date, agg_count)
+;

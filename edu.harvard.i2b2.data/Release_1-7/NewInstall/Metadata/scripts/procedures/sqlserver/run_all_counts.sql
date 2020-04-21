@@ -50,6 +50,7 @@ declare getsql cursor local for select distinct c_table_name from TABLE_ACCESS w
 
 
 begin
+
 OPEN getsql;
 FETCH NEXT FROM getsql INTO @sqltext;
 WHILE @@FETCH_STATUS = 0
