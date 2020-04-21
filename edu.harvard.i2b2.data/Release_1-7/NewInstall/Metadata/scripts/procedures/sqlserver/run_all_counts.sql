@@ -9,7 +9,7 @@ IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'EndTime')
                     AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE EndTime
+DROP PROCEDURE EndTime;
 
 
 CREATE PROCEDURE EndTime @startime datetime,@label varchar(100),@label2 varchar(100)
@@ -74,4 +74,4 @@ END
 
 CLOSE getsql;
 DEALLOCATE getsql;
-end
+end;

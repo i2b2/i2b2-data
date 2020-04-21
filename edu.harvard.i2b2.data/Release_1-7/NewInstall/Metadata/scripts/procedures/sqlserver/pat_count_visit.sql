@@ -1,5 +1,11 @@
 -- Originally Developed by Griffin Weber, Harvard Medical School
 -- Contributors: Mike Mendis, Jeff Klann, Lori Phillips
+
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'PAT_COUNT_VISITS')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE PAT_COUNT_VISITS;
  
 CREATE PROCEDURE [dbo].[PAT_COUNT_VISITS] (@tabname varchar(50), @schemaName varchar(50))
 AS BEGIN
