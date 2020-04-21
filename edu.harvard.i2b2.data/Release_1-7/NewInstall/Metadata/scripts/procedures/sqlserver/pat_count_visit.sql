@@ -66,9 +66,15 @@ declare @sqlstr nvarchar(4000),
                ' where ' + @facttablecolumn + ' in (select ' + @facttablecolumn + ' from ' +   @schemaName + '.' + @tablename + ' where '+ @columnname + ' ' + @operator +' ' + @dimcode +' ))
             where c_fullname = ' + ''''+ @concept + ''''+ ' and numpats is null'
 
-		--	print @sqlstr
-		--  RAISERROR('visit query: %s',0,1,@sqlstr) WITH NOWAIT;
-			execute sp_executesql @sqlstr
+
+			BEGIN TRY
+    			execute sp_executesql @sqlstr
+			END TRY
+			BEGIN CATCH
+				print 'Error executing:' + @sqlstr
+                --  RAISERROR('visit query: %s',0,1,@sqlstr) WITH NOWAIT;
+			END CATCH
+
 		end
 
 		fetch next from e into @concept, @facttablecolumn, @tablename, @columnname, @operator, @dimcode
