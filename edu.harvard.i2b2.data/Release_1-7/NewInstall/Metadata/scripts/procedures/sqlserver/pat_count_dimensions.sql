@@ -5,38 +5,6 @@
 -- Multifact support by Jeff Klann, PhD 05-18
 -- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
 
--- EndTime is a simple helper procedure to assist with printing timestamped debug messages
-IF EXISTS ( SELECT  *
-            FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(N'EndTime')
-                    AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE EndTime
-GO
-
-CREATE PROCEDURE EndTime @startime datetime,@label varchar(100),@label2 varchar(100)
-AS
-    declare @duration varchar(30);
-BEGIN
-    --set @duration = format(getdate()-@startime, 'ss.fff'); -- OLD MSSQL VERSIONS - ONVERT( VARCHAR(24), getdate()-@startime, 121) ;
-    set @duration = datediff(second,@startime,getdate());
-    RAISERROR('(BENCH) %s,%s,%s',0,1,@label,@label2,@duration) WITH NOWAIT;
-END 
-
-GO
-
------------------------------------
-
-IF OBJECT_ID('conceptCountOnt', 'U') IS NOT NULL 
-  DROP TABLE conceptCountOnt; 
-GO
-
-IF EXISTS ( SELECT  *
-            FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(N'PAT_COUNT_DIMENSIONS')
-                    AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE PAT_COUNT_DIMENSIONS
-GO
-
 CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @schemaName varchar(50),
 @observationTable varchar(50), 
  @facttablecolumn varchar(50), @tablename varchar(50), @columnname varchar(50)

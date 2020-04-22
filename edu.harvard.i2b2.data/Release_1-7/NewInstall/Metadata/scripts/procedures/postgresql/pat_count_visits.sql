@@ -45,7 +45,7 @@ BEGIN
 	For curRecord IN 
 		select c_fullname, c_facttablecolumn, c_tablename, c_columnname, c_operator, c_dimcode from ontPatVisitDims
     LOOP 
- raise info 'At %: Running: %',curRecord.c_tablename, curRecord.c_columnname;
+ --raise info 'At %: Running: %',curRecord.c_tablename, curRecord.c_columnname;
         -- check first to determine if current columns of current table actually exist in the schema
    --     if exists(select 1 from information_schema.columns 
    --               where table_catalog = current_catalog 
