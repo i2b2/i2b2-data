@@ -1,17 +1,6 @@
--- By Mike Mendis, Partners Healthcare based on SQL Server code by Griffin Weber, MD, PhD at Harvard Medical School
--- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
---
--- Generally, run this procedure via run_all_counts. But an example of how to run it directly:
--- declare
--- errorMsg VARCHAR2(700);
--- begin
--- PAT_COUNT_DIMENSIONS( <metadatatable> , <schema>, 'observation_fact' ,  'concept_cd', 'concept_dimension', 'concept_path', errorMsg  );
--- end;
-
 create or replace PROCEDURE              pat_count_dimensions  (metadataTable IN VARCHAR, schemaName IN VARCHAR, observationTable IN VARCHAR, 
  facttablecolumn in VARCHAR, tablename in VARCHAR, columnname in VARCHAR, 
    errorMsg OUT VARCHAR)
-AUTHID CURRENT_USER
 IS
     v_startime timestamp;
     v_duration varchar2(30);
@@ -23,32 +12,22 @@ BEGIN
 --  WHEN OTHERS THEN
 --  NULL;
 
--- Select a list of all your ontology paths and basecodes.
+-- Modify this query to select a list of all your ontology paths and basecodes.
 
 v_startime := CURRENT_TIMESTAMP;
  
-execute immediate 'create table dimCountOnt as select c_fullname, c_basecode, c_hlevel from 
-    (select c_fullname, c_basecode, c_hlevel,f.concept_cd,c_visualattributes from '  || metadataTable  || ' o 
-        left outer join (select distinct concept_cd from observation_fact) f on concept_cd=o.c_basecode
-	    where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
+execute immediate 'create table dimCountOnt as select c_fullname, c_basecode
+	from '  || metadataTable  || ' where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
 		and lower(c_tablename) = ''' || tablename || '''
 		and lower(c_columnname) = ''' || columnname || '''
 		and lower(c_synonym_cd) = ''n''
 		and lower(c_columndatatype) = ''t''
 		and lower(c_operator) = ''like''
 		and m_applied_path = ''@''
-        and c_fullname is not null)
-        where (c_visualattributes not like ''L%'' or concept_cd is not null)';
-        -- ^ NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology.
-        -- From 1.47M entries to 100k entries!
-        -- On Oracle, had to do this with an outer join and a subquery, otherwise terrible performance.
+        and c_fullname is not null';
 
     --creating indexes rather than primary keys on temporary tables to speed up joining between them
-execute immediate 'create index dimcountont_fullname on dimCountOnt (c_fullname)';
- 
- v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
- DBMS_OUTPUT.PUT_LINE('(BENCH) '||metadataTable||',ontology setup,'||v_duration); 
- v_startime := CURRENT_TIMESTAMP;
+execute immediate 'create index dim_fullname on dimCountOnt (c_fullname)';
 
     -- since 'folders' may exist such that a given concept code could be a child of another, query the result
     -- set against itself to generate a list of child codes that reflect themselves as members of the parent 
@@ -60,30 +39,10 @@ execute immediate 'create index dimcountont_fullname on dimCountOnt (c_fullname)
     -- rather than being included in the join against the observation_fact table below.
 
 execute immediate 'create table dimOntWithFolders  as 
-with  concepts (c_fullname, c_hlevel, c_basecode) as
-	(
-	select c_fullname, c_hlevel, c_basecode
-	from dimCountOnt
-	--where coalesce(c_fullname,'') <> '' and coalesce(c_basecode,'') <> ''
-	union all
-	select cast(
-			substr(c_fullname, 1, length(c_fullname)-instr(reverse(c_fullname),''\'',1,2))
-		   	as varchar(700)
-			) c_fullname,
-	c_hlevel-1 c_hlevel, c_basecode
-	from concepts
-	where concepts.c_hlevel>0
-	)
-select distinct c_fullname, c_basecode
-from concepts
-order by c_fullname, c_basecode';
-
--- Too slow version
---execute immediate 'create table dimOntWithFolders  as 
---	select distinct c1.c_fullname, c2.c_basecode
---        from dimCountOnt c1 
---        inner join dimCountOnt c2
---        on c2.c_fullname like c1.c_fullname || ''%'''; -- expecting that no '&' exist in the data*/
+	select distinct c1.c_fullname, c2.c_basecode
+        from dimCountOnt c1 
+        inner join dimCountOnt c2
+        on c2.c_fullname like c1.c_fullname || ''%'''; -- expecting that no '&' exist in the data
 
 execute immediate 'create index  dimFldBasecode on dimOntWithFolders (c_basecode)';
         
