@@ -226,6 +226,7 @@ CREATE TABLE ONT_PROCESS_STATUS (
 CREATE TABLE [totalnum]  ( 
     [c_fullname]	varchar(850) NULL,
     [agg_date]  	datetime NULL,
-    [agg_count] 	int NULL 
+    [agg_count] 	int NULL,
+    [typeflag_cd]   varchar(3) NULL
     );
-CREATE INDEX totalnum_idx ON totalnum([c_fullname], [agg_date], [agg_count]);
+CREATE INDEX totalnum_idx ON totalnum([c_fullname], [agg_date], [typeflag_cd]);

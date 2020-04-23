@@ -2,13 +2,6 @@
 -- Originally Developed by Griffin Weber, Harvard Medical School
 -- Contributors: Mike Mendis, Jeff Klann, Lori Phillips
  
- IF EXISTS ( SELECT  *
-            FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(N'PAT_COUNT_VISITS')
-                    AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE PAT_COUNT_VISITS
-GO
- 
 CREATE PROCEDURE [dbo].[PAT_COUNT_VISITS] (@tabname varchar(50), @schemaName varchar(50))
 AS BEGIN
 
@@ -92,9 +85,9 @@ declare @sqlstr nvarchar(4000),
 	execute sp_executesql @sqlstr
 	
 	-- New 4/2020 - Update the totalnum reporting table as well
-	insert into totalnum(c_fullname, agg_date, agg_count)
-	select c_fullname, getdate(), numpats from ontPatVisitDims
-
+	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	select c_fullname, CONVERT (date, GETDATE()), numpats, 'PD' from ontPatVisitDims
+	
 
 END
 

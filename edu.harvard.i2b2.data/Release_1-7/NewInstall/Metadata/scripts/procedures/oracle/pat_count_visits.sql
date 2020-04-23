@@ -124,6 +124,10 @@ execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
         b.numpats 
             from ontPatVisitDims b  
             where a.c_fullname=b.c_fullname )';
+            
+	-- New 4/2020 - Update the totalnum reporting table as well
+execute immediate	'insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	                    select c_fullname, CURRENT_DATE, numpats, ''PD'' from ontPatVisitDims';
 
  EXECUTE IMMEDIATE 'drop table ontPatVisitDims';
 

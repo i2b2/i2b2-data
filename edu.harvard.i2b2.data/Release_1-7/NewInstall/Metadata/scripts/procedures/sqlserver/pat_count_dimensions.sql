@@ -156,8 +156,8 @@ select o.*, isnull(c.num_patients,0) num_patients into finalCountsByConcept
 	execute sp_executesql @sqlstr
 	
 	-- New 4/2020 - Update the totalnum reporting table as well
-	insert into totalnum(c_fullname, agg_date, agg_count)
-	select c_fullname, getdate(), num_patients from finalCountsByConcept
+	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	select c_fullname, CONVERT (date, GETDATE()), num_patients, 'PF' from finalCountsByConcept where num_patients>0
 
     DROP TABLE ##CONCEPTPATIENT
     

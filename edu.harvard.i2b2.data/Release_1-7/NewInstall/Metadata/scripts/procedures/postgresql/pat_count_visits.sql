@@ -137,6 +137,11 @@ BEGIN
     raise info 'At %, updating c_totalnum in % for % records',clock_timestamp(), tabname, v_num;
              
 	execute v_sqlstr;
+	
+	-- New 4/2020 - Update the totalnum reporting table as well
+	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	select c_fullname, current_date, numpats, 'PD' from ontPatVisitDims;
+	
     discard temp;
 END;
 $BODY$
