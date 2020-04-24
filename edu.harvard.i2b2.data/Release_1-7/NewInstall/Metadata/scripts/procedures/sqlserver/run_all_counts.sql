@@ -3,7 +3,6 @@
 -- By Mike Mendis and Jeff Klann, PhD
 -- Run with: exec RunTotalnum
 -----------------------------------------------------------------------------------------------------------------
-
 CREATE PROCEDURE [dbo].[RunTotalnum]  (@observationTable varchar(50) = 'observation_fact', @schemaname varchar(50) = 'dbo') as  
 
 DECLARE @sqlstr NVARCHAR(4000);
@@ -50,4 +49,6 @@ END
 
 CLOSE getsql;
 DEALLOCATE getsql;
+
+    exec BuildTotalnumReport 9, 2.8
 end;

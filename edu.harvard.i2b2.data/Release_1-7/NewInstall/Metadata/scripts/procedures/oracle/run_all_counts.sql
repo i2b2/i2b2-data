@@ -58,5 +58,6 @@ BEGIN
 
  END LOOP;
 
+ BuildTotalnumReport(9, 2.8);
  -- :ERRORMSG := ERRORMSG;
 END;

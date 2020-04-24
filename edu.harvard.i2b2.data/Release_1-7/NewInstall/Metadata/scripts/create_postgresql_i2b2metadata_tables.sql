@@ -238,3 +238,12 @@ CREATE TABLE TOTALNUM  (
 ;
 CREATE INDEX totalnum_idx ON totalnum(c_fullname, agg_date, typeflag_cd)
 ;
+-- Report table to store most recent obfuscated counts
+CREATE TABLE TOTALNUM_REPORT  ( 
+    C_FULLNAME	VARCHAR(850) NULL,
+    AGG_DATE  	date NULL,
+    AGG_COUNT 	int NULL
+    )
+;
+CREATE INDEX totalnum_report_idx ON totalnum(c_fullname)
+;

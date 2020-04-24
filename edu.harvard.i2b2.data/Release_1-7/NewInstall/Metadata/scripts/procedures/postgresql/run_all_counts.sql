@@ -55,6 +55,9 @@ begin
 		v_startime := clock_timestamp();
 
     END LOOP;
+    
+    select BuildTotalnumReport(9, 2.8);
+    
 end; 
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER

@@ -133,7 +133,7 @@ execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
             
  -- New 4/2020 - Update the totalnum reporting table as well
 execute immediate	'insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
-	                    select c_fullname, current_date, num_patients, ''PF'' from finalDimCounts where num_patients>0';
+	                    select c_fullname, trunc(current_date), num_patients, ''PF'' from finalDimCounts where num_patients>0';
 
  EXECUTE IMMEDIATE 'drop table dimCountOnt';
  EXECUTE IMMEDIATE 'drop table finalDimCounts';
