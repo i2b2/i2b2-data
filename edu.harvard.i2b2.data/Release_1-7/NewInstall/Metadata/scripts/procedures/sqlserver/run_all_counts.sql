@@ -3,6 +3,14 @@
 -- By Mike Mendis and Jeff Klann, PhD
 -- Run with: exec RunTotalnum
 -----------------------------------------------------------------------------------------------------------------
+
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'RunTotalnum')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE RunTotalnum;
+GO
+
 CREATE PROCEDURE [dbo].[RunTotalnum]  (@observationTable varchar(50) = 'observation_fact', @schemaname varchar(50) = 'dbo') as  
 
 DECLARE @sqlstr NVARCHAR(4000);
@@ -52,3 +60,4 @@ DEALLOCATE getsql;
 
     exec BuildTotalnumReport 9, 2.8
 end;
+GO

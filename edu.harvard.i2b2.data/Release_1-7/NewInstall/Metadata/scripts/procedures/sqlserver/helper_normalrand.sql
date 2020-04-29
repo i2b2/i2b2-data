@@ -4,6 +4,11 @@
 --   Returning random numbers in select statements - https://weblogs.sqlteam.com/jeffs/2004/11/22/2927/
 --   Generating a normal distribution in MSSQL - https://www.mssqltips.com/sqlservertip/4233/sql-server-tsql-code-to-generate-a-normal-distribution/
 -- By Jeff Klann, PhD
+
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[NormalRand]') AND type in (N'FN', N'IF',N'TF', N'FS', N'FT'))
+DROP FUNCTION [dbo].[NormalRand]
+GO
+
 CREATE FUNCTION NormalRand(@sigma float, @precision int)
 RETURNS float
 AS
@@ -11,3 +16,4 @@ AS
   RETURN (SELECT round((sqrt(-2.0*log(r1.RandNumber))*cos(2*pi()*r2.RandNumber))*@sigma, @precision) FROM vRandNumber r1 cross join vRandNumber r2) 
   END;
   
+GO

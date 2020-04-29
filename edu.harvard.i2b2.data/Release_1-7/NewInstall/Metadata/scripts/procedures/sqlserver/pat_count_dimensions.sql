@@ -5,6 +5,13 @@
 -- Multifact support by Jeff Klann, PhD 05-18
 -- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
 
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'PAT_COUNT_DIMENSIONS')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE PAT_COUNT_DIMENSIONS;
+GO
+
 CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @schemaName varchar(50),
 @observationTable varchar(50), 
  @facttablecolumn varchar(50), @tablename varchar(50), @columnname varchar(50)
@@ -167,3 +174,4 @@ select o.*, isnull(c.num_patients,0) num_patients into finalCountsByConcept
     END
 
 END;
+GO
