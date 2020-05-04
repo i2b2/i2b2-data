@@ -63,7 +63,7 @@ begin
 
     END LOOP;
     
-    select BuildTotalnumReport(9, 2.8);
+    select BuildTotalnumReport(10, 6.5);
     
 end; 
 $BODY$

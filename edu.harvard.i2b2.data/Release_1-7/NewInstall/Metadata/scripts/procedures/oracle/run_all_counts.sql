@@ -2,6 +2,7 @@
 -- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
  
 -- Count totalnumbers of patients for all metadata tables in table access.
+-- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
 -- Run the procedure like this (but with your schema name instead of i2b2demodata):
 --begin
 --  runtotalnum('observation_fact','i2b2demodata');
@@ -66,6 +67,6 @@ END IF;
 
  END LOOP;
 
- BuildTotalnumReport(9, 2.8);
+ BuildTotalnumReport(10, 6.5);
  -- :ERRORMSG := ERRORMSG;
 END;

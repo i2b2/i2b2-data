@@ -4,6 +4,7 @@
 -- Run with: exec RunTotalnum
 --  Optionally you can specify the observation table name (for multi-fact-table setups), the schemaname, or
 --    a single table name to run on a single ontology table.
+-- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
 -----------------------------------------------------------------------------------------------------------------
 
 IF EXISTS ( SELECT  *
@@ -63,6 +64,6 @@ END
 CLOSE getsql;
 DEALLOCATE getsql;
 
-    exec BuildTotalnumReport 9, 2.8
+    exec BuildTotalnumReport 10, 6.5
 end;
 GO

@@ -2,10 +2,12 @@
 
 -- generates `count` normally distributed random numbers
 --   with given mean and given standard deviation
+--   if the noise is greater than threshold (or less than negative threshold), it is replaced by threshold
 CREATE OR REPLACE FUNCTION random_normal(
     count INTEGER DEFAULT 1,
     mean DOUBLE PRECISION DEFAULT 0.0,
-    stddev DOUBLE PRECISION DEFAULT 1.0
+    stddev DOUBLE PRECISION DEFAULT 1.0,
+    threshold integer default 10
     ) RETURNS SETOF DOUBLE PRECISION
       RETURNS NULL ON NULL INPUT AS $$
         DECLARE
@@ -21,11 +23,25 @@ CREATE OR REPLACE FUNCTION random_normal(
                 IF s != 0.0 AND s < 1.0 THEN
                     s = SQRT(-2 * LN(s) / s);
 
-                    RETURN NEXT mean + stddev * s * u;
+                    IF stddev * s * u > threshold THEN 
+                        RETURN NEXT mean + threshold;
+                    ELSIF stddev * s * u < -1 * threshold THEN 
+                        RETURN NEXT mean - threshold;
+                    ELSE
+                        RETURN NEXT mean + stddev * s * u;
+                    END IF;
+                    
                     count = count - 1;
 
                     IF count > 0 THEN
-                        RETURN NEXT mean + stddev * s * v;
+                        IF stddev * s * v > threshold THEN 
+                            RETURN NEXT mean + threshold;
+                        ELSIF stddev * s * v < -1 * threshold THEN 
+                            RETURN NEXT mean - threshold;
+                        ELSE
+                            RETURN NEXT mean + stddev * s * v;
+                        END IF;
+                    
                         count = count - 1;
                     END IF;
                 END IF;
