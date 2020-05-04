@@ -29,7 +29,7 @@ v_startime := CURRENT_TIMESTAMP;
  
 execute immediate 'create table dimCountOnt as select c_fullname, c_basecode, c_hlevel from 
     (select c_fullname, c_basecode, c_hlevel,f.concept_cd,c_visualattributes from '  || metadataTable  || ' o 
-        left outer join (select distinct concept_cd from observation_fact) f on concept_cd=o.c_basecode
+        left outer join (select distinct concept_cd from  ' || schemaName || '.' || 'observation_fact) f on concept_cd=o.c_basecode
 	    where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
 		and lower(c_tablename) = ''' || tablename || '''
 		and lower(c_columnname) = ''' || columnname || '''
