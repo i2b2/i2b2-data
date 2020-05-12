@@ -157,6 +157,10 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
     raise info 'At %, updating c_totalnum in % %',clock_timestamp(), metadataTable, v_num;
     
 	execute v_sqlstr;
+	
+	-- New 4/2020 - Update the totalnum reporting table as well
+	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	select c_fullname, current_date, num_patients, 'PF' from finalCountsByConcept where num_patients>0;
 
     discard temp;
 END; 

@@ -2,12 +2,17 @@
 -- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
  
 -- Count totalnumbers of patients for all metadata tables in table access.
+-- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
 -- Run the procedure like this (but with your schema name instead of i2b2demodata):
 --begin
 --  runtotalnum('observation_fact','i2b2demodata');
 -- end;
+-- You can optionally include a table named if you only want to count one ontology table (this IS case sensitive):
+--begin
+--  runtotalnum('observation_fact','i2b2demodata','I2B2');
+-- end;
 
-create or replace PROCEDURE                           runtotalnum  (observationTable IN VARCHAR, schemaName in VARCHAR)
+create or replace PROCEDURE                           runtotalnum  (observationTable IN VARCHAR, schemaName in VARCHAR, tableName IN VARCHAR DEFAULT '@')
 AUTHID CURRENT_USER
 IS
 
@@ -32,6 +37,9 @@ BEGIN
    loop
     FETCH curRecord INTO dis_c_table_name;
       EXIT WHEN curRecord%NOTFOUND;
+ 
+      --DBMS_OUTPUT.PUT_LINE(dis_c_table_name);
+IF tableName='@' OR tableName=dis_c_table_name THEN
 
  EXECUTE IMMEDIATE 'update ' || dis_c_table_name || ' set c_totalnum=null';
  v_startime := CURRENT_TIMESTAMP;
@@ -55,8 +63,10 @@ BEGIN
  DBMS_OUTPUT.PUT_LINE('(BENCH) '||dis_c_table_name||',PAT_COUNT_modifier_dimension,'||v_duration); 
  v_startime := CURRENT_TIMESTAMP;
 
+END IF;
 
  END LOOP;
 
+ BuildTotalnumReport(10, 6.5);
  -- :ERRORMSG := ERRORMSG;
 END;

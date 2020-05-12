@@ -16,15 +16,21 @@ BEGIN
 
 v_startime := CURRENT_TIMESTAMP;
  
-execute immediate 'create table dimCountOnt as select c_fullname, c_basecode
-	from '  || metadataTable  || ' where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
+execute immediate 'create table dimCountOnt as select c_fullname, c_basecode, c_hlevel from 
+    (select c_fullname, c_basecode, c_hlevel,f.concept_cd,c_visualattributes from '  || metadataTable  || ' o 
+        left outer join (select distinct concept_cd from  ' || schemaName || '.' || 'observation_fact) f on concept_cd=o.c_basecode
+	    where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
 		and lower(c_tablename) = ''' || tablename || '''
 		and lower(c_columnname) = ''' || columnname || '''
 		and lower(c_synonym_cd) = ''n''
 		and lower(c_columndatatype) = ''t''
 		and lower(c_operator) = ''like''
 		and m_applied_path = ''@''
-        and c_fullname is not null';
+        and c_fullname is not null)
+        where (c_visualattributes not like ''L%'' or concept_cd is not null)';
+        -- ^ NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology.
+        -- From 1.47M entries to 100k entries!
+        -- On Oracle, had to do this with an outer join and a subquery, otherwise terrible performance.
 
     --creating indexes rather than primary keys on temporary tables to speed up joining between them
 execute immediate 'create index dim_fullname on dimCountOnt (c_fullname)';
@@ -89,6 +95,10 @@ execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
 		and lower(a.c_tablename) = ''' || tablename || '''
 		and lower(a.c_columnname) = ''' || columnname || '''
             ';
+            
+ -- New 4/2020 - Update the totalnum reporting table as well
+execute immediate	'insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	                    select c_fullname, trunc(current_date), num_patients, ''PF'' from finalDimCounts where num_patients>0';
 
  EXECUTE IMMEDIATE 'drop table dimCountOnt';
  EXECUTE IMMEDIATE 'drop table finalDimCounts';

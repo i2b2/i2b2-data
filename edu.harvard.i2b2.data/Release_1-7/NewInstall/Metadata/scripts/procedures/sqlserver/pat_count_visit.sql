@@ -1,5 +1,13 @@
+-- MSSQL version
 -- Originally Developed by Griffin Weber, Harvard Medical School
 -- Contributors: Mike Mendis, Jeff Klann, Lori Phillips
+
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'PAT_COUNT_VISITS')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE PAT_COUNT_VISITS;
+GO
  
 CREATE PROCEDURE [dbo].[PAT_COUNT_VISITS] (@tabname varchar(50), @schemaName varchar(50))
 AS BEGIN
@@ -14,6 +22,7 @@ declare @sqlstr nvarchar(4000),
 		 @operator varchar(10),
 		 @dimcode varchar(1200)
 
+    SET NOCOUNT ON
 
     if exists (select 1 from sysobjects where name='ontPatVisitDims') drop table ontPatVisitDims
 
@@ -22,6 +31,8 @@ declare @sqlstr nvarchar(4000),
 	set @sqlstr='select c_fullname, c_basecode, c_facttablecolumn, c_tablename, c_columnname, c_operator, c_dimcode into ontPatVisitDims from ' + @tabname
         + ' where  m_applied_path = ''@'' and c_tablename in (''patient_dimension'', ''visit_dimension'') '
     execute sp_executesql @sqlstr
+    
+    RAISERROR('visit query: %s',0,1,@sqlstr) WITH NOWAIT;
 
 	alter table ontPatVisitDims add numpats int
 
@@ -55,8 +66,15 @@ declare @sqlstr nvarchar(4000),
                ' where ' + @facttablecolumn + ' in (select ' + @facttablecolumn + ' from ' +   @schemaName + '.' + @tablename + ' where '+ @columnname + ' ' + @operator +' ' + @dimcode +' ))
             where c_fullname = ' + ''''+ @concept + ''''+ ' and numpats is null'
 
-		--	print @sqlstr
-			execute sp_executesql @sqlstr
+
+			BEGIN TRY
+    			execute sp_executesql @sqlstr
+			END TRY
+			BEGIN CATCH
+				print 'Error executing:' + @sqlstr
+                --  RAISERROR('visit query: %s',0,1,@sqlstr) WITH NOWAIT;
+			END CATCH
+
 		end
 
 		fetch next from e into @concept, @facttablecolumn, @tablename, @columnname, @operator, @dimcode
@@ -72,8 +90,13 @@ declare @sqlstr nvarchar(4000),
 	'where a.c_fullname=b.c_fullname '
 --	print @sqlstr
 	execute sp_executesql @sqlstr
-
+	
+	-- New 4/2020 - Update the totalnum reporting table as well
+	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+	select c_fullname, CONVERT (date, GETDATE()), numpats, 'PD' from ontPatVisitDims
+	
 
 END
 
 END;
+GO
