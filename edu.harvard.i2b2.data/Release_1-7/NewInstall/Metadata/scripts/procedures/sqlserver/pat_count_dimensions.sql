@@ -22,7 +22,8 @@ AS BEGIN
 declare @sqlstr nvarchar(4000)
 declare @startime datetime
 
-
+    IF OBJECT_ID('tempdb..##CONCEPTPATIENT') IS NOT NULL
+        DROP TABLE ##CONCEPTPATIENT
     if exists (select 1 from sysobjects where name='conceptCountOnt') drop table conceptCountOnt
     if exists (select 1 from sysobjects where name='finalCountsByConcept') drop table finalCountsByConcept
 

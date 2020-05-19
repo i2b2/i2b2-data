@@ -24,8 +24,27 @@ IS
 errorMsg VARCHAR2(700);
     v_startime timestamp;
     v_duration varchar2(30);
+    c int;
 
 BEGIN
+
+ -- Cleanup in case last run was unsuccessful
+   select count(*) into c from user_tables where table_name = upper('dimCountOnt');
+   if c = 1 then
+      execute immediate 'drop table dimCountOnt';
+   end if;
+   select count(*) into c from user_tables where table_name = upper('finalDimCounts');
+   if c = 1 then
+      execute immediate 'drop table finalDimCounts';
+   end if;
+   select count(*) into c from user_tables where table_name = upper('dimOntWithFolders');
+   if c = 1 then
+      execute immediate 'drop table dimOntWithFolders';
+   end if;
+   select count(*) into c from user_tables where table_name = upper('ontPatVisitDims');
+   if c = 1 then
+      execute immediate 'drop table ontPatVisitDims';
+   end if;
 
  sql_stmt := 'select distinct c_table_name from TABLE_ACCESS where c_visualattributes like ''%A%''  ';
  
