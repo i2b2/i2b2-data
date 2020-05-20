@@ -11,9 +11,6 @@
 -- You can optionally specify a single table name, to count using only one ontology table. This is case sensitive.
 -----------------------------------------------------------------------------------------------------------------
 
-DROP FUNCTION IF EXISTS runtotalnum(text,text); -- have to explicitly drop the old version because we changed the method signature
-GO
-
 CREATE OR REPLACE FUNCTION runtotalnum(observationTable text, schemaName text, tableName text default '@')
   RETURNS void AS
 $BODY$
@@ -69,5 +66,3 @@ end;
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;
-  GO
-  --select runtotalnum('observation_fact','i2b2demodata')

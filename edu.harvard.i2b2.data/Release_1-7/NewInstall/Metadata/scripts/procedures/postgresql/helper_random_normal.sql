@@ -47,4 +47,6 @@ CREATE OR REPLACE FUNCTION random_normal(
                 END IF;
             END LOOP;
         END;
-    $$ LANGUAGE plpgsql;
+$BODY$
+  LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+  COST 100;
