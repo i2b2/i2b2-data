@@ -2,8 +2,8 @@
 -- Uses the most recent value for each path name in the totalnum table, and obfuscates with the specified censoring threshold and Gaussian sigma
 -- e.g., to censor counts under ten and add Gaussian noise with a sigma of 2.8 - exec BuildTotalnumReport 9, 2.8
 -- Dependent on the random helper functions in this directory
+-- Example usage: exec BuildTotalnumReport 10, 6.5
 -- By Jeff Klann, PhD
-
 IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'BuildTotalnumReport')
@@ -31,8 +31,9 @@ BEGIN
     truncate table totalnum_report;
 
     insert into totalnum_report(c_fullname, agg_count, agg_date)
-    select c_fullname, case sign(agg_count+1 - @threshold) when 1 then round(agg_count/5.0,0)*5+dbo.normalrand(@sigma, 0, @threshold) else -1 end agg_count, agg_date from 
-        (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd like 'P%') x where rn=1;
+    select c_fullname, case sign(agg_count+1 - @threshold) when 1 then round(agg_count/5.0,0)*5+dbo.normalrand(@sigma, 0, @threshold) else -1 end agg_count, 
+        convert(varchar(50),agg_date,23) agg_date --YYYY-MM-DD
+        from (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd like 'P%') x where rn=1;
         
     update totalnum_report set agg_count=-1 where agg_count<@threshold;
 
