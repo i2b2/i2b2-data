@@ -41,7 +41,7 @@ set @sqlstr = 'select c_fullname, c_basecode, c_hlevel
 		and lower(c_operator) = ''like''
 		and m_applied_path = ''@''
         and c_fullname is not null
-        and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from observation_fact))'
+        and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from ' + @schemaName + '.' + @observationTable + '))'
         -- ^ NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology.
         -- From 1.47M entries to 100k entries!
 		
