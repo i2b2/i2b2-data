@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION random_normal(
     stddev DOUBLE PRECISION DEFAULT 1.0,
     threshold integer default 10
     ) RETURNS SETOF DOUBLE PRECISION
-      RETURNS NULL ON NULL INPUT AS $$
+      RETURNS NULL ON NULL INPUT AS $BODY$
         DECLARE
             u DOUBLE PRECISION;
             v DOUBLE PRECISION;
