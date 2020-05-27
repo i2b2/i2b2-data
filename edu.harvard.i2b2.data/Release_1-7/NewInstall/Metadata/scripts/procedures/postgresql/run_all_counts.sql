@@ -60,7 +60,7 @@ begin
 
     END LOOP;
     
-    select BuildTotalnumReport(10, 6.5);
+    perform BuildTotalnumReport(10, 6.5);
     
 end; 
 $BODY$
