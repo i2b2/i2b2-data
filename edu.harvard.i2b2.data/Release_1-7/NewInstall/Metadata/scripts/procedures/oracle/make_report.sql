@@ -35,5 +35,5 @@ BEGIN
     execute immediate 'update totalnum_report set agg_count=-1 where agg_count<'||threshold;
 
 END;
-GO
+
 
