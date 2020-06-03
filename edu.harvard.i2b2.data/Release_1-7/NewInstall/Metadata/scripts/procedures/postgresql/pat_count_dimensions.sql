@@ -1,3 +1,5 @@
+
+
 -- By Mike Mendis, Partners Healthcare
 -- Performance improvements by Jeff Green, Prognosis Data Corp; Jeff Klann, PhD; and Griffin Weber, MD, PhD
 -- Based on code from Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
@@ -34,7 +36,7 @@ BEGIN
              || ' and lower(c_operator) = ''like'' '
              || ' and m_applied_path = ''@'' '
 		     || ' and coalesce(c_fullname, '''') <> '''' '
-		     || ' and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from observation_fact)) ';
+		     || ' and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from ' || lower(schemaName) || '.'|| observationTable || ')) ';
 		-- NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology (10x speedup).
         -- From 1.47M entries to 300k entries!
            
@@ -86,19 +88,14 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
 || '  from concepts '
 || '  where c_fullname like ''' || replace(curRecord.c_fullname,'\','\\') || '%'' '
 || '  order by c_fullname, c_basecode ';
-
     raise info 'SQL_dimOntWithFolders: %',v_sqlstr;
 	execute v_sqlstr;
-
 	--raise notice 'At %, collected concepts for % %',clock_timestamp(),curRecord.c_table_name,curRecord.c_fullname;
 	v_duration := clock_timestamp()-v_startime;
 	raise info '(BENCH) %,collected_concepts,%',curRecord,v_duration;
 	v_startime := clock_timestamp();
-
  end if;
-
     END LOOP;
-
     -- Too slow version
     --v_sqlstr := ' create temp table finalDimCounts AS '
     --    || ' select p1.c_fullname, count(distinct patient_num) as num_patients '
@@ -127,9 +124,13 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
     
     alter table ConceptPath add primary key (c_basecode, path_num);
     
-    create temp table PathCounts as
-    select p1.path_num, count(distinct patient_num) as num_patients  from ConceptPath p1  left join public.observation_fact  o      on p1.c_basecode = o.concept_cd     and coalesce(p1.c_basecode, '') <> ''  group by p1.path_num;
+  --  create temp table PathCounts as
+
+    v_sqlstr := 'create temp table PathCounts as select p1.path_num, count(distinct patient_num) as num_patients  from ConceptPath p1  left join ' || lower(schemaName) || '.'|| observationTable || '  o      on p1.c_basecode = o.concept_cd     and coalesce(p1.c_basecode, '''') <> ''''  group by p1.path_num';
     
+
+	execute v_sqlstr;
+
     alter table PathCounts add primary key (path_num);
     
     create temp table finalCountsbyConcept as
@@ -138,15 +139,11 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
           inner join Path2Num p
            on p.path_num=c.path_num
         order by p.c_fullname;
-
-
     --raise notice 'At %, done counting.',clock_timestamp();
 	v_duration := clock_timestamp()-v_startime;
 	raise info '(BENCH) %,counted_concepts,%',curRecord,v_duration;
 	v_startime := clock_timestamp();
-
     create index on finalCountsbyConcept using btree (c_fullname);
-
     v_sqlstr := ' update ' || metadataTable || ' a set c_totalnum=b.num_patients '
              || ' from finalCountsbyConcept b '
              || ' where a.c_fullname=b.c_fullname '
@@ -161,7 +158,6 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
 	-- New 4/2020 - Update the totalnum reporting table as well
 	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
 	select c_fullname, current_date, num_patients, 'PF' from finalCountsByConcept where num_patients>0;
-
     discard temp;
 END; 
 $BODY$
