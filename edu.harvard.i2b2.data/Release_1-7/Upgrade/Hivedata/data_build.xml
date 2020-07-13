@@ -14,8 +14,8 @@ $Id: data_build.xml,v 1.3 2010/05/24 15:39:23 rk903 Exp $
 	<target name="init"  description="Prepare for build">
 		<path id="classpath">
 			<pathelement location="../../ojdbc8.jar" />
-			<pathelement location="../../mssql-jdbc-6.2.2.jre8.jar"/>
-			<pathelement location="../../postgresql-42.1.4.jar"/>
+			<pathelement location="../../mssql-jdbc-8.2.2.jre8.jar"/>
+			<pathelement location="../../postgresql-42.2.14.jar"/>
 		</path>
 	</target>
 
@@ -25,9 +25,9 @@ $Id: data_build.xml,v 1.3 2010/05/24 15:39:23 rk903 Exp $
 	<!-- 			DATABASE SETUP TARGETS						 			 -->
 	<!-- =================================================================== -->
 
-	<target name="upgrade_hive_tables_release_1-7" depends="init">
+	<target name="upgrade_tables_release_1-7" depends="init">
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true">
-			<transaction src="./scripts/upgrade_${db.type}_i2b2hive_tables.sql" />
+			<transaction src="./scripts/upgrade_${db.type}.sql" />
 		</sql>
 	</target>
 

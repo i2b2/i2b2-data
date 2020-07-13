@@ -15,8 +15,8 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
 	<target name="init"  description="Prepare for build">
 		<path id="classpath">
 			<pathelement location="../../ojdbc8.jar" />
-			<pathelement location="../../mssql-jdbc-6.2.2.jre8.jar"/>
-			<pathelement location="../../postgresql-42.1.4.jar"/>
+			<pathelement location="../../mssql-jdbc-8.2.2.jre8.jar"/>
+			<pathelement location="../../postgresql-42.2.14.jar"/>
 		</path>
 	</target>
 

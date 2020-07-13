@@ -1,3 +1,0 @@
--- Insert if needed
---INSERT INTO SCHEMES(C_KEY, C_NAME, C_DESCRIPTION)
---  VALUES('ICD10:', 'ICD10', 'ICD10 code for diagnoses');
