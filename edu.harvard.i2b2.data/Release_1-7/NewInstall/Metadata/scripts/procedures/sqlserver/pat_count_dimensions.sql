@@ -25,16 +25,15 @@ AS BEGIN
 declare @sqlstr nvarchar(4000)
 declare @startime datetime
 
-    IF OBJECT_ID('tempdb..##CONCEPTPATIENT') IS NOT NULL
-        DROP TABLE ##CONCEPTPATIENT
-    if exists (select 1 from sysobjects where name='conceptCountOnt') drop table conceptCountOnt
-    if exists (select 1 from sysobjects where name='finalCountsByConcept') drop table finalCountsByConcept
+    if exists (select 1 from sysobjects where name='tnum_ConceptPatient') drop table tnum_ConceptPatient
+    if exists (select 1 from sysobjects where name='tnum_conceptCountOnt') drop table tnum_conceptCountOnt
+    if exists (select 1 from sysobjects where name='tnum_finalCountsByConcept') drop table tnum_finalCountsByConcept
 
 
 -- Modify this query to select a list of all your ontology paths and basecodes.
 
 set @sqlstr = 'select c_fullname, c_basecode, c_hlevel
-	into conceptCountOnt
+	into tnum_conceptCountOnt
 	from ' + @metadataTable + 
 ' where lower(c_facttablecolumn)= ''' + @facttablecolumn + '''
 		and lower(c_tablename) = ''' + @tablename + '''
@@ -52,7 +51,7 @@ execute sp_executesql @sqlstr;
 
 print @sqlstr
 
-if exists(select top 1 NULL from conceptCountOnt)
+if exists(select top 1 NULL from tnum_conceptCountOnt)
 BEGIN
     set @startime = getdate(); 
     
@@ -62,7 +61,7 @@ select c_fullname, isnull(row_number() over (order by c_fullname),-1) path_num
 	into #Path2Num
 	from (
 		select distinct isnull(c_fullname,'') c_fullname
-		from conceptCountOnt
+		from tnum_conceptCountOnt
 		where isnull(c_fullname,'')<>''
 	) t
 
@@ -74,7 +73,7 @@ alter table #Path2Num add primary key (c_fullname)
 ;with concepts (c_fullname, c_hlevel, c_basecode) as
 	(
 	select c_fullname, c_hlevel, c_basecode
-	from conceptCountOnt
+	from tnum_conceptCountOnt
 	where isnull(c_fullname,'') <> '' and isnull(c_basecode,'') <> ''
 	union all
 	select 
@@ -93,7 +92,7 @@ inner join #path2num
 THIS VERSION IS DEPRECATED BECAUSE IT IS VERY SLOW ON DEEP ONTOLOGIES
 select distinct isnull(c_fullname,'') c_fullname, isnull(c_basecode,'') c_basecode
 	into #PathConcept
-	from conceptCountOnt
+	from tnum_conceptCountOnt
 	where isnull(c_fullname,'')<>'' and isnull(c_basecode,'')<>''
 
 alter table #PathConcept add primary key (c_fullname, c_basecode)
@@ -113,20 +112,20 @@ alter table #ConceptPath add primary key (c_basecode, path_num)
 -- Create a list of distinct concept-patient pairs
 
 SET @sqlstr = 'select distinct concept_cd, patient_num
-	into ##ConceptPatient
+	into tnum_ConceptPatient
 	from '+@schemaName + '.' + @observationTable+' f with (nolock)'
 EXEC sp_executesql @sqlstr
 
-ALTER TABLE ##ConceptPatient  ALTER COLUMN [PATIENT_NUM] int NOT NULL
-ALTER TABLE ##ConceptPatient  ALTER COLUMN [concept_cd] varchar(50) NOT NULL
+ALTER TABLE tnum_ConceptPatient  ALTER COLUMN [PATIENT_NUM] int NOT NULL
+ALTER TABLE tnum_ConceptPatient  ALTER COLUMN [concept_cd] varchar(50) NOT NULL
 
-alter table ##ConceptPatient add primary key (concept_cd, patient_num)
+alter table tnum_ConceptPatient add primary key (concept_cd, patient_num)
 
 -- Create a list of distinct path-patient pairs
 
 select distinct c.path_num, f.patient_num
 	into #PathPatient
-	from ##ConceptPatient f
+	from tnum_ConceptPatient f
 		inner join #ConceptPath c
 			on f.concept_cd = c.c_basecode
 
@@ -149,15 +148,15 @@ alter table #PathCounts add primary key (path_num)
 
 -- This is the final counts per ont path
 
-select o.*, isnull(c.num_patients,0) num_patients into finalCountsByConcept
-	from conceptCountOnt o
+select o.*, isnull(c.num_patients,0) num_patients into tnum_finalCountsByConcept
+	from tnum_conceptCountOnt o
 		left outer join #Path2Num p
 			on o.c_fullname = p.c_fullname
 		left outer join #PathCounts c
 			on p.path_num = c.path_num
 	order by o.c_fullname
 
-	set @sqlstr='update a set c_totalnum=b.num_patients from '+@metadataTable+' a, finalCountsByConcept b '+
+	set @sqlstr='update a set c_totalnum=b.num_patients from '+@metadataTable+' a, tnum_finalCountsByConcept b '+
 	'where a.c_fullname=b.c_fullname ' +
  ' and lower(a.c_facttablecolumn)= ''' + @facttablecolumn + ''' ' +
 	' and lower(a.c_tablename) = ''' + @tablename + ''' ' +
@@ -168,9 +167,11 @@ select o.*, isnull(c.num_patients,0) num_patients into finalCountsByConcept
 	
 	-- New 4/2020 - Update the totalnum reporting table as well
 	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
-	select c_fullname, CONVERT (date, GETDATE()), num_patients, 'PF' from finalCountsByConcept where num_patients>0
+	select c_fullname, CONVERT (date, GETDATE()), num_patients, 'PF' from tnum_finalCountsByConcept where num_patients>0
 
-    DROP TABLE ##CONCEPTPATIENT
+    if exists (select 1 from sysobjects where name='tnum_ConceptPatient') drop table tnum_ConceptPatient
+    if exists (select 1 from sysobjects where name='tnum_conceptCountOnt') drop table tnum_conceptCountOnt
+    if exists (select 1 from sysobjects where name='tnum_finalCountsByConcept') drop table tnum_finalCountsByConcept
     
     EXEC EndTime @startime,'dimension','cleanup';
     set @startime = getdate(); 
