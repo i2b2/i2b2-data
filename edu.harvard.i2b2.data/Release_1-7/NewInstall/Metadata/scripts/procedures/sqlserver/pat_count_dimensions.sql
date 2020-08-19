@@ -3,6 +3,9 @@
 
 -- Count by concept
 -- Multifact support by Jeff Klann, PhD 05-18
+-- To use with an alternate fact table, run once for each fact table used. The fact table must also be specified in the ontology per multifact setup.
+-- The format for multifact-table is (this example uses a fact table called derived_fact set up in act_covid:
+--    exec PAT_COUNT_DIMENSIONS 'act_covid', 'dbo', 'derived_fact', 'derived_fact.concept_cd','concept_dimension','concept_path'
 -- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
 
 IF EXISTS ( SELECT  *
