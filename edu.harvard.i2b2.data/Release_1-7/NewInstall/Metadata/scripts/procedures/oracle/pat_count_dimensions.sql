@@ -1,3 +1,9 @@
+-- To run this separately from run_all_counts, follow this example, substituting your local parameters:
+--DECLARE errorMsg VARCHAR2(700);
+--begin
+-- PAT_COUNT_DIMENSIONS( 'ACT_MED_VA_V2_092818' , 'I2B2DemoData', 'observation_fact' ,  'concept_cd', 'concept_dimension', 'concept_path', errorMsg  );
+--end;
+
 create or replace PROCEDURE              pat_count_dimensions  (metadataTable IN VARCHAR, schemaName IN VARCHAR, observationTable IN VARCHAR, 
  facttablecolumn in VARCHAR, tablename in VARCHAR, columnname in VARCHAR, 
    errorMsg OUT VARCHAR)
@@ -44,11 +50,32 @@ execute immediate 'create index dim_fullname on dimCountOnt (c_fullname)';
     -- temporary table and itself, which is much smaller than observation_fact, is faster when done separately
     -- rather than being included in the join against the observation_fact table below.
 
+
 execute immediate 'create table dimOntWithFolders  as 
-	select distinct c1.c_fullname, c2.c_basecode
-        from dimCountOnt c1 
-        inner join dimCountOnt c2
-        on c2.c_fullname like c1.c_fullname || ''%'''; -- expecting that no '&' exist in the data
+with  concepts (c_fullname, c_hlevel, c_basecode) as
+	(
+	select c_fullname, c_hlevel, c_basecode
+	from dimCountOnt
+	--where coalesce(c_fullname,'') <> '' and coalesce(c_basecode,'') <> ''
+	union all
+	select cast(
+			substr(c_fullname, 1, length(c_fullname)-instr(reverse(c_fullname),''\'',1,2))
+		   	as varchar(700)
+			) c_fullname,
+	c_hlevel-1 c_hlevel, c_basecode
+	from concepts
+	where concepts.c_hlevel>0
+	)
+select distinct c_fullname, c_basecode
+from concepts
+order by c_fullname, c_basecode';
+
+-- Too slow version
+--execute immediate 'create table dimOntWithFolders  as 
+--	select distinct c1.c_fullname, c2.c_basecode
+--        from dimCountOnt c1 
+--        inner join dimCountOnt c2
+--        on c2.c_fullname like c1.c_fullname || ''%'''; -- expecting that no '&' exist in the data
 
 execute immediate 'create index  dimFldBasecode on dimOntWithFolders (c_basecode)';
         
