@@ -66,6 +66,9 @@ BEGIN
         exec PAT_COUNT_DIMENSIONS  @sqltext , @schemaName, @observationTable ,  @derived_facttablecolumn, 'modifier_dimension', 'modifier_path';
         EXEC EndTime @startime,@sqltext,'PAT_COUNT_modifier_dimension';
         set @startime = getdate(); 
+        -- New 11/20 - update counts in top levels (table_access) at the end
+        SET @sqlstr = 'update t set c_totalnum=x.c_totalnum from table_access t inner join '+@sqltext+' x on x.c_fullname=t.c_fullname'
+        execute sp_executesql @sqlstr
     END
     
 --	exec sp_executesql @sqltext
