@@ -37,11 +37,11 @@ declare getsql cursor local for select distinct c_table_name from TABLE_ACCESS w
 
 begin
 
-SET @derived_facttablecolumn = case when @observationTable='observation_fact' then '' else @observationTable+'.' end
 OPEN getsql;
 FETCH NEXT FROM getsql INTO @sqltext;
 WHILE @@FETCH_STATUS = 0
 BEGIN
+    SET @derived_facttablecolumn = case when @observationTable='observation_fact' then '' else @observationTable+'.' end
     IF @tablename='@' OR @tablename=@sqltext
     BEGIN
         print @sqltext

@@ -58,7 +58,7 @@ begin
             v_startime := clock_timestamp();
             
              -- New 11/20 - update counts in top levels (table_access) at the end
-             execute immediate 'update table_access set c_totalnum=(select c_totalnum from ' || curRecord.sqltext || ' x where x.c_fullname=table_access.c_fullname)';
+             execute 'update table_access set c_totalnum=(select c_totalnum from ' || curRecord.sqltext || ' x where x.c_fullname=table_access.c_fullname)';
 
         END IF;
 
