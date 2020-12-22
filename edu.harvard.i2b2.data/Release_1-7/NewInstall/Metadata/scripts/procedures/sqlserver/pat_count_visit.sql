@@ -24,7 +24,7 @@ declare @sqlstr nvarchar(4000),
 
     SET NOCOUNT ON
 
-    if exists (select 1 from sysobjects where name='tnum_tnum_ontPatVisitDims') drop table tnum_tnum_ontPatVisitDims
+    if exists (select 1 from sysobjects where name='tnum_ontPatVisitDims') drop table tnum_ontPatVisitDims
 
 -- pat_dim , visit_dim queries
 
