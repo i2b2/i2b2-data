@@ -31,6 +31,8 @@ execute immediate 'create table ontPatVisitDims as select c_fullname
 	from '  || metadataTable  || ' where  m_applied_path = ''@''
           and lower(c_tablename) in (''patient_dimension'', ''visit_dimension'') ';
 
+execute immediate 'create index ontPatVisitDims_idx on ontPatVisitDims(c_fullname)';
+
  sql_stmt := 'select c_fullname, c_facttablecolumn, c_tablename, c_columnname, c_operator, c_dimcode from ontPatVisitDims ';
  
 

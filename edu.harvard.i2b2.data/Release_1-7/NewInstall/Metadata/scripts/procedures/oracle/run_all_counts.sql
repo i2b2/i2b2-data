@@ -81,6 +81,9 @@ IF tableName='@' OR tableName=dis_c_table_name THEN
  v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
  DBMS_OUTPUT.PUT_LINE('(BENCH) '||dis_c_table_name||',PAT_COUNT_modifier_dimension,'||v_duration); 
  v_startime := CURRENT_TIMESTAMP;
+ 
+ -- New 11/20 - update counts in top levels (table_access) at the end
+ execute immediate 'update table_access set c_totalnum=(select c_totalnum from ' || dis_c_table_name || ' x where x.c_fullname=table_access.c_fullname)';
 
 END IF;
 

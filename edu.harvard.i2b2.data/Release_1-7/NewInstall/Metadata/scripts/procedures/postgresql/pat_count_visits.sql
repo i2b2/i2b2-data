@@ -39,6 +39,8 @@ BEGIN
      */
 
     execute v_sqlstr;
+    
+    CREATE INDEX ontPatVisitDimsfname ON ontPatVisitDims(c_fullname);
 
     -- rather than creating cursor and fetching rows into local variables, instead using record variable type to 
     -- access each element of the current row of the cursor

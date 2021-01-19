@@ -56,6 +56,10 @@ begin
             v_duration := clock_timestamp()-v_startime;
             raise info '(BENCH) %,PAT_COUNT_modifier_dimension,%',curRecord,v_duration;
             v_startime := clock_timestamp();
+            
+             -- New 11/20 - update counts in top levels (table_access) at the end
+             execute 'update table_access set c_totalnum=(select c_totalnum from ' || curRecord.sqltext || ' x where x.c_fullname=table_access.c_fullname)';
+
         END IF;
 
     END LOOP;
