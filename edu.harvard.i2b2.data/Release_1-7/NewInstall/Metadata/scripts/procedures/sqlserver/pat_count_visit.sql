@@ -35,6 +35,8 @@ declare @sqlstr nvarchar(4000),
     RAISERROR('visit query: %s',0,1,@sqlstr) WITH NOWAIT;
 
 	alter table tnum_ontPatVisitDims add numpats int
+
+	alter table tnum_ontPatVisitDims alter column c_fullname varchar(900) NOT NULL
 	
 	alter table tnum_ontPatVisitDims add primary key (c_fullname)
 
