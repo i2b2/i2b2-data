@@ -21,6 +21,7 @@ IS
  curRecord   distinctTableCurTyp;
  sql_stmt  varchar2(2000);
  dis_c_table_name varchar2(700);
+ denom int;
 errorMsg VARCHAR2(700);
     v_startime timestamp;
     v_duration varchar2(30);
@@ -84,10 +85,22 @@ IF tableName='@' OR tableName=dis_c_table_name THEN
  
  -- New 11/20 - update counts in top levels (table_access) at the end
  execute immediate 'update table_access set c_totalnum=(select c_totalnum from ' || dis_c_table_name || ' x where x.c_fullname=table_access.c_fullname)';
+ -- Null out cases that are actually 0 [1/21]
+execute immediate 'update  ' || dis_c_table_name || ' set c_totalnum=null where c_totalnum=0 and c_visualattributes like ''C%''';
 
 END IF;
 
  END LOOP;
+ 
+  -- Cleanup (1/21)
+  update table_access set c_totalnum=null where c_totalnum=0;
+  -- Denominator (1/21)
+  SELECT count(*) into denom from totalnum where c_fullname='\denominator\facts\' and trunc(agg_date)=trunc(CURRENT_DATE);
+  IF denom = 0
+  THEN
+      insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
+          select '\denominator\facts\',CURRENT_DATE,count(distinct patient_num),'PX' from observation_fact;
+  END IF;
 
  BuildTotalnumReport(10, 6.5);
  -- :ERRORMSG := ERRORMSG;

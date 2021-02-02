@@ -21,6 +21,7 @@ DECLARE
     v_numpats integer;
     v_startime timestamp;
     v_duration text = '';
+    denom int;
 begin
     raise info 'At %, running RunTotalnum()',clock_timestamp();
     v_startime := clock_timestamp();
@@ -59,10 +60,22 @@ begin
             
              -- New 11/20 - update counts in top levels (table_access) at the end
              execute 'update table_access set c_totalnum=(select c_totalnum from ' || curRecord.sqltext || ' x where x.c_fullname=table_access.c_fullname)';
+             -- Null out cases that are actually 0 [1/21]
+            execute  'update  ' || curRecord.sqltext || ' set c_totalnum=null where c_totalnum=0 and c_visualattributes like ''C%''';
 
         END IF;
 
     END LOOP;
+    
+      -- Cleanup (1/21)
+      update table_access set c_totalnum=null where c_totalnum=0;
+      -- Denominator (1/21)
+      SELECT count(*) into denom from totalnum where c_fullname='\denominator\facts\' and agg_date=CURRENT_DATE;
+      IF denom = 0
+      THEN
+          insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
+              select '\denominator\facts\',CURRENT_DATE,count(distinct patient_num),'PX' from observation_fact;
+      END IF;
     
     perform BuildTotalnumReport(10, 6.5);
     

@@ -111,6 +111,8 @@ alter table #ConceptPath add primary key (c_basecode, path_num)
 
 -- Create a list of distinct concept-patient pairs
 
+-- TODO 10/21/20: No need to do this for every single ontology
+
 SET @sqlstr = 'select distinct concept_cd, patient_num
 	into tnum_ConceptPatient
 	from '+@schemaName + '.' + @observationTable+' f with (nolock)'

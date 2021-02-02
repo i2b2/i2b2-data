@@ -69,8 +69,11 @@ BEGIN
         -- New 11/20 - update counts in top levels (table_access) at the end
         SET @sqlstr = 'update t set c_totalnum=x.c_totalnum from table_access t inner join '+@sqltext+' x on x.c_fullname=t.c_fullname'
         execute sp_executesql @sqlstr
+        -- Null out cases that are actually 0 [1/21]
+        SET @sqlstr = 'update t set c_totalnum=null from '+@sqltext+' where c_totalnum=0 and c_visualattributes like ''C%'''
+        execute sp_executesql @sqlstr
     END
-    
+                  
 --	exec sp_executesql @sqltext
 	FETCH NEXT FROM getsql INTO @sqltext;	
 END
@@ -78,6 +81,16 @@ END
 CLOSE getsql;
 DEALLOCATE getsql;
 
+    -- Cleanup (1/21)
+    update table_access set c_totalnum=null where c_totalnum=0
+    -- Denominator (1/21)
+    IF (SELECT count(*) from totalnum where c_fullname='\denominator\facts\' and cast(agg_date as date)=cast(getdate() as date)) = 0
+    BEGIN
+        insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
+            select '\denominator\facts\',getdate(),count(distinct patient_num),'PX' from observation_fact
+    END
+        
     exec BuildTotalnumReport 10, 6.5
 end;
 GO
+
