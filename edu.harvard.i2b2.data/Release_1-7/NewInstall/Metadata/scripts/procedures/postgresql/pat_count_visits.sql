@@ -130,7 +130,7 @@ BEGIN
 
 	v_sqlstr := 'update ' || tabname || ' a set c_totalnum=b.numpats '
              || ' from ontPatVisitDims b '
-             || ' where a.c_fullname=b.c_fullname ';
+             || ' where a.c_fullname=b.c_fullname and b.numpats>0';
 
     raise info 'At %: Running: %',clock_timestamp()e, v_sqlstr;
  

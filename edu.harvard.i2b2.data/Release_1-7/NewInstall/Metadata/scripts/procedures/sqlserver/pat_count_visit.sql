@@ -91,7 +91,7 @@ declare @sqlstr nvarchar(4000),
  
 
 	set @sqlstr='update a set c_totalnum=b.numpats from '+@tabname+' a, tnum_ontPatVisitDims b '+
-	'where a.c_fullname=b.c_fullname '
+	'where a.c_fullname=b.c_fullname and b.numpats>0'
 --	print @sqlstr
 	execute sp_executesql @sqlstr
 	

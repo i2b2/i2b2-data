@@ -125,7 +125,7 @@ execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
         (select 
         b.numpats 
             from ontPatVisitDims b  
-            where a.c_fullname=b.c_fullname )';
+            where a.c_fullname=b.c_fullname and b.numpats>0)';
             
 	-- New 4/2020 - Update the totalnum reporting table as well
 execute immediate	'insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
