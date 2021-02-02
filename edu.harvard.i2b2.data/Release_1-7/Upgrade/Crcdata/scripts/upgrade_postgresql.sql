@@ -58,3 +58,9 @@ update QT_QUERY_RESULT_TYPE set CLASSNAME='edu.harvard.i2b2.crc.dao.setfinder.Qu
 ;
 update QT_QUERY_RESULT_TYPE set CLASSNAME='edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator' where NAME='PATIENT_INOUT_XML'
 ;
+
+--==============================================================
+-- Database Script to upgrade CRC from 1.7.12a to 1.7.13                 
+--==============================================================
+alter table QT_PATIENT_SET_COLLECTION alter column PATIENT_SET_COLL_ID BIGSERIAL
+;
