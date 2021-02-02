@@ -54,7 +54,7 @@ execute immediate 'create index dim_fullname on dimCountOnt (c_fullname)';
 execute immediate 'create table dimOntWithFolders  as 
 with  concepts (c_fullname, c_hlevel, c_basecode) as
 	(
-	select c_fullname, c_hlevel, c_basecode
+	select substr(c_fullname,1,length(c_fullname)-1), c_hlevel, c_basecode
 	from dimCountOnt
 	--where coalesce(c_fullname,'') <> '' and coalesce(c_basecode,'') <> ''
 	union all
@@ -64,11 +64,11 @@ with  concepts (c_fullname, c_hlevel, c_basecode) as
 			) c_fullname,
 	c_hlevel-1 c_hlevel, c_basecode
 	from concepts
-	where concepts.c_hlevel>0
+	where concepts.c_hlevel>=0
 	)
-select distinct c_fullname, c_basecode
+select distinct concat(c_fullname,''\'') c_fullname, c_basecode
 from concepts
-order by c_fullname, c_basecode';
+order by concat(c_fullname,''\''), c_basecode';
 
 -- Too slow version
 --execute immediate 'create table dimOntWithFolders  as 
