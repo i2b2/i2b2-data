@@ -35,7 +35,7 @@ declare @startime datetime
 set @sqlstr = 'select c_fullname, c_basecode, c_hlevel
 	into tnum_conceptCountOnt
 	from ' + @metadataTable + 
-' where lower(c_facttablecolumn)= ''' + @facttablecolumn + '''
+' where lower(c_facttablecolumn) like ''' + @facttablecolumn + '''
 		and lower(c_tablename) = ''' + @tablename + '''
 		and lower(c_columnname) = ''' + @columnname + '''
 		and lower(c_synonym_cd) = ''n''
@@ -160,7 +160,7 @@ select o.*, isnull(c.num_patients,0) num_patients into tnum_finalCountsByConcept
 
 	set @sqlstr='update a set c_totalnum=b.num_patients from '+@metadataTable+' a, tnum_finalCountsByConcept b '+
 	'where a.c_fullname=b.c_fullname ' +
- ' and lower(a.c_facttablecolumn)= ''' + @facttablecolumn + ''' ' +
+   ' and lower(a.c_facttablecolumn) like ''' + @facttablecolumn + ''' ' +
 	' and lower(a.c_tablename) = ''' + @tablename + ''' ' +
 	' and lower(a.c_columnname) = ''' + @columnname + ''' '
 
