@@ -105,7 +105,7 @@ DEALLOCATE getsql;
     BEGIN
         set @sqlstr = '
         insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
-            select ''\denominator\facts\'',getdate(),count(distinct patient_num),''PX'' from ' + @observationTable
+            select ''\denominator\facts\'',getdate(),count(distinct patient_num),''PX'' from ' + @schemaName + '.' + @observationTable
         execute sp_executesql @sqlstr;
     END
         
