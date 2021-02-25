@@ -98,8 +98,8 @@ END IF;
   SELECT count(*) into denom from totalnum where c_fullname='\denominator\facts\' and trunc(agg_date)=trunc(CURRENT_DATE);
   IF denom = 0
   THEN
-      insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
-          select '\denominator\facts\',CURRENT_DATE,count(distinct patient_num),'PX' from observation_fact;
+      execute immediate 'insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
+          select ''\denominator\facts\'',CURRENT_DATE,count(distinct patient_num),''PX'' from ' || schemaName || '.' || observationTable;
   END IF;
 
  BuildTotalnumReport(10, 6.5);
