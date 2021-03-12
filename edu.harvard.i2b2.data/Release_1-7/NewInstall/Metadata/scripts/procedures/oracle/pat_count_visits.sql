@@ -1,4 +1,4 @@
--- If your i2b2MetaData schema cant read, i2b2Data schema
+-- If your i2b2MetaData schema cant read i2b2Data schema
 -- grant select  on  "&&DataSchemaName"."PATIENT_DIMENSION" to "&&schemaName";
 create synonym PATIENT_DIMENSION for "&&DataSchemaName"."PATIENT_DIMENSION";
 
