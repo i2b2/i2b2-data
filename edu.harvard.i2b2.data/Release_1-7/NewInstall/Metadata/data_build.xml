@@ -126,8 +126,12 @@ END;
 	<target name="db_metadata_load_data" depends="init">
 		<echo message="Loading metadata -- may take a while; over 10 min" />
 
-		<unzip src="./${db.project}/scripts/${db.type}/metadata.zip" dest="./${db.project}/scripts/${db.type}" />
-  		
+		<unzip dest="./${db.project}/scripts/${db.type}">
+		    <fileset dir="./${db.project}/scripts/${db.type}">
+		        <include name="**/metadata*.zip"/>
+		    </fileset>
+		</unzip>
+
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./${db.project}/scripts/schemes_insert_data.sql" />
 		</sql>
