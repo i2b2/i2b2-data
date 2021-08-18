@@ -1,0 +1,24 @@
+--==============================================================
+-- Database Script to upgrade CRC from 1.7.01 to 1.7.02                  
+--==============================================================
+
+
+create  GLOBAL TEMPORARY TABLE TEMP_PDO_INPUTLIST    ( 
+char_param1 varchar2(100)
+ ) ON COMMIT PRESERVE ROWS
+;
+
+ALTER TABLE ENCOUNTER_MAPPING
+DROP CONSTRAINT ENCOUNTER_MAPPING_PK
+;
+
+alter table ENCOUNTER_MAPPING modify (PATIENT_IDE VARCHAR2(200) NOT NULL)
+;
+
+alter table ENCOUNTER_MAPPING modify (PATIENT_IDE_SOURCE VARCHAR2(50) NOT NULL)
+;
+
+ALTER TABLE ENCOUNTER_MAPPING
+ADD CONSTRAINT ENCOUNTER_MAPPING_PK PRIMARY KEY(ENCOUNTER_IDE, ENCOUNTER_IDE_SOURCE, PROJECT_ID, PATIENT_IDE, PATIENT_IDE_SOURCE)
+;
+

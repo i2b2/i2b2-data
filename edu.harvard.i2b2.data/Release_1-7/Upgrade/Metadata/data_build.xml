@@ -25,9 +25,11 @@ $Id: data_build.xml,v 1.3 2010/05/24 15:39:23 rk903 Exp $
 	<!-- 			DATABASE SETUP TARGETS						 			 -->
 	<!-- =================================================================== -->
 
-	<target name="upgrade_tables_release_1-7" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter="GO">
-					<transaction src="./scripts/upgrade_${db.type}.sql" />	
+
+
+	<target name="upgrade_tables_release_1-7-10" depends="init">
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+					<transaction src="./scripts/upgrade_${db.type}_1-7-10.sql" />	
 								 <path>
 			 	<sort>
 				    <fileset dir="../../NewInstall/Metadata/scripts/procedures/${db.type}">
@@ -38,6 +40,20 @@ $Id: data_build.xml,v 1.3 2010/05/24 15:39:23 rk903 Exp $
 		</sql>
 	</target>
 
+
+	<target name="upgrade_tables_release_1-7-12a" depends="init">
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+					<transaction src="./scripts/upgrade_${db.type}_1-7-12a.sql" />	
+								 <path>
+			 	<sort>
+				    <fileset dir="../../NewInstall/Metadata/scripts/procedures/${db.type}">
+				      <include name="*.sql"/>
+				    </fileset>
+			 	</sort>
+			  </path>
+		</sql>
+	</target>
+	
 	
 </project>
 
