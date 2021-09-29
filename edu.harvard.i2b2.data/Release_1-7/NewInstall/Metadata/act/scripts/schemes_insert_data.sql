@@ -1,8 +1,6 @@
 --------------------------------------------------------
 --  File created - Monday-May-24-2021   
 --------------------------------------------------------
-REM INSERTING into SCHEMES
-SET DEFINE OFF;
 Insert into SCHEMES (C_KEY,C_NAME,C_DESCRIPTION) values ('NDC:','NDC','National Drug Code');
 Insert into SCHEMES (C_KEY,C_NAME,C_DESCRIPTION) values ('DSG-NLP:','DSG-NLP','Natural Language Processing Data');
 Insert into SCHEMES (C_KEY,C_NAME,C_DESCRIPTION) values ('UMLS:','UMLS','United Medical Language System');
