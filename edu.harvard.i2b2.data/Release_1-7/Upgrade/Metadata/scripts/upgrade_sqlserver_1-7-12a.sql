@@ -1,6 +1,6 @@
 
 --==============================================================
--- Database Script to upgrade ONT from 1.7.12a to 1.7.13                  
+-- Database Script to upgrade ONT to 1.7.12a to 1.7.13                  
 --==============================================================
 
 -- New 04-20: Create totalnum table to track changes over time
@@ -19,3 +19,10 @@ CREATE TABLE [totalnum_report]  (
     [agg_count] 	int NULL
     );
 CREATE INDEX totalnum_report_idx ON totalnum_report([c_fullname]);
+
+-- Set age_in_num_years values in PATIENT_DIMENSION 
+UPDATE PATIENT_DIMENSION
+Set AGE_IN_YEARS_NUM=
+DATEDIFF(hour, BIRTH_DATE,
+case when DEATH_DATE is null then getdate() else DEATH_DATE end
+)/8766
