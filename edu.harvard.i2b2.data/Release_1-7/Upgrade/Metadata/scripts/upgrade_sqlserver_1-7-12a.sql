@@ -20,9 +20,3 @@ CREATE TABLE [totalnum_report]  (
     );
 CREATE INDEX totalnum_report_idx ON totalnum_report([c_fullname]);
 
--- Set age_in_num_years values in PATIENT_DIMENSION 
-UPDATE PATIENT_DIMENSION
-Set AGE_IN_YEARS_NUM=
-DATEDIFF(hour, BIRTH_DATE,
-case when DEATH_DATE is null then getdate() else DEATH_DATE end
-)/8766
