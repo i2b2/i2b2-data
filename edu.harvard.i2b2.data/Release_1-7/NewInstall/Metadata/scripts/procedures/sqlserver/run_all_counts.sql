@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------------------------------------------
 -- Function to run totalnum counts on all tables in table_access 
--- By Mike Mendis and Jeff Klann, PhD
+-- By Mike Mendis and Jeff Klann, PhD with performance optimization by Darren Henderson (UKY)
 -- Run with: exec RunTotalnum or exec RunTotalnum 'observation_fact','dbo','@' 
 --  Optionally you can specify the observation table name (for multi-fact-table setups), the schemaname, 
 --    a single table name to run on a single ontology table, and a wildcard flag that will ignore multifact references in the ontology if 'Y'.
@@ -39,6 +39,23 @@ DECLARE @sqlcurs NVARCHAR(4000);
 DECLARE @startime datetime;
 DECLARE @derived_facttablecolumn NVARCHAR(4000);
 DECLARE @facttablecolumn_prefix NVARCHAR(4000);
+
+/* 03-22: DWH - build concept patient table once here, rather than in each call to count */
+if object_id(N'tnum_ConceptPatient') is not null drop table tnum_ConceptPatient
+
+RAISERROR(N'Building tnum_ConceptPatient', 1, 1) with nowait;
+
+/* CREATE TABLE WITH CONSTRAINTS AND INSERT INTO WITH(TABLOCK) = PARALLEL - MUCH FAST */
+CREATE TABLE tnum_ConceptPatient (
+PATIENT_NUM INT NOT NULL, 
+CONCEPT_CD VARCHAR(50) NOT NULL,
+CONSTRAINT PKCONPAT PRIMARY KEY (CONCEPT_CD, PATIENT_NUM)
+)
+
+SET @sqlstr = 'insert into tnum_ConceptPatient with(tablock) (concept_cd, patient_num)
+  select distinct concept_cd, patient_num
+	from '+@schemaName + '.' + @observationTable+' f with (nolock)'
+EXEC sp_executesql @sqlstr
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
@@ -109,7 +126,7 @@ DEALLOCATE getsql;
         execute sp_executesql @sqlstr;
     END
         
+    if object_id(N'tnum_ConceptPatient') is not null drop table tnum_ConceptPatient
     exec BuildTotalnumReport 10, 6.5
 end;
 GO
-

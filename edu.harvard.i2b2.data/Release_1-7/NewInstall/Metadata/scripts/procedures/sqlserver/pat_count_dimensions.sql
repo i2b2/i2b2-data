@@ -1,5 +1,5 @@
 -- Originally Developed by Griffin Weber, Harvard Medical School
--- Contributors: Mike Mendis, Jeff Klann, Lori Phillips, Jeff Green
+-- Contributors: Mike Mendis, Jeff Klann, Lori Phillips, Jeff Green, Darren Henderson (UKY)
 
 -- Count by concept
 -- Multifact support by Jeff Klann, PhD 05-18
@@ -12,11 +12,12 @@ IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'PAT_COUNT_DIMENSIONS')
                     AND type IN ( N'P', N'PC' ) ) 
+
 DROP PROCEDURE PAT_COUNT_DIMENSIONS;
 GO
 
 CREATE PROCEDURE [dbo].[PAT_COUNT_DIMENSIONS]  (@metadataTable varchar(50), @schemaName varchar(50),
-@observationTable varchar(50), 
+ @observationTable varchar(50), 
  @facttablecolumn varchar(50), @tablename varchar(50), @columnname varchar(50)
 
  )
@@ -25,15 +26,20 @@ AS BEGIN
 declare @sqlstr nvarchar(4000)
 declare @startime datetime
 
-    if exists (select 1 from sysobjects where name='tnum_ConceptPatient') drop table tnum_ConceptPatient
+    --if exists (select 1 from sysobjects where name='tnum_ConceptPatient') drop table tnum_ConceptPatient
     if exists (select 1 from sysobjects where name='tnum_conceptCountOnt') drop table tnum_conceptCountOnt
     if exists (select 1 from sysobjects where name='tnum_finalCountsByConcept') drop table tnum_finalCountsByConcept
 
+CREATE TABLE tnum_conceptCountOnt(
+	[c_fullname] [varchar](700) NOT NULL,
+	[c_basecode] [varchar](50) NULL,
+	[c_hlevel] [int] NOT NULL
+) 
 
 -- Modify this query to select a list of all your ontology paths and basecodes.
 
-set @sqlstr = 'select c_fullname, c_basecode, c_hlevel
-	into tnum_conceptCountOnt
+set @sqlstr = 'insert into tnum_conceptCountOnt with(tablock)(c_fullname,c_basecode,c_hlevel)
+  select c_fullname, c_basecode, c_hlevel
 	from ' + @metadataTable + 
 ' where lower(c_facttablecolumn) like ''' + @facttablecolumn + '''
 		and lower(c_tablename) = ''' + @tablename + '''
@@ -111,30 +117,44 @@ alter table #ConceptPath add primary key (c_basecode, path_num)
 
 -- Create a list of distinct concept-patient pairs
 
--- TODO 10/21/20: No need to do this for every single ontology
+-- 03/30/22: No longer builds concept patient ontology more than once
+/* MOVED TO RUN_ALL_COUNTS.SQL - DWH */
+/* CREATE TABLE WITH CONSTRAINTS AND INSERT INTO WITH(TABLOCK) = PARALLEL - MUCH FAST */
+--CREATE TABLE tnum_ConceptPatient (
+--PATIENT_NUM INT NOT NULL, 
+--CONCEPT_CD VARCHAR(50) NOT NULL,
+--CONSTRAINT PKCONPAT PRIMARY KEY (CONCEPT_CD, PATIENT_NUM)
+--)
 
-SET @sqlstr = 'select distinct concept_cd, patient_num
-	into tnum_ConceptPatient
-	from '+@schemaName + '.' + @observationTable+' f with (nolock)'
-EXEC sp_executesql @sqlstr
+--SET @sqlstr = 'insert into tnum_ConceptPatient with(tablock) (concept_cd, patient_num)
+--  select distinct concept_cd, patient_num
+--	from '+@schemaName + '.' + @observationTable+' f with (nolock)'
+--EXEC sp_executesql @sqlstr
 
-ALTER TABLE tnum_ConceptPatient  ALTER COLUMN [PATIENT_NUM] int NOT NULL
-ALTER TABLE tnum_ConceptPatient  ALTER COLUMN [concept_cd] varchar(50) NOT NULL
+/* SINGLE THREADED - VERY SLOW */
+--ALTER TABLE tnum_ConceptPatient  ALTER COLUMN [PATIENT_NUM] int NOT NULL
+--ALTER TABLE tnum_ConceptPatient  ALTER COLUMN [concept_cd] varchar(50) NOT NULL
 
-alter table tnum_ConceptPatient add primary key (concept_cd, patient_num)
+--alter table tnum_ConceptPatient add primary key (concept_cd, patient_num)
 
 -- Create a list of distinct path-patient pairs
 
+/* DWH - CREATE TABLE WITH CONSTRAINTS AND INSERT INTO WITH(TABLOCK) = PARALLEL - MUCH FAST */
+CREATE TABLE #PathPatient (
+path_num int not null,
+patient_num int not null,
+constraint pkpp primary key (path_num, patient_num)
+)
+
+insert into #PathPatient with(tablock)(path_num,patient_num)
 select distinct c.path_num, f.patient_num
-	into #PathPatient
 	from tnum_ConceptPatient f
 		inner join #ConceptPath c
 			on f.concept_cd = c.c_basecode
 
-
-ALTER TABLE #PathPatient  ALTER COLUMN [PATIENT_NUM] int NOT NULL
-alter table #PathPatient add primary key (path_num, patient_num)
-
+/* DWH - THIS WAS SINGLE THREADED - VERY SLOW */
+--ALTER TABLE #PathPatient ALTER COLUMN [PATIENT_NUM] int NOT NULL
+--alter table #PathPatient add primary key (path_num, patient_num)
 
 -- Determine the number of patients per path
 
@@ -143,14 +163,15 @@ select path_num, count(*) num_patients
 	from #PathPatient
 	group by path_num
 
-alter table #PathCounts add primary key (path_num)
+--alter table #PathCounts add primary key (path_num) /* DWH - THIS NOT NEEDED - GROUP BY ALREADY ENSURED UNIQUENESS DURING INSERT */
 
     EXEC EndTime @startime,'dimension','patients';
     set @startime = getdate(); 
 
 -- This is the final counts per ont path
 
-select o.*, isnull(c.num_patients,0) num_patients into tnum_finalCountsByConcept
+select o.*, isnull(c.num_patients,0) num_patients 
+into tnum_finalCountsByConcept
 	from tnum_conceptCountOnt o
 		left outer join #Path2Num p
 			on o.c_fullname = p.c_fullname
@@ -171,7 +192,7 @@ select o.*, isnull(c.num_patients,0) num_patients into tnum_finalCountsByConcept
 	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
 	select c_fullname, CONVERT (date, GETDATE()), num_patients, 'PF' from tnum_finalCountsByConcept where num_patients>0
 
-    if exists (select 1 from sysobjects where name='tnum_ConceptPatient') drop table tnum_ConceptPatient
+    --if exists (select 1 from sysobjects where name='tnum_ConceptPatient') drop table tnum_ConceptPatient
     if exists (select 1 from sysobjects where name='tnum_conceptCountOnt') drop table tnum_conceptCountOnt
     if exists (select 1 from sysobjects where name='tnum_finalCountsByConcept') drop table tnum_finalCountsByConcept
     
