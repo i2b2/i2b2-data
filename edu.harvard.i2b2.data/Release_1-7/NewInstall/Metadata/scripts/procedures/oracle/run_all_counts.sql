@@ -11,6 +11,16 @@
 --begin
 --  runtotalnum('observation_fact','i2b2demodata','I2B2');
 -- end;
+--   To use with multi-fact setups: Create a fact table view as the union of all your fact tables. (This is essentially going back to a single fact table,  but it is only used
+--     for totalnum counting. This is needed to correctly count patients that mention multiple fact tables within a hierarchy.)
+--    e.g., 
+--       create view observation_fact_view as
+--       select * from CONDITION_VIEW 
+--       union all
+--       select * from drug_view
+--    And then run the totalnum counter on that fact table:
+--      e.g., runtotalnum('observation_fact_view','i2b2demodata');
+--    Note this approach does not work if you have conflicting concept_cds across fact tables.
 
 create or replace PROCEDURE                           runtotalnum  (observationTable IN VARCHAR, schemaName in VARCHAR, tableName IN VARCHAR DEFAULT '@')
 AUTHID CURRENT_USER

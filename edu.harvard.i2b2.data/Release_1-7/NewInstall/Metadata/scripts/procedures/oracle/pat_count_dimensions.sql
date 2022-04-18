@@ -22,10 +22,11 @@ BEGIN
 
 v_startime := CURRENT_TIMESTAMP;
  
+--execute immediate 
 execute immediate 'create table dimCountOnt as select c_fullname, c_basecode, c_hlevel from 
     (select c_fullname, c_basecode, c_hlevel,f.concept_cd,c_visualattributes from '  || metadataTable  || ' o 
         left outer join (select distinct concept_cd from  ' || schemaName || '.' || observationTable || ') f on concept_cd=o.c_basecode
-	    where lower(c_facttablecolumn)= ''' || facttablecolumn || '''
+	    where lower(c_facttablecolumn) like ''%' || facttablecolumn || '''
 		and lower(c_tablename) = ''' || tablename || '''
 		and lower(c_columnname) = ''' || columnname || '''
 		and lower(c_synonym_cd) = ''n''
@@ -136,7 +137,7 @@ execute immediate 'update ' || metadataTable || '  a  set c_totalnum=
             from finalDimCounts b  
             where a.c_fullname=b.c_fullname )
       where 
-       lower(a.c_facttablecolumn)= ''' || facttablecolumn || '''
+       lower(a.c_facttablecolumn) like ''%' || facttablecolumn || '''
 		and lower(a.c_tablename) = ''' || tablename || '''
 		and lower(a.c_columnname) = ''' || columnname || '''
             ';
