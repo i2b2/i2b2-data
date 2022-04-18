@@ -28,7 +28,7 @@ BEGIN
     v_sqlstr := 'create temp table dimCountOnt AS '
              || ' select c_fullname, c_basecode, c_hlevel '
              || ' from ' || metadataTable  
-             || ' where lower(c_facttablecolumn) = '''||facttablecolumn||''' '
+             || ' where lower(c_facttablecolumn) like ''%'||facttablecolumn||''' '
              || ' and lower(c_tablename) = '''|| tablename || ''' '
              || ' and lower(c_columnname) = '''|| columnname || ''' '
              || ' and lower(c_synonym_cd) = ''n'' '
@@ -147,7 +147,7 @@ v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
     v_sqlstr := ' update ' || metadataTable || ' a set c_totalnum=b.num_patients '
              || ' from finalCountsbyConcept b '
              || ' where a.c_fullname=b.c_fullname '
-            || ' and lower(a.c_facttablecolumn)= ''' || facttablecolumn || ''' '
+            || ' and lower(a.c_facttablecolumn) like ''%' || facttablecolumn || ''' '
 		    || ' and lower(a.c_tablename) = ''' || tablename || ''' '
 		    || ' and lower(a.c_columnname) = ''' || columnname || ''' ';
     select count(*) into v_num from finalCountsByConcept where num_patients is not null and num_patients <> 0;

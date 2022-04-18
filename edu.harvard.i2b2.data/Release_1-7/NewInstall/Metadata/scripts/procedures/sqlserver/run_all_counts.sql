@@ -74,7 +74,7 @@ FETCH NEXT FROM getsql INTO @sqltext;
 WHILE @@FETCH_STATUS = 0
 BEGIN
     SET @derived_facttablecolumn = case when @observationTable='observation_fact' then '' else @observationTable+'.' end
-    SET @facttablecolumn_prefix = case when @wildcard_factcolumn='Y' then '%.' else
+    SET @facttablecolumn_prefix = case when @wildcard_factcolumn='Y' then '%' else
         case when @observationTable='observation_fact' then '' else @observationTable+'.' end end
     IF @tablename='@' OR @tablename=@sqltext
     BEGIN

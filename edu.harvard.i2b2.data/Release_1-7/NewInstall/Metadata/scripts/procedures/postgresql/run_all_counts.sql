@@ -9,6 +9,17 @@
 --   (replace 'public' by the schema name for the fact table)
 -- If using a schema other than public for metadata, you might need to run "set search_path to 'i2b2metadata','public' " first as well
 -- You can optionally specify a single table name, to count using only one ontology table. This is case sensitive.
+--
+--   To use with multi-fact setups: Create a fact table view as the union of all your fact tables. (This is essentially going back to a single fact table,  but it is only used
+--     for totalnum counting. This is needed to correctly count patients that mention multiple fact tables within a hierarchy.)
+--    e.g., 
+--       create view observation_fact_view as
+--       select * from CONDITION_VIEW 
+--       union all
+--       select * from drug_view
+--    And then run the totalnum counter on that fact table:
+--      e.g., runtotalnum('observation_fact_view','public');
+--    Note this approach does not work if you have conflicting concept_cds across fact tables.
 -----------------------------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION runtotalnum(observationTable text, schemaName text, tableName text default '@')
