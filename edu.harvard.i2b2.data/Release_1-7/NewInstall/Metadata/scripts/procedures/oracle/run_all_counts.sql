@@ -56,7 +56,23 @@ BEGIN
    if c = 1 then
       execute immediate 'drop table ontPatVisitDims';
    end if;
-
+   select count(*) into c from user_tables where table_name = upper('Path2Num');
+   if c = 1 then
+      execute immediate 'drop table Path2Num';
+   end if;
+   select count(*) into c from user_tables where table_name = upper('ConceptPath');
+   if c = 1 then
+      execute immediate 'drop table ConceptPath';
+   end if;
+   select count(*) into c from user_tables where table_name = upper('PathCounts');
+   if c = 1 then
+      execute immediate 'drop table PathCounts';
+   end if;
+   select count(*) into c from user_tables where table_name = upper('finalDimCounts');
+   if c = 1 then
+      execute immediate 'drop table finalDimCounts';
+   end if;
+   
  sql_stmt := 'select distinct c_table_name from TABLE_ACCESS where c_visualattributes like ''%A%''  ';
  
 
