@@ -83,9 +83,14 @@ execute immediate 'create index ontPatVisitDims_idx on ontPatVisitDims(c_fullnam
                 -- could be listed in the query if it is known for certain that that character will never be found in any c_dimcode value accessed by this 
                 -- function
    --             sql_stmt := sql_stmt || dis_c_operator  || ' ' || '''' || replace(replace(dis_c_dimcode,'\','\\'),'''','''''') || '%''' ;
-sql_stmt := sql_stmt || dis_c_operator  || ' ' || '''' || replace(dis_c_dimcode,'''','''''') || '%''' ;
+				sql_stmt := sql_stmt || dis_c_operator  || ' ' || '''' || replace(dis_c_dimcode,'''','''''') || '%''' ;
             WHEN lower(dis_c_operator) = 'in' then 
-                sql_stmt := sql_stmt || dis_c_operator  || ' ' ||  '(' || dis_c_dimcode || ')';
+                -- With IN statements, () are optional in dimcode
+			    if substr(dis_c_dimcode,1,1) = '(' then
+				   sql_stmt := sql_stmt || dis_c_operator  || ' ' ||  dis_c_dimcode ;
+				else 
+                   sql_stmt := sql_stmt || dis_c_operator  || ' ' ||  '(' || dis_c_dimcode || ')';
+				end if;
             WHEN lower(dis_c_operator) = '=' then 
       --          sql_stmt := sql_stmt || dis_c_operator  || ' ' ||  replace(dis_c_dimcode,'''','''''') ;
                 sql_stmt := sql_stmt || dis_c_operator  || ' ' ||  '''' || dis_c_dimcode || '''' ;
@@ -102,7 +107,12 @@ sql_stmt := sql_stmt || dis_c_operator  || ' ' || '''' || replace(dis_c_dimcode,
                  *       v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' || 'current_date - interval ''85 year''';
                  *   else
                  */
+                 -- Code to handle NULL dimcodes. This is technically not allowed but could happen on some setups.
+                   if dis_c_dimcode is null then 
+                        sql_stmt := sql_stmt || dis_c_operator || ' NULL';
+                   else
                         sql_stmt := sql_stmt || dis_c_operator  || ' ' || dis_c_dimcode;
+                   end if;
                 /* 
                  *   end if;
                  */
