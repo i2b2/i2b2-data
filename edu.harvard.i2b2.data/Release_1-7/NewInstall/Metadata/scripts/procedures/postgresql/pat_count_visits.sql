@@ -88,7 +88,12 @@ BEGIN
                 -- function
                 v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' || '''' || replace(replace(curRecord.c_dimcode,'\','\\'),'''','''''') || '%''' ;
            WHEN lower(curRecord.c_operator) = 'in' then 
-                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  '(' || curRecord.c_dimcode || ')';
+           		-- Handle dimcodes with no parentheses for IN statements
+           		IF left(curRecord.c_dimcode,1)='()' THEN
+	                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' || curRecord.c_dimcode;
+	            ELSE
+	                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  '(' || curRecord.c_dimcode || ')';
+				END IF;	            
             WHEN lower(curRecord.c_operator) = '=' then 
            --     v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  replace(curRecord.c_dimcode,'''','''''') ;
                 v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ''' ||  replace(curRecord.c_dimcode,'''','''''') || '''';

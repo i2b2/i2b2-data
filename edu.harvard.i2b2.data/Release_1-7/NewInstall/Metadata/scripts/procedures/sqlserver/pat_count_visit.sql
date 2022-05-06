@@ -55,11 +55,15 @@ declare @sqlstr nvarchar(4000),
 		begin
 			if lower(@operator) = 'like'
 			begin
-				set @dimcode =  '''' + replace(@dimcode,'''','''''') + '%''' 
+					set @dimcode =  '''' + replace(@dimcode,'''','''''') + '%''' 
 			end
 			if lower(@operator) = 'in'
 			begin
-				set @dimcode = '(' + @dimcode + ')'
+				-- Parentheses are optional in dimcode with IN queries
+				if left(@dimcode,1) != '('
+					BEGIN
+					set @dimcode = '(' + @dimcode + ')'
+					END
 			end
 			if lower(@operator) = '='
 			begin
