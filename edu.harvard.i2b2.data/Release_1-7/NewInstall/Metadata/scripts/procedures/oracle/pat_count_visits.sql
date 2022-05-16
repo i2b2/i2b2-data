@@ -117,14 +117,15 @@ execute immediate 'create index ontPatVisitDims_idx on ontPatVisitDims(c_fullnam
                  *   end if;
                  */
             END CASE;
-            
+            dis_c_fullname := replace(dis_c_fullname,'''','''''') ; -- Escape single quotes in c_fullnames
             sql_stmt := sql_stmt -- || ' ) ' -- in
                      || ' ) ' -- set
                      || ' where c_fullname = ' || '''' || dis_c_fullname || '''' 
                      || ' and numpats is null';
 
+        	--DBMS_OUTPUT.PUT_LINE(sql_stmt);
+
          execute immediate sql_stmt;
-        --   DBMS_OUTPUT.PUT_LINE(sql_stmt);
 	--	else
             -- do nothing since we do not have the column in our schema
       --  end if;
