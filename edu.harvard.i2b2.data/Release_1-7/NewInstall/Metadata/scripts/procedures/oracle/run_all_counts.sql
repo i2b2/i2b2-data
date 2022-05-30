@@ -110,7 +110,13 @@ IF tableName='@' OR tableName=dis_c_table_name THEN
  v_startime := CURRENT_TIMESTAMP;
  
  -- New 11/20 - update counts in top levels (table_access) at the end
- execute immediate 'update table_access set c_totalnum=(select c_totalnum from ' || dis_c_table_name || ' x where x.c_fullname=table_access.c_fullname)';
+ BEGIN
+    execute immediate 'update table_access set c_totalnum=(select c_totalnum from ' || dis_c_table_name || ' x where x.c_fullname=table_access.c_fullname)';
+ exception
+  WHEN TOO_MANY_ROWS then CONTINUE;
+  when others then CONTINUE;
+  -- when others then dbms_output.put_line(sqlerrm);
+   END;
  -- Null out cases that are actually 0 [1/21]
 execute immediate 'update  ' || dis_c_table_name || ' set c_totalnum=null where c_totalnum=0 and c_visualattributes like ''C%''';
 
