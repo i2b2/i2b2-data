@@ -1,3 +1,10 @@
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(INSERT_EID_MAP_FROMTEMP')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE INSERT_EID_MAP_FROMTEMP;
+GO
+
 CREATE PROCEDURE INSERT_EID_MAP_FROMTEMP (@tempEidTableName VARCHAR(500),  @upload_id INT,
 @errorMsg VARCHAR(MAX) = NULL OUTPUT) 
 AS

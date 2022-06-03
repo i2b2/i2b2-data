@@ -1,3 +1,10 @@
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(INSERT_PROVIDER_FROMTEMP')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE INSERT_PROVIDER_FROMTEMP;
+GO
+
 create  PROCEDURE  "INSERT_PROVIDER_FROMTEMP" (@tempProviderTableName VARCHAR(500), @upload_id INT,
   @errorMsg varchar(max)  = NULL OUTPUT) 
 AS 

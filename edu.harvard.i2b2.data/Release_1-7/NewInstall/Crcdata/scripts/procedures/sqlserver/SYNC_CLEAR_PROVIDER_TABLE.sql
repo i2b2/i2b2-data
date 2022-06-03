@@ -1,3 +1,10 @@
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(SYNC_CLEAR_PROVIDER_TABLE')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE SYNC_CLEAR_PROVIDER_TABLE;
+GO
+
 create 
 PROCEDURE SYNC_CLEAR_PROVIDER_TABLE (@tempProviderTableName varchar(500), @backupProviderTableName VARCHAR(500), @upload_id INT, @errorMsg varchar(max) = NULL OUTPUT) 
 as

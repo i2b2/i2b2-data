@@ -1,3 +1,10 @@
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(CREATE_TEMP_PATIENT_TABLE')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE CREATE_TEMP_PATIENT_TABLE;
+GO
+
 create 
 PROCEDURE CREATE_TEMP_PATIENT_TABLE(@tempPatientDimensionTableName  VARCHAR(500),
    @errorMsg varchar(max) = NULL OUTPUT) 

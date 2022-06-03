@@ -1,3 +1,10 @@
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(INSERT_PID_MAP_FROMTEMP')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE INSERT_PID_MAP_FROMTEMP;
+GO
+
 create PROCEDURE  INSERT_PID_MAP_FROMTEMP (@tempPatientMapTableName VARCHAR(500), @upload_id INT, 
    @errorMsg varchar(max)  = NULL OUTPUT) 
 AS 

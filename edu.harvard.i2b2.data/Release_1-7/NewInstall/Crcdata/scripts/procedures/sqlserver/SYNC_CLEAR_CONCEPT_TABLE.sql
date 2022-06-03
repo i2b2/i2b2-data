@@ -1,3 +1,10 @@
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(SYNC_CLEAR_CONCEPT_TABLE')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE SYNC_CLEAR_CONCEPT_TABLE;
+GO
+
 create 
 PROCEDURE SYNC_CLEAR_CONCEPT_TABLE (@tempConceptTableName varchar(500), @backupConceptTableName VARCHAR(500), @upload_id INT, @errorMsg varchar(max) = NULL OUTPUT) 
 as
