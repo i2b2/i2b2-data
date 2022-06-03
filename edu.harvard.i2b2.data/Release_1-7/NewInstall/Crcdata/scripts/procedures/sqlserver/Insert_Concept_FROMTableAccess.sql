@@ -1,5 +1,3 @@
-USE [i2b2actdemo]
-GO
 
 /****** Object:  StoredProcedure [dbo].[insert_Concept_FROMTableAccess]    Script Date: 3/18/2022 12:04:21 PM ******/
 SET ANSI_NULLS ON
