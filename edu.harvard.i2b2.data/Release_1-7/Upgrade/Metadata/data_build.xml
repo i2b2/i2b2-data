@@ -4,57 +4,60 @@ $Id: data_build.xml,v 1.3 2010/05/24 15:39:23 rk903 Exp $
 -->
 <project name="Metadata" basedir=".">
 
-	<property environment="env" />
+        <property environment="env" />
 
-	<property file="./db.properties" />
+        <property file="./db.properties" />
 
-	<!-- =================================================================== -->
-	<!-- 								INIT 								 -->
-	<!-- =================================================================== -->
-	<target name="init"  description="Prepare for build">
-		<path id="classpath">
-			<pathelement location="../../ojdbc8.jar" />
-			<pathelement location="../../mssql-jdbc-8.2.2.jre8.jar"/>
-			<pathelement location="../../postgresql-42.2.14.jar"/>
-		</path>
-	</target>
-
-	
-
-	<!-- =================================================================== -->
-	<!-- 			DATABASE SETUP TARGETS						 			 -->
-	<!-- =================================================================== -->
+        <!-- =================================================================== -->
+        <!--                                                            INIT                                                             -->
+        <!-- =================================================================== -->
+        <target name="init"  description="Prepare for build">
+                <path id="classpath">
+                        <pathelement location="../../ojdbc8.jar" />
+                        <pathelement location="../../mssql-jdbc-8.2.2.jre8.jar"/>
+                        <pathelement location="../../postgresql-42.2.14.jar"/>
+                </path>
+        </target>
 
 
+        <target name="rebuild_procedures" depends="init">
 
-	<target name="upgrade_tables_release_1-7-10" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-10.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Metadata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}"
+                                        print="true"
+                        delimitertype="row"
+                        delimiter="GO"
+                        keepformat="true"
+                autocommit="true" classpathref="classpath" onerror="continue">
+                         <path>
+                                <sort>
+                                    <fileset dir="../../NewInstall/Metadata/scripts/procedures/${db.type}">
+                                      <include name="*.sql"/>
+                                    </fileset>
+                                </sort>
+                          </path>
+                </sql>
+        </target>
 
 
-	<target name="upgrade_tables_release_1-7-12a" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-12a.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Metadata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>
-	
-	
+
+        <!-- =================================================================== -->
+        <!--                    DATABASE SETUP TARGETS                                                                   -->
+        <!-- =================================================================== -->
+
+
+
+        <target name="upgrade_tables_release_1-7-10" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-10.sql" />
+                </sql>
+        </target>
+
+
+        <target name="upgrade_tables_release_1-7-12a" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-12a.sql" />
+                </sql>
+        </target>
+
+
 </project>
-
-
