@@ -26,13 +26,13 @@ v_startime := CURRENT_TIMESTAMP;
 execute immediate 'create table dimCountOnt as select c_fullname, c_basecode, c_hlevel from 
     (select c_fullname, c_basecode, c_hlevel,f.concept_cd,c_visualattributes from '  || metadataTable  || ' o 
         left outer join (select distinct concept_cd from  ' || schemaName || '.' || observationTable || ') f on concept_cd=o.c_basecode
-	    where lower(c_facttablecolumn) like ''%' || facttablecolumn || '''
-		and lower(c_tablename) = ''' || tablename || '''
-		and lower(c_columnname) = ''' || columnname || '''
-		and lower(c_synonym_cd) = ''n''
-		and lower(c_columndatatype) = ''t''
-		and lower(c_operator) = ''like''
-		and m_applied_path = ''@''
+	    where trim(lower(c_facttablecolumn)) like ''%' || facttablecolumn || '''
+		and trim(lower(c_tablename)) = ''' || tablename || '''
+		and trim(lower(c_columnname)) = ''' || columnname || '''
+		and trim(lower(c_synonym_cd)) = ''n''
+		and trim(lower(c_columndatatype)) = ''t''
+		and trim(lower(c_operator)) = ''like''
+		and trim(m_applied_path) = ''@''
         and c_fullname is not null)
         where (c_visualattributes not like ''L%'' or concept_cd is not null)';
         -- ^ NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology.
