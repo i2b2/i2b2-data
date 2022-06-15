@@ -9,7 +9,7 @@ $Id: data_build.xml,v 1.6 2010/06/01 18:13:30 rk903 Exp $
     <property file="./db.properties" />
 
     <!-- =================================================================== -->
-    <!-- 								INIT 								 -->
+    <!--                                                                INIT                                                             -->
     <!-- =================================================================== -->
     <target name="init" description="Prepare for build">
         <path id="classpath">
@@ -19,84 +19,61 @@ $Id: data_build.xml,v 1.6 2010/06/01 18:13:30 rk903 Exp $
         </path>
     </target>
 
+        <target name="rebuild_procedures" depends="init">
+
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}"
+                                        print="true"
+                        delimitertype="row"
+                        delimiter="GO"
+                        keepformat="true"
+                autocommit="true" classpathref="classpath" onerror="continue">
+                         <path>
+                                <sort>
+                                    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
+                                      <include name="*.sql"/>
+                                    </fileset>
+                                </sort>
+                          </path>
+                </sql>
+        </target>
 
 
-	<target name="upgrade_tables_release_1-6" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-6.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>	
 
-	<target name="upgrade_tables_release_1-7-01" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-01.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>	
 
-	<target name="upgrade_tables_release_1-7-09c" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-09c.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>	
+        <target name="upgrade_tables_release_1-6" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-6.sql" />
+                </sql>
+        </target>
 
-	<target name="upgrade_tables_release_1-7-10" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-10.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>	
+        <target name="upgrade_tables_release_1-7-01" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-01.sql" />
+                </sql>
+        </target>
 
-	<target name="upgrade_tables_release_1-7-11" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-11.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>	
+        <target name="upgrade_tables_release_1-7-09c" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-09c.sql" />
+                </sql>
+        </target>
 
-	<target name="upgrade_tables_release_1-7-12a" depends="init">
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
-					<transaction src="./scripts/upgrade_${db.type}_1-7-12a.sql" />	
-								 <path>
-			 	<sort>
-				    <fileset dir="../../NewInstall/Crcdata/scripts/procedures/${db.type}">
-				      <include name="*.sql"/>
-				    </fileset>
-			 	</sort>
-			  </path>
-		</sql>
-	</target>	
+        <target name="upgrade_tables_release_1-7-10" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-10.sql" />
+                </sql>
+        </target>
+
+        <target name="upgrade_tables_release_1-7-11" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-11.sql" />
+                </sql>
+        </target>
+
+        <target name="upgrade_tables_release_1-7-12a" depends="init,rebuild_procedures">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                                        <transaction src="./scripts/upgrade_${db.type}_1-7-12a.sql" />
+                </sql>
+        </target>
 
 </project>
