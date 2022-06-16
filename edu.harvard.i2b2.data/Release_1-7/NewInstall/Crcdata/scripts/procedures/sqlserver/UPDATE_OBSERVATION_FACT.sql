@@ -1,6 +1,6 @@
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(UPDATE_OBSERVATION_FACT')
+            WHERE   object_id = OBJECT_ID(N'UPDATE_OBSERVATION_FACT')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE UPDATE_OBSERVATION_FACT;
 GO

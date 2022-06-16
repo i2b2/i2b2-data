@@ -1,6 +1,6 @@
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(UPDATE_QUERYINSTANCE_MESSAGE')
+            WHERE   object_id = OBJECT_ID(N'UPDATE_QUERYINSTANCE_MESSAGE')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE UPDATE_QUERYINSTANCE_MESSAGE;
 GO

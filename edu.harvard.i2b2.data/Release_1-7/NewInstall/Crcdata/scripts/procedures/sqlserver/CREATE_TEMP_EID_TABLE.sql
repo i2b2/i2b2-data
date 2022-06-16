@@ -1,6 +1,6 @@
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(CREATE_TEMP_EID_TABLE')
+            WHERE   object_id = OBJECT_ID(N'CREATE_TEMP_EID_TABLE')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE CREATE_TEMP_EID_TABLE;
 GO

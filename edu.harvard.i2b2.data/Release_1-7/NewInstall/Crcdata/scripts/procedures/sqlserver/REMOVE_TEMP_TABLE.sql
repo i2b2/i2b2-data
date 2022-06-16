@@ -1,6 +1,6 @@
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(REMOVE_TEMP_TABLE')
+            WHERE   object_id = OBJECT_ID(N'REMOVE_TEMP_TABLE')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE REMOVE_TEMP_TABLE;
 GO

@@ -1,6 +1,6 @@
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(INSERT_PROVIDER_FROMTEMP')
+            WHERE   object_id = OBJECT_ID(N'INSERT_PROVIDER_FROMTEMP')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE INSERT_PROVIDER_FROMTEMP;
 GO

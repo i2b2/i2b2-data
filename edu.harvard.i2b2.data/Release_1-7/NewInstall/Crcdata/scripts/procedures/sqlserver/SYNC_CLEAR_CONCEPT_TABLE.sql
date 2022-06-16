@@ -1,6 +1,6 @@
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(SYNC_CLEAR_CONCEPT_TABLE')
+            WHERE   object_id = OBJECT_ID(N'SYNC_CLEAR_CONCEPT_TABLE')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE SYNC_CLEAR_CONCEPT_TABLE;
 GO
