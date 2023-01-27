@@ -2,7 +2,8 @@ IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'INSERT_CONCEPT_FROMTEMP')
                     AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE INSERT_CONCEPT_FROMTEMP;
+DROP PROCEDURE INSERT_CONCEPT_FROMTEMP
+;
 
 
 create   PROCEDURE  INSERT_CONCEPT_FROMTEMP (@tempConceptTableName VARCHAR(500), @upload_id int,

@@ -2,7 +2,8 @@ IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'UPDATE_OBSERVATION_FACT')
                     AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE UPDATE_OBSERVATION_FACT;
+DROP PROCEDURE UPDATE_OBSERVATION_FACT
+;
 
 
 create  PROCEDURE  UPDATE_OBSERVATION_FACT (@upload_temptable_name VARCHAR(500), @upload_id int, @appendFlag int, 

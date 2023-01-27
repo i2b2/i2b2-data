@@ -2,7 +2,8 @@ IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'CREATE_TEMP_TABLE')
                     AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE CREATE_TEMP_TABLE;
+DROP PROCEDURE CREATE_TEMP_TABLE
+;
 
 
 create  PROCEDURE CREATE_TEMP_TABLE(@tempTableName  VARCHAR(500), @errorMsg varchar(max)  = NULL OUTPUT) 

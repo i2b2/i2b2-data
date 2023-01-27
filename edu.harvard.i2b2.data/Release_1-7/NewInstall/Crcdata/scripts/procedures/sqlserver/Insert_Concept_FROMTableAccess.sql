@@ -9,7 +9,8 @@ IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'insert_Concept_FROMTableAccess')
                     AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE insert_Concept_FROMTableAccess;
+DROP PROCEDURE insert_Concept_FROMTableAccess
+;
 
 CREATE PROCEDURE [dbo].[insert_Concept_FROMTableAccess]
 	
