@@ -3,7 +3,7 @@ IF EXISTS ( SELECT  *
             WHERE   object_id = OBJECT_ID(N'UPDATE_OBSERVATION_FACT')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE UPDATE_OBSERVATION_FACT;
-GO
+
 
 create  PROCEDURE  UPDATE_OBSERVATION_FACT (@upload_temptable_name VARCHAR(500), @upload_id int, @appendFlag int, 
    @errorMsg varchar(max)  = NULL OUTPUT)

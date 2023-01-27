@@ -1,16 +1,16 @@
 
 /****** Object:  StoredProcedure [dbo].[insert_Concept_FROMTableAccess]    Script Date: 3/18/2022 12:04:21 PM ******/
 SET ANSI_NULLS ON
-GO
+
 
 SET QUOTED_IDENTIFIER ON
-GO
+
 IF EXISTS ( SELECT  *
             FROM    sys.objects
             WHERE   object_id = OBJECT_ID(N'insert_Concept_FROMTableAccess')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE insert_Concept_FROMTableAccess;
-GO
+
 CREATE PROCEDURE [dbo].[insert_Concept_FROMTableAccess]
 	
 AS

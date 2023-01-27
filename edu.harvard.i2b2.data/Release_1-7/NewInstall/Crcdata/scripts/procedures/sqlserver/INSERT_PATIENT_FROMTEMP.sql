@@ -3,7 +3,7 @@ IF EXISTS ( SELECT  *
             WHERE   object_id = OBJECT_ID(N'INSERT_PATIENT_FROMTEMP')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE INSERT_PATIENT_FROMTEMP;
-GO
+
 
 create  PROCEDURE   INSERT_PATIENT_FROMTEMP (@tempPatientTableName  VARCHAR(500),  @upload_id  INT,
  @errorMsg varchar(max)  = NULL OUTPUT) 

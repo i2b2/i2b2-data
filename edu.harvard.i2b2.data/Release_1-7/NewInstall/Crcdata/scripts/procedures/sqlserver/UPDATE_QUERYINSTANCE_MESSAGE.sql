@@ -3,7 +3,7 @@ IF EXISTS ( SELECT  *
             WHERE   object_id = OBJECT_ID(N'UPDATE_QUERYINSTANCE_MESSAGE')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE UPDATE_QUERYINSTANCE_MESSAGE;
-GO
+
 
 create procedure UPDATE_QUERYINSTANCE_MESSAGE (@message  varchar(MAX), @instanceId int , @errorMsg varchar(MAX) = NULL OUTPUT) as 
 begin 

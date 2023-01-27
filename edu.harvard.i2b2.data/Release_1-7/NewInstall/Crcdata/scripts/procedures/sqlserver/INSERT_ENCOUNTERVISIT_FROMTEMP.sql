@@ -3,7 +3,7 @@ IF EXISTS ( SELECT  *
             WHERE   object_id = OBJECT_ID(N'INSERT_ENCOUNTERVISIT_FROMTEMP')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE INSERT_ENCOUNTERVISIT_FROMTEMP;
-GO
+
 
 create  PROCEDURE   "INSERT_ENCOUNTERVISIT_FROMTEMP" (@tempTableName  VARCHAR(500), @upload_id int ,
  @errorMsg varchar(max) = NULL OUTPUT) 

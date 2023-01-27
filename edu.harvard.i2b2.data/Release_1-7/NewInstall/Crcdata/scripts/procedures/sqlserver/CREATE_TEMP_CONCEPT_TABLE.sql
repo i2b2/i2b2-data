@@ -3,7 +3,7 @@ IF EXISTS ( SELECT  *
             WHERE   object_id = OBJECT_ID(N'CREATE_TEMP_CONCEPT_TABLE')
                     AND type IN ( N'P', N'PC' ) ) 
 DROP PROCEDURE CREATE_TEMP_CONCEPT_TABLE;
-GO
+
 
 create 
 PROCEDURE CREATE_TEMP_CONCEPT_TABLE (@tempConceptTableName VARCHAR(500), @errorMsg varchar(max) = NULL OUTPUT) 
