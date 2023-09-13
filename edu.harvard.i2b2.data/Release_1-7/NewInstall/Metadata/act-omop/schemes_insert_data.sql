@@ -1,5 +1,7 @@
 INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('(null)', 'None', 'No scheme');
 
+/* 
+--Everything in OMOP is an OMOP number, there are no schemes 
 INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('CPT4:', 'CPT4', 'Current Procedural Terminology');
 
 INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('DEM|AGE:', 'DEM|AGE', 'Age of patient from demographics data');
@@ -43,3 +45,4 @@ INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('NUI:', 'NDF-RT', 'NDF-RT 
 INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('RXNORM:', 'RXNORM', 'RxNorm');
 
 INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('UMLS:', 'UMLS', 'United Medical Language System');
+*/
