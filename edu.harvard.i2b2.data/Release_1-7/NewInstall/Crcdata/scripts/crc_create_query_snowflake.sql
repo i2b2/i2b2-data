@@ -231,7 +231,7 @@ insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID
 ;
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(4,'PATIENT_COUNT_XML','Number of patients','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientCountGenerator')
 ;
-insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(5,'PATIENT_GPCSITE_COUNT_XML','GPC Site breakdown','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator')
+insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(5,'PATIENT_GPCSITE_COUNT_XML','GPC Site breakdown','CATNUM','LH','edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator')
 ;
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(6,'PATIENT_GENDER_COUNT_XML','Gender patient breakdown','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator')
 ;
@@ -266,7 +266,7 @@ insert into QT_PRIVILEGE(PROTECTION_LABEL_CD, DATAPROT_CD, HIVEMGMT_CD) values (
 
 
 
---INSERT INTO QT_BREAKDOWN_PATH(NAME,VALUE,CREATE_DATE) VALUES ('PATIENT_GPCSITE_COUNT_XML','\\\\ACT_DEMO\\ACT\\Demographics\\GPC Sites\\', CURRENT_TIMESTAMP);
+INSERT INTO QT_BREAKDOWN_PATH(NAME,VALUE,CREATE_DATE) VALUES ('PATIENT_GPCSITE_COUNT_XML','\\\\ACT_DEMO\\ACT\\Demographics\\GPC Sites\\', CURRENT_TIMESTAMP);
 INSERT INTO QT_BREAKDOWN_PATH(NAME,VALUE,CREATE_DATE) VALUES ('PATIENT_GENDER_COUNT_XML','\\\\ACT_DEMO\\ACT\\Demographics\\Sex\\', CURRENT_TIMESTAMP);
 INSERT INTO QT_BREAKDOWN_PATH(NAME,VALUE,CREATE_DATE) VALUES ('PATIENT_RACE_COUNT_XML','\\\\ACT_DEMO\\ACT\\Demographics\\Race\\', CURRENT_TIMESTAMP);
 INSERT INTO QT_BREAKDOWN_PATH(NAME,VALUE,CREATE_DATE) VALUES ('PATIENT_VITALSTATUS_COUNT_XML','\\\\ACT_DEMO\\ACT\\Demographics\\Vital Status\\',CURRENT_TIMESTAMP);
@@ -275,9 +275,6 @@ INSERT INTO qt_breakdown_path (name, value, create_date) VALUES ('PATIENT_LOS_XM
 INSERT INTO qt_breakdown_path (name, value, create_date) VALUES ('PATIENT_TOP20MEDS_XML','select b.name_char as patient_range, count(distinct a.patient_num) as patient_count from prescribing_fact a, concept_dimension b, DX c where a.concept_cd = b.concept_cd and concept_path like ''\\\\ACT\\\\Medications\\\\%'' and a.patient_num = c.patient_num   group by name_char order by patient_count desc limit 20', CURRENT_TIMESTAMP);
 INSERT INTO qt_breakdown_path (name, value, create_date) VALUES ('PATIENT_TOP20DIAG_XML','select b.name_char as patient_range, count(distinct a.patient_num) as patient_count from diagnosis_fact a, concept_dimension b, DX c where a.concept_cd = b.concept_cd and concept_path like ''\\\\ACT\\\\Diagnosis\\\\%'' and a.patient_num = c.patient_num   group by name_char order by patient_count desc limit 20', CURRENT_TIMESTAMP);
 INSERT INTO qt_breakdown_path  (name, value, create_date) VALUES ('PATIENT_INOUT_XML','select INOUT_CD as patient_range, count(distinct a.patient_num) as patient_count from visit_dimension a, DX b where a.patient_num = b.patient_num group by a.INOUT_CD order by 1', CURRENT_TIMESTAMP);
-
-
-
 
 
 
