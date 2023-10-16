@@ -6,7 +6,7 @@ LANGUAGE SQL
 AS
 DECLARE
     results RESULTSET;
-    query VARCHAR DEFAULT 'select c_table_name, c_facttablecolumn from table_access where c_visualattributes like ''%A%''';
+    query VARCHAR DEFAULT 'select c_table_name, c_facttablecolumn from table_access where c_visualattributes like ''%A%'' and c_facttablecolumn like ''%.concept_cd'' ';
     tableName VARCHAR;
     ont_table VARCHAR;
 BEGIN
