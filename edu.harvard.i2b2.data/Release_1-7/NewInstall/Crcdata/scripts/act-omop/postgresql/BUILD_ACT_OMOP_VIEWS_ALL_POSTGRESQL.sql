@@ -16,6 +16,36 @@ DROP VIEW if exists  OBSERVATION_NS_VIEW;
 DROP VIEW if exists DEVICE_NS_VIEW;
 DROP VIEW if exists PROCEDUR_NS_VIEW;
 
+DROP TABLE IF EXISTS EMPTY_VIEW;
+CREATE TABLE EMPTY_VIEW
+   (
+    ENCOUNTER_NUM INT ,
+	PATIENT_NUM INT ,
+	CONCEPT_CD VARCHAR(50) ,
+	PROVIDER_ID VARCHAR(50) ,
+	START_DATE DATE ,
+	END_DATE timestamp,
+	MODIFIER_CD VARCHAR(100) ,
+	INSTANCE_NUM INT ,
+	VALTYPE_CD VARCHAR(50),
+	LOCATION_CD VARCHAR(50),
+	TVAL_CHAR VARCHAR(255),
+	NVAL_NUM INT ,
+	VALUEFLAG_CD VARCHAR(50),
+	UNITS_CD VARCHAR(50),
+	CONFIDENCE_NUM FLOAT,
+	SOURCESYSTEM_CD VARCHAR(50),
+	UPDATE_DATE timestamp,
+	DOWNLOAD_DATE timestamp,
+	IMPORT_DATE timestamp,
+	OBSERVATION_BLOB   text,
+	UPLOAD_ID INT,
+	QUANTITY_NUM INT ,
+    SOURCE_CONCEPT_ID INT,
+    SOURCE_VALUE VARCHAR(50),
+    DOMAIN_ID VARCHAR(20)
+   );
+
 create or replace view  VISIT_DIMENSION
 (encounter_num, patient_num, active_status_cd, start_date, end_date, inout_cd, location_cd, location_path,
 length_of_stay, visit_blob, update_date, download_date, import_date, sourcesystem_cd, upload_id)
