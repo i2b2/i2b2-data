@@ -37,96 +37,10 @@ If OBJECT_ID('OBSERVATION_NS_VIEW','V') is not null
 DROP VIEW OBSERVATION_NS_VIEW;
 If OBJECT_ID('PROCEDURE_NS_VIEW','V') is not null
 DROP VIEW PROCEDURE_NS_VIEW;
-If OBJECT_ID('COVID_LAB_NS_VIEW','V') is not null
-DROP VIEW COVID_LAB_NS_VIEW;
 If OBJECT_ID('DEVICE_NS_VIEW','V') is not null
 DROP VIEW DEVICE_NS_VIEW;
 If OBJECT_ID('VISIT_NS_VIEW','V') is not null
 DROP VIEW VISIT_NS_VIEW;
-
-/****** Object:  View ALL_SOURCE_CONCEPTS - Not used ******/
-
-/*
-CREATE    VIEW [ALL_SOURCE_CONCEPTS] (ENCOUNTER_NUM, PATIENT_NUM, CONCEPT_CD, PROVIDER_ID, START_DATE, MODIFIER_CD, 
-INSTANCE_NUM, VALTYPE_CD, TVAL_CHAR, NVAL_NUM, VALUEFLAG_CD,  quantity_num, UNITS_CD,  END_DATE, LOCATION_CD,  OBSERVATION_BLOB, CONFIDENCE_NUM, update_date, download_date, import_date, SOURCESYSTEM_CD,   UPLOAD_ID, text_search_index) AS 
-
-SELECT        ENCOUNTER_NUM, PATIENT_NUM, CONCEPT_CD, PROVIDER_ID, START_DATE, END_DATE, MODIFIER_CD, INSTANCE_NUM, valtype_cd, location_cd, tval_char, nval_num, valueflag_cd,  units_cd,  OBSERVATION_BLOB, 
-                          SOURCESYSTEM_CD , UPLOAD_ID  , null as quanity_num, null as text_search_index, null as update_date, null as download_date, null as import_date, null as CONFIDENCE_NUM
-FROM            (SELECT        visit_occurrence_id AS ENCOUNTER_NUM, person_id AS PATIENT_NUM, CAST(condition_source_concept_id AS varchar(50)) AS CONCEPT_CD, CAST(provider_id AS VARCHAR(50)) AS PROVIDER_ID, 
-                                                    condition_start_datetime AS START_DATE, condition_end_datetime AS END_DATE, NULL AS MODIFIER_CD, NULL AS INSTANCE_NUM, NULL AS valtype_cd, NULL AS location_cd, NULL AS tval_char, NULL 
-                                                    AS nval_num, NULL AS valueflag_cd, NULL AS units_cd, condition_concept_id AS OBSERVATION_BLOB, condition_source_value AS SOURCESYSTEM_CD, 1 AS UPLOAD_ID, null as quantity_num, null as text_search_index, null as update_date, null as download_date, null as import_date, null as confidence_num
-                          FROM            dbo.CONDITION_OCCURRENCE AS x
-                          UNION
-                          SELECT        visit_occurrence_id AS ENCOUNTER_NUM, person_id AS PATIENT_NUM, CAST(drug_source_concept_id AS varchar(50)) AS CONCEPT_CD, CAST(provider_id AS VARCHAR(50)) AS PROVIDER_ID, 
-                                                   drug_exposure_start_datetime AS START_DATE, drug_exposure_end_datetime AS END_DATE, NULL AS MODIFIER_CD, NULL AS INSTANCE_NUM, NULL AS valtype_cd, NULL AS location_cd, NULL 
-                                                   AS tval_char, NULL AS nval_num, NULL AS valueflag_cd, NULL AS units_cd, drug_concept_id AS OBSERVATION_BLOB, drug_source_value AS SOURCESYSTEM_CD, 1 AS UPLOAD_ID, null as quantity_num, null as text_search_index, null as update_date, null as download_date, null as import_date, null as confidence_num
-                          FROM            dbo.DRUG_EXPOSURE
-                          UNION
-                          SELECT        visit_occurrence_id AS ENCOUNTER_NUM, person_id AS PATIENT_NUM, CAST(procedure_source_concept_id AS varchar(50)) AS CONCEPT_CD, CAST(provider_id AS VARCHAR(50)) AS PROVIDER_ID, 
-                                                   procedure_datetime AS START_DATE, NULL AS END_DATE, NULL AS MODIFIER_CD, NULL AS INSTANCE_NUM, NULL AS valtype_cd, NULL AS location_cd, NULL AS tval_char, NULL AS nval_num, NULL 
-                                                   AS valueflag_cd, NULL AS units_cd, procedure_concept_id AS OBSERVATION_BLOB, procedure_source_value AS SOURCESYSTEM_CD, 1 AS UPLOAD_ID, null as quantity_num, null as text_search_index, null as update_date, null as download_date, null as import_date, null as confidence_num
-                          FROM            dbo.PROCEDURE_OCCURRENCE
-                          UNION
-                          SELECT        visit_occurrence_id AS ENCOUNTER_NUM, person_id AS PATIENT_NUM, CAST(device_source_concept_id AS varchar(50)) AS CONCEPT_CD, CAST(provider_id AS VARCHAR(50)) AS PROVIDER_ID, 
-                                                   device_exposure_start_datetime AS START_DATE, device_exposure_end_datetime AS END_DATE, CAST(device_type_concept_id
-												   AS VARCHAR(50)) AS MODIFIER_CD, NULL AS INSTANCE_NUM, NULL 
-                                                   AS valtype_cd, NULL AS location_cd, NULL AS tval_char, NULL AS nval_num, NULL AS valueflag_cd, NULL AS units_cd, device_exposure_id AS OBSERVATION_BLOB, device_source_value AS SOURCESYSTEM_CD, 
-                                                   1 AS UPLOAD_ID, null as quantity_num, null as text_search_index, null as update_date, null as download_date, null as import_date, null as confidence_num
-                          FROM            dbo.DEVICE_EXPOSURE
-                            UNION
-                      SELECT        visit_occurrence_id AS ENCOUNTER_NUM,
-						  person_id AS PATIENT_NUM, CAST(measurement_source_concept_id AS varchar(50)) AS CONCEPT_CD,
-						  CAST(provider_id AS VARCHAR(50)) AS PROVIDER_ID, 
-                                                   measurement_datetime AS START_DATE,
-												   NULL AS END_DATE, 
-												   CAST(measurement_type_concept_id AS varchar(50)) AS MODIFIER_CD,
-												   NULL AS INSTANCE_NUM,
-												   CASE WHEN VALUE_AS_NUMBER IS NOT NULL 
-                                                   THEN 'N' ELSE 'T' END AS valtype_cd,
-												   NULL AS location_cd,
-                                                   CASE WHEN OPERATOR_CONCEPT_ID = 4172703 THEN 'E' WHEN OPERATOR_CONCEPT_ID = 4171756 THEN 'LT' WHEN OPERATOR_CONCEPT_ID = 4172704 THEN 'GT' WHEN OPERATOR_CONCEPT_ID = 4171754
-                                                    THEN 'LE' WHEN OPERATOR_CONCEPT_ID = 4171755 THEN 'GE' WHEN OPERATOR_CONCEPT_ID IS NULL AND VALUE_AS_NUMBER IS NOT NULL THEN 'E' ELSE VALUE_SOURCE_VALUE
-													END AS TVAL_CHAR, 
-                                                   value_as_number AS NVAL_NUM,
-												   CAST(value_as_concept_id AS VARCHAR(50)) AS VALUEFLAG_CD,
-												   unit_source_value AS UNITS_CD,
-												   measurement_concept_id AS OBSERVATION_BLOB, 
-                                                   measurement_source_value AS SOURCESYSTEM_CD
-												   , 1  AS UPLOAD_ID, null as quantity_num,
-												   null as text_search_index,
-												   null as update_date,
-												   null as download_date, 
-												   null as import_date,
-												   null as confidence_num
-                          FROM            dbo.MEASUREMENT
-                    UNION
-                        SELECT        visit_occurrence_id AS ENCOUNTER_NUM,
-						  person_id AS PATIENT_NUM, CAST(observation_source_concept_id AS VARCHAR(50)) AS CONCEPT_CD,
-						  CAST(provider_id AS VARCHAR(50)) AS PROVIDER_ID, 
-                                                   observation_datetime AS START_DATE,
-												   NULL AS END_DATE, 
-												   CAST(observation_type_concept_id AS VARCHAR(50)) AS MODIFIER_CD,
-												   1 AS INSTANCE_NUM,
-												   CASE WHEN VALUE_AS_NUMBER IS NOT NULL 
-                                                   THEN 'N' ELSE 'T' END AS valtype_cd,
-												   NULL AS location_cd,
-												   value_as_string AS TVAL_CHAR,
-												   value_as_number AS NVAL_NUM,
-												   CAST(qualifier_concept_id AS VARCHAR(50)) AS VALUEFLAG_CD, 
-                                                   unit_source_value AS UNITS_CD,
-												   observation_concept_id AS OBSERVATION_BLOB,
-												   observation_source_value AS SOURCESYSTEM_CD,
-												   1 AS UPLOAD_ID,  null as quantity_num,
-												   null as text_search_index,
-												   null as update_date,
-												   null as download_date, 
-												   null as import_date,
-												   null as confidence_num
-                          FROM            dbo.OBSERVATION
-						  
-						  ) 
-						  AS x; 
-*/
 
 -- Fixed 9/7/23 to support PDO
 CREATE TABLE EMPTY_VIEW 
@@ -207,14 +121,14 @@ SELECT
 	VISIT_end_datetime AS END_DATE, 
     	'@' AS MODIFIER_CD,
      	1 AS INSTANCE_NUM,
-        NULL AS valtype_cd,
+        CAST(NULL as varchar(50)) AS valtype_cd,
         CARE_SITE_ID AS location_cd,
-        NULL AS tval_char,
+        CAST(NULL as varchar(255)) AS tval_char,
         NULL AS nval_num,
-        NULL AS valueflag_cd,
-        NULL AS units_cd,
+        CAST(NULL as varchar(50)) AS valueflag_cd,
+        CAST(NULL as varchar(50)) AS units_cd,
         NULL CONFIDENCE_NUM, 
-        NULL SOURCESYSTEM_CD, 
+        CAST(NULL as varchar(50)) AS sourcesystem_cd, 
         NULL UPDATE_DATE, 
         NULL DOWNLOAD_DATE, 
         NULL IMPORT_DATE, 
@@ -261,7 +175,7 @@ DATEDIFF(hour, birth_datetime,
                          AS AGE_IN_YEARS_NUM, NULL AS LANGUAGE_CD,CONVERT(char, RACE_CONCEPT_ID) AS RACE_CD, NULL AS MARITAL_STATUS_CD,
 						 NULL AS RELIGION_CD, NULL AS ZIP_CD, NULL AS STATECITYZIP_PATH, NULL AS INCOME_CD, NULL 
                          AS PATIENT_BLOB, CAST(NULL AS DATE) AS UPDATE_DATE, CAST(NULL AS DATE) AS DOWNLOAD_DATE, CAST(NULL AS DATE) 
-						 AS IMPORT_DATE, NULL AS SOURCESYSTEM_CD, NULL AS UPLOAD_ID, 
+						 AS IMPORT_DATE, CAST(NULL as varchar(50)) AS sourcesystem_cd, NULL AS UPLOAD_ID, 
                         CONVERT(char, ethnicity_concept_id) AS ETHNICITY_CD
 FROM            PERSON
 ;
@@ -278,14 +192,14 @@ SELECT
 			condition_end_datetime AS END_DATE, 
             '@' AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -314,14 +228,14 @@ SELECT
 			device_exposure_end_datetime AS END_DATE, 
             isnull(CAST(device_type_concept_id AS VARCHAR(50)),'@') AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -348,14 +262,14 @@ SELECT
 			drug_exposure_END_datetime AS END_DATE, 
             '@' AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -396,7 +310,7 @@ FROM DRUG_EXPOSURE;
 		THEN 'N' 
 		ELSE 'T' 
 	END AS VALTYPE_CD,
-    NULL AS LOCATION_CD,
+    CAST(NULL as varchar(50)) AS location_cd,
 	CASE 
 		WHEN OPERATOR_CONCEPT_ID = 4172703 
 		THEN 'E' 
@@ -416,7 +330,7 @@ FROM DRUG_EXPOSURE;
    	CAST(VALUE_AS_CONCEPT_ID AS VARCHAR(50)) AS VALUEFLAG_CD,
     UNIT_SOURCE_VALUE AS UNITS_CD, 
     NULL CONFIDENCE_NUM, 
-    NULL SOURCESYSTEM_CD, 
+    CAST(NULL as varchar(50)) AS sourcesystem_cd, 
     NULL UPDATE_DATE, 
     NULL DOWNLOAD_DATE, 
     NULL IMPORT_DATE, 
@@ -444,7 +358,7 @@ SELECT
        THEN 'N' 
        ELSE 'T' 
     END AS valtype_cd, --DECODE THIS IS THE FUTURE operator_concept_id
-	NULL AS LOCATION_CD,
+	CAST(NULL as varchar(50)) AS location_cd,
     CASE 
         WHEN VALUE_AS_NUMBER IS NOT NULL THEN 'E' 
         ELSE VALUE_AS_STRING 
@@ -453,7 +367,7 @@ SELECT
     CAST(VALUE_AS_CONCEPT_ID AS VARCHAR(50)) AS VALUEFLAG_CD,
     UNIT_SOURCE_VALUE AS UNITS_CD,
     NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -476,14 +390,14 @@ SELECT
 			NULL AS END_DATE, 
             '@' AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -539,7 +453,7 @@ SELECT
             NULL END_DATE, 
             NULL LOCATION_CD, 
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -565,14 +479,14 @@ SELECT
 			condition_end_datetime AS END_DATE, 
             '@' AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -601,14 +515,14 @@ SELECT
 			device_exposure_end_datetime AS END_DATE, 
             isnull(CAST(device_type_concept_id AS VARCHAR(50)),'@') AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -635,14 +549,14 @@ SELECT
 			drug_exposure_END_datetime AS END_DATE, 
             '@' AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE, 
@@ -683,7 +597,7 @@ FROM DRUG_EXPOSURE;
 		THEN 'N' 
 		ELSE 'T' 
 	END AS VALTYPE_CD,
-    NULL AS LOCATION_CD,
+    CAST(NULL as varchar(50)) AS location_cd,
 	CASE 
 		WHEN OPERATOR_CONCEPT_ID = 4172703 
 		THEN 'E' 
@@ -703,7 +617,7 @@ FROM DRUG_EXPOSURE;
    	CAST(VALUE_AS_CONCEPT_ID AS VARCHAR(50)) AS VALUEFLAG_CD,
     UNIT_SOURCE_VALUE AS UNITS_CD, 
     NULL CONFIDENCE_NUM, 
-    NULL SOURCESYSTEM_CD, 
+    CAST(NULL as varchar(50)) AS sourcesystem_cd, 
     NULL UPDATE_DATE, 
     NULL DOWNLOAD_DATE, 
     NULL IMPORT_DATE,  
@@ -731,7 +645,7 @@ SELECT
        THEN 'N' 
        ELSE 'T' 
     END AS valtype_cd, --DECODE THIS IS THE FUTURE operator_concept_id
-	NULL AS LOCATION_CD,
+	CAST(NULL as varchar(50)) AS location_cd,
     CASE 
         WHEN VALUE_AS_NUMBER IS NOT NULL THEN 'E' 
         ELSE OBSERVATION_SOURCE_VALUE 
@@ -740,7 +654,7 @@ SELECT
     CAST(VALUE_AS_CONCEPT_ID AS VARCHAR(50)) AS VALUEFLAG_CD,
     UNIT_SOURCE_VALUE AS UNITS_CD,
     NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE,
@@ -763,14 +677,14 @@ SELECT
 			NULL AS END_DATE, 
             '@' AS MODIFIER_CD,
             1 AS INSTANCE_NUM,
-            NULL AS valtype_cd,
-            NULL AS location_cd,
-            NULL AS tval_char,
+            CAST(NULL as varchar(50)) AS valtype_cd,
+            CAST(NULL as varchar(50)) AS location_cd,
+            CAST(NULL as varchar(255)) AS tval_char,
             NULL AS nval_num,
-            NULL AS valueflag_cd,
-            NULL AS units_cd,
+            CAST(NULL as varchar(50)) AS valueflag_cd,
+            CAST(NULL as varchar(50)) AS units_cd,
             NULL CONFIDENCE_NUM, 
-            NULL SOURCESYSTEM_CD, 
+            CAST(NULL as varchar(50)) AS sourcesystem_cd, 
             NULL UPDATE_DATE, 
             NULL DOWNLOAD_DATE, 
             NULL IMPORT_DATE,
@@ -802,14 +716,14 @@ SELECT
 	NULL AS END_DATE, 
     '@' AS MODIFIER_CD,
     1 AS INSTANCE_NUM,
-    NULL AS valtype_cd,
-    NULL AS location_cd,
-    NULL AS tval_char,
+    CAST(NULL as varchar(50)) AS valtype_cd,
+    CAST(NULL as varchar(50)) AS location_cd,
+    CAST(NULL as varchar(255)) AS tval_char,
     NULL AS nval_num,
-    NULL AS valueflag_cd,
-    NULL AS units_cd,
+    CAST(NULL as varchar(50)) AS valueflag_cd,
+    CAST(NULL as varchar(50)) AS units_cd,
     NULL AS CONFIDENCE_NUM, 
-    NULL AS SOURCESYSTEM_CD, 
+    CAST(NULL as varchar(50)) AS sourcesystem_cd, 
     NULL AS UPDATE_DATE, 
     NULL AS DOWNLOAD_DATE, 
     NULL AS IMPORT_DATE, 
