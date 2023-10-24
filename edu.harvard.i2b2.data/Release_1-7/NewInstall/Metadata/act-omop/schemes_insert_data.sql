@@ -1,4 +1,4 @@
-INSERT schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('(null)', 'None', 'No scheme');
+INSERT INTO schemes (C_KEY, C_NAME, C_DESCRIPTION) VALUES ('(null)', 'None', 'No scheme');
 
 /* 
 --Everything in OMOP is an OMOP number, there are no schemes 
