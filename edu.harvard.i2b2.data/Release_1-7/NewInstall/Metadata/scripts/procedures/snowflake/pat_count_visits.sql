@@ -72,7 +72,7 @@ BEGIN
             WHEN lower(curRecord.c_operator) = 'like' then 
                 v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' || '''' || replace(replace(c_dimcode,'\\','\\\\'),'''','''''') || '%''' ;
            WHEN lower(curRecord.c_operator) = 'in' then 
-           		IF (left(c_dimcode,1)='()') THEN
+           		IF (left(c_dimcode,1)='(') THEN
 	                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' || c_dimcode;
 	            ELSE
 	                v_sqlstr := v_sqlstr || curRecord.c_operator  || ' ' ||  '(' || c_dimcode || ')';
