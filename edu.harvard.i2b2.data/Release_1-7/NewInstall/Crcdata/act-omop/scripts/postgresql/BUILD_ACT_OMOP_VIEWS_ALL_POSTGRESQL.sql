@@ -82,8 +82,8 @@ END AS vital_status_cd,
 concat(year_of_birth, '-', month_of_birth, '-', day_of_birth) AS birth_date,
 NULL AS death_date,
 to_char(gender_concept_id, '9') AS sex_cd,
-date_part('epoch', birth_datetime - CURRENT_DATE) /
-3600 AS age_in_years_num,
+date_part('epoch', (CURRENT_DATE - birth_datetime ) /
+3600/8766) AS age_in_years_num,
 NULL AS language_cd,
 race_concept_id AS race_cd,
 NULL AS marital_status_cd,
