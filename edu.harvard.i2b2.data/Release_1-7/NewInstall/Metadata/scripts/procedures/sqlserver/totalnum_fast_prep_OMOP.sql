@@ -9,7 +9,7 @@
 -- 2) Run with: exec FastTotalnumPrep or exec FastTotalnumPrep 'dbo' 
 --       (Optionally you can specify the schemaname)
 --
--- Note that this presently hardcoded (change if your table names are different): ACT_VISIT_DETAILS_V4_OMOP and ACT_DEM_V4_OMOP
+-- Note that this presently hardcoded (change if your table names are different): ACT_VISIT_DETAILS_V41_OMOP and ACT_DEM_V41_OMOP
 -----------------------------------------------------------------------------------------------------------------
 
 
@@ -101,7 +101,7 @@ DECLARE CUR CURSOR FOR
   SELECT C_TABLE_NAME, CONCAT(C_FULLNAME,'%') AS [PATH]
   FROM TABLE_ACCESS
   --WHERE C_TABLE_NAME=@metadataTable -- DO JUST 1 ONTOLOBY
-  -- (FOR TESTING) where c_table_name='ACT_ICD10CM_DX_V4_OMOP'
+  -- (FOR TESTING) where c_table_name='ACT_ICD10CM_DX_V41_OMOP'
   WHERE C_TABLE_CD NOT IN ('ACT_DEMO','ACT_VISIT') /* THESE ARE HANDLED BY CONVERTING DEMOGRAPHICS AND VISIT DETAILS INTO FACTS IN A LATER STEP */
    AND C_VISUALATTRIBUTES LIKE '%A%'
    
@@ -154,13 +154,13 @@ SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, case when charind
         when c_fullname like '\ACT\Visit Details\Age at visit\%' then replace(c_basecode,'DEM|','VIS|') 
         else c_basecode
         end as c_basecode, c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, c_operator, c_dimcode, m_applied_path
-FROM DBO.ACT_VISIT_DETAILS_V4_OMOP
+FROM DBO.ACT_VISIT_DETAILS_V41_OMOP
 UNION
 SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, case when charindex(':',c_basecode)=0 and nullif(c_basecode,'') is not null 
                         then concat(c_tablename,'|',c_columnname,':',c_basecode) 
                         else c_basecode 
                         end as c_basecode, c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, c_operator, c_dimcode, m_applied_path
-FROM DBO.ACT_DEM_V4_OMOP
+FROM DBO.ACT_DEM_V41_OMOP
 )M LEFT JOIN CTE_BASECODE_OVERRIDE BO
   ON M.c_fullname = BO.c_fullname
 where C_FACTTABLECOLUMN != 'concept_cd';
