@@ -57,7 +57,7 @@ begin
             v_sqlstring := 'update table_access set c_totalnum=(select min(c_totalnum) from ' || curRecord || ' x where x.c_fullname=table_access.c_fullname) where c_table_name=' || '''' || curRecord || '''';
             execute immediate :v_sqlstring;
              -- Null out cases that are actually 0 [1/21]
-             v_sqlstring := 'update  ' || curRecord || ' set c_totalnum=null where c_totalnum=0 and c_visualattributes like ''C%''';
+             v_sqlstring := 'update  ' || curRecord || ' set c_totalnum=null where c_totalnum=0';
             execute  immediate :v_sqlstring;
         END IF;
     END FOR;
