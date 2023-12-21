@@ -20,21 +20,21 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 
 	<target name="create_database" depends="init" description="Load i2b2">
                         <echo message="${Name}: CRC Data" />
-                            <ant antfile="data_build.xml"  dir="./Crcdata" target="create_crcdata_tables_release_1-7"/>
-                            <ant antfile="data_build.xml"  dir="./Crcdata" target="create_procedures_release_1-7"/>
+                            <ant antfile="data_build.xml"  dir="./Crcdata" target="create_crcdata_tables_release_1-8"/>
+                            <ant antfile="data_build.xml"  dir="./Crcdata" target="create_procedures_release_1-8"/>
          
                         <echo message="${Name}: Ontology Data" />
-                            <ant antfile="data_build.xml"  dir="./Metadata" target="create_metadata_tables_release_1-7"/>
+                            <ant antfile="data_build.xml"  dir="./Metadata" target="create_metadata_tables_release_1-8"/>
 
                         <echo message="${Name}: Work Data" />
-                            <ant antfile="data_build.xml"  dir="./Workdata" target="create_workdata_tables_release_1-7"/>
+                            <ant antfile="data_build.xml"  dir="./Workdata" target="create_workdata_tables_release_1-8"/>
 
                         <echo message="${Name}: Hive Data" />
-                            <ant antfile="data_build.xml"  dir="./Hivedata" target="create_hivedata_tables_release_1-7"/>
+                            <ant antfile="data_build.xml"  dir="./Hivedata" target="create_hivedata_tables_release_1-8"/>
 
                         <echo message="${Name}: Pm Data" />
-                            <ant antfile="data_build.xml"  dir="./Pmdata" target="create_pmdata_tables_release_1-7"/>
-                            <ant antfile="data_build.xml"  dir="./Pmdata" target="create_triggers_release_1-7"/>
+                            <ant antfile="data_build.xml"  dir="./Pmdata" target="create_pmdata_tables_release_1-8"/>
+                            <ant antfile="data_build.xml"  dir="./Pmdata" target="create_triggers_release_1-8"/>
 	</target>
 
         <target name="load_demodata" depends="init" description="Load Demo Data">

@@ -31,16 +31,16 @@ $Id: data_build.xml,v 1.5 2010/06/04 15:33:06 lcp5 Exp $
 				</sql>
 	</target>
 
-	<target name="create_metadata_tables_release_1-7" depends="init">
+	<target name="create_metadata_tables_release_1-8" depends="init">
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./scripts/create_${db.type}_i2b2metadata_tables.sql" />
 		</sql>
 		
-		<antcall target="create_metadata_procedures_release_1-7"/>
+		<antcall target="create_metadata_procedures_release_1-8"/>
 		
 	</target>
 	
-	<target name="create_metadata_procedures_release_1-7" depends="init">
+	<target name="create_metadata_procedures_release_1-8" depends="init">
 	
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" 
 					print="true"

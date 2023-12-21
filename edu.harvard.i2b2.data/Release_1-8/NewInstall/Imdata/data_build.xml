@@ -25,7 +25,7 @@ $Id: data_build.xml,v 1.1 2013/01/05 13:53:58 lcp5 Exp $
 	<!-- 			DATABASE SETUP TARGETS						 			 -->
 	<!-- =================================================================== -->
 
-	<target name="create_imdata_tables_release_1-7" depends="init">
+	<target name="create_imdata_tables_release_1-8" depends="init">
 		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./scripts/im_create_tables_${db.type}.sql" />
 		</sql>
