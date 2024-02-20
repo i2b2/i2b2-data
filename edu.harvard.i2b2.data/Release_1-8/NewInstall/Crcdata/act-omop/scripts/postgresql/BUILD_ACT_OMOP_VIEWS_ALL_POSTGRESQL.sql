@@ -81,7 +81,7 @@ ELSE 'N'
 END AS vital_status_cd,
 concat(year_of_birth, '-', month_of_birth, '-', day_of_birth) AS birth_date,
 NULL AS death_date,
-to_char(gender_concept_id, '9') AS sex_cd,
+gender_concept_id::text AS sex_cd,
 trunc(EXTRACT(
                 EPOCH FROM (now() - (birth_datetime::date)
 )/3600)/8766)  AS age_in_years_num,
