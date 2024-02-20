@@ -2,9 +2,10 @@
 -- This is all the preperatory work that must happen once when the ontology changes before running FastTotalnumRun.
 -- create a view of distinct concept codes and patient nums (OBSFACT_PAIRS), a unified ontology (TNUM_ONTOLOGY) and a transitive closure table (CONCEPT_CLOSURE) 
 -- by Darren Henderson (UKY) and Jeff Klann, PhD (MGB) 
--- Last updated: 07/2023
+-- Last updated: 02/2024
 --
 -- 1) Modify the obsfact_pairs view to include additional fact tables, if applicable.
+-- 2) If you're running an ACT version prior to v4.1, change the reference DBO.ACT_VISIT_DETAILS_V41 to match your ontology (near line 150)
 -- 2) Run with: exec FastTotalnumPrep or exec FastTotalnumPrep 'dbo' 
 --       (Optionally you can specify the schemaname)
 --
@@ -94,7 +95,7 @@ DECLARE CUR CURSOR FOR
   SELECT C_TABLE_NAME, CONCAT(C_FULLNAME,'%') AS [PATH]
   FROM TABLE_ACCESS
   --WHERE C_TABLE_NAME=@metadataTable -- DO JUST 1 ONTOLOBY
-  -- (FOR TESTING) where c_table_name='ACT_ICD10CM_DX_V4_OMOP'
+  -- (FOR TESTING) where c_table_name='ACT_ICD10CM_DX_V4'
   WHERE C_TABLE_CD NOT IN ('ACT_DEMO','ACT_VISIT') /* THESE ARE HANDLED BY CONVERTING DEMOGRAPHICS AND VISIT DETAILS INTO FACTS IN A LATER STEP */
    AND C_VISUALATTRIBUTES LIKE '%A%'
    
@@ -147,7 +148,7 @@ SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, case when charind
         when c_fullname like '\ACT\Visit Details\Age at visit\%' then replace(c_basecode,'DEM|','VIS|') 
         else c_basecode
         end as c_basecode, c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, c_operator, c_dimcode, m_applied_path
-FROM DBO.ACT_VISIT_DETAILS_V4
+FROM DBO.ACT_VISIT_DETAILS_V41
 UNION
 SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, case when charindex(':',c_basecode)=0 and nullif(c_basecode,'') is not null 
                         then concat(c_tablename,'|',c_columnname,':',c_basecode) 

@@ -6,7 +6,8 @@
 -- Last updated: 11/2023
 --
 -- 1) Set up ACT-OMOP ontologies and views, if you haven't already. (https://bit.ly/i2b2onomop)
--- 2) Run with: exec FastTotalnumPrep or exec FastTotalnumPrep 'dbo' 
+-- 2) If you're running an ACT version prior to v4.1, change the reference DBO.ACT_VISIT_DETAILS_V41_OMOP to match your ontology (near line 150)
+-- 3) Run with: exec FastTotalnumPrep or exec FastTotalnumPrep 'dbo' 
 --       (Optionally you can specify the schemaname)
 --
 -- Note that this presently hardcoded (change if your table names are different): ACT_VISIT_DETAILS_V41_OMOP and ACT_DEM_V41_OMOP
