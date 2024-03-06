@@ -200,7 +200,7 @@ CREATE TABLE QT_PRIVILEGE(
 /*============================================================================*/
 CREATE TABLE QT_BREAKDOWN_PATH (
 	NAME			VARCHAR(100), 
-	VALUE			VARCHAR(2000), 
+	VALUE			VARCHAR(MAX), 
 	CREATE_DATE		DATETIME,
 	UPDATE_DATE		DATETIME,
 	USER_ID			VARCHAR(50)
