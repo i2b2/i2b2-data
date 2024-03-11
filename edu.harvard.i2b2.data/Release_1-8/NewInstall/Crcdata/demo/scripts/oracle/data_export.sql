@@ -29,8 +29,6 @@ Your guideline for the storage of Protected Health Information can be found at: 
 
 These results are the data that was requested under the authority of the Institutional Review Board.  The query resulting in this identified patient data is included at the end of this letter.  A copy of this letter is kept on file and is available to the IRB in the event of an audit.
 
-THIS INFORMATION IS PROTECTED UNDER PRIVACY AND CONFIDENTIALITY POLICY AND IS PROVIDED WITH APPROVAL BY THE HUMAN RESEARCH COMMITTEE ONLY FOR USE SPECIFIED IN PROTOCOL NUMBER.  IT MAY NOT BE USED FOR ANY OTHER PURPOSES WITHOUT SPECIFIC APPROVAL BY THE HUMAN RESEARCH COMMITTEE.  IT MAY NOT BE DISTRIBUTED TO ANY INDIVIDUAL NOT SPECIFICALLY AUTHORIZED UNDER THAT APPROVAL.
-
 Thank you,
 
 The i2b2 Team 
@@ -40,7 +38,7 @@ The i2b2 Team
 *****************************************************************************
 
 
-The query entitled '{{{QUERY_NAME}}}', submitted on {{{QUERY_STARTDATE}}}, was successfully completed on {{{QUERY_ENDDATE}}}.  This query was performed for {{{ of the group of {{{FULL_NAME}}}. The search was completed in {{{QUERY_RUNTIME}}} seconds. 
+The query entitled ''{{{QUERY_NAME}}}'', submitted on {{{QUERY_STARTDATE}}}, was successfully completed on {{{QUERY_ENDDATE}}}.  This query was performed for {{{ of the group of {{{FULL_NAME}}}. The search was completed in {{{QUERY_RUNTIME}}} seconds. 
 
 
 ******************************************************************
@@ -72,7 +70,7 @@ This information transmitted in this electronic communication is intended only f
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
 
-</ValueExporter>'null,null,null)
+</ValueExporter>',null,null,null)
 ;
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MEDICATION_CSV','<?xml version="1.0"?>
 <ValueExporter>
@@ -104,8 +102,6 @@ Your guideline for the storage of Protected Health Information can be found at: 
 
 These results are the data that was requested under the authority of the Institutional Review Board.  The query resulting in this identified patient data is included at the end of this letter.  A copy of this letter is kept on file and is available to the IRB in the event of an audit.
 
-THIS INFORMATION IS PROTECTED UNDER PRIVACY AND CONFIDENTIALITY POLICY AND IS PROVIDED WITH APPROVAL BY THE HUMAN RESEARCH COMMITTEE ONLY FOR USE SPECIFIED IN PROTOCOL NUMBER.  IT MAY NOT BE USED FOR ANY OTHER PURPOSES WITHOUT SPECIFIC APPROVAL BY THE HUMAN RESEARCH COMMITTEE.  IT MAY NOT BE DISTRIBUTED TO ANY INDIVIDUAL NOT SPECIFICALLY AUTHORIZED UNDER THAT APPROVAL.
-
 Thank you,
 
 The i2b2 Team 
@@ -115,7 +111,7 @@ The i2b2 Team
 *****************************************************************************
 
 
-The query entitled '{{{QUERY_NAME}}}', submitted on {{{QUERY_STARTDATE}}}, was successfully completed on {{{QUERY_ENDDATE}}}.  This query was performed for {{{ of the group of {{{FULL_NAME}}}. The search was completed in {{{QUERY_RUNTIME}}} seconds. 
+The query entitled ''{{{QUERY_NAME}}}'', submitted on {{{QUERY_STARTDATE}}}, was successfully completed on {{{QUERY_ENDDATE}}}.  This query was performed for {{{ of the group of {{{FULL_NAME}}}. The search was completed in {{{QUERY_RUNTIME}}} seconds. 
 
 
 ******************************************************************
@@ -157,5 +153,5 @@ left join patient_mapping m on
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
 
-</ValueExporter>'null,null,null)
+</ValueExporter>',null,null,null)
 ;
