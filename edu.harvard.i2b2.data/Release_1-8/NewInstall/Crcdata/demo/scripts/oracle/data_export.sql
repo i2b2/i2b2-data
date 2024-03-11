@@ -31,25 +31,7 @@ These results are the data that was requested under the authority of the Institu
 
 Thank you,
 
-The i2b2 Team 
-
-*****************************************************************************
-*                            i2b2 QUERY REPORT                              *
-*****************************************************************************
-
-
-The query entitled ''{{{QUERY_NAME}}}'', submitted on {{{QUERY_STARTDATE}}}, was successfully completed on {{{QUERY_ENDDATE}}}.  This query was performed for {{{ of the group of {{{FULL_NAME}}}. The search was completed in {{{QUERY_RUNTIME}}} seconds. 
-
-
-******************************************************************
-*               END OF REPORT                                    *
-******************************************************************
-
-
-
-This information transmitted in this electronic communication is intended only for the person or entity to whom it is addressed and may contain confidential and/or privileged material.  Any review, retransmission, dissemination or other use of or taking of any action in reliance upon, this information by persons or entities other than the intended recipient is prohibited.  If you received this information in error, please contact the sender and properly dispose of this information.
-
-</Letter>
+The i2b2 Team </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Demographics.csv</Filename>
 	<Query>SELECT   a.PATIENT_NUM as "i2b2 Patient Number"
@@ -105,23 +87,6 @@ These results are the data that was requested under the authority of the Institu
 Thank you,
 
 The i2b2 Team 
-
-*****************************************************************************
-*                            i2b2 QUERY REPORT                              *
-*****************************************************************************
-
-
-The query entitled ''{{{QUERY_NAME}}}'', submitted on {{{QUERY_STARTDATE}}}, was successfully completed on {{{QUERY_ENDDATE}}}.  This query was performed for {{{ of the group of {{{FULL_NAME}}}. The search was completed in {{{QUERY_RUNTIME}}} seconds. 
-
-
-******************************************************************
-*               END OF REPORT                                    *
-******************************************************************
-
-
-
-This information transmitted in this electronic communication is intended only for the person or entity to whom it is addressed and may contain confidential and/or privileged material.  Any review, retransmission, dissemination or other use of or taking of any action in reliance upon, this information by persons or entities other than the intended recipient is prohibited.  If you received this information in error, please contact the sender and properly dispose of this information.
-
 </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Medication.csv</Filename>

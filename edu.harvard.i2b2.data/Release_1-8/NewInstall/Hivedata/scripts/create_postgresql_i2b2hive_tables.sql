@@ -261,5 +261,12 @@ Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (78,'T','CRC','edu.harvard.i2b2.crc.exportcsv.defaultquotechar','"',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (79,'T','CRC','edu.harvard.i2b2.crc.exportcsv.workfolder','/tmp/i2b2',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (80,'T','CRC','edu.harvard.i2b2.crc.exportcsv.zipencryptmethod','none',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (81,'T','CRC','edu.harvard.i2b2.crc.smtp.host','smtp.site.org',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (82,'T','CRC','edu.harvard.i2b2.crc.smtp.port','25',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (83,'T','CRC','edu.harvard.i2b2.crc.smtp.ssl.enable','false',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (84,'T','CRC','edu.harvard.i2b2.crc.smtp.auth','none',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (85,'T','CRC','edu.harvard.i2b2.crc.smtp.username','none',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (86,'T','CRC','edu.harvard.i2b2.crc.smtp.password','none',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (87,'T','CRC','edu.harvard.i2b2.crc.exportcsv.datamanageremail','datamanager@site.org',null,null,null,'A');
  
   
