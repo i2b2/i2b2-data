@@ -63,7 +63,7 @@ insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) value
   <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
  entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
   </RequestLetter>
-  <LetterFilename>/tmp/{{{PROJECT_ID}}}/Readme.txt</LetterFilename>
+  <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
   <Letter>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
@@ -90,13 +90,13 @@ The i2b2 Team
 </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Medication.csv</Filename>
-	<Query>ELECT distinct   a.PATIENT_NUM as "i2b2 Patient Number"
+	<Query>SELECT distinct   a.PATIENT_NUM as "i2b2 Patient Number"
         ,m.patient_ide as "MRN"
       ,a.start_date as "Start Date"
       ,a.end_date as "End Date"      
       ,b.name_char as "Medication Name"
       ,b.concept_cd as "NDC Code"
-      ,b.units_cd as "Unit"
+      ,a.units_cd as "Unit"
       ,a.quantity_num as "Dose Quantity"
       ,a.location_cd as "Clinic"
       ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' else ''Unknown'' end as "Inpatient or Outpatient"
