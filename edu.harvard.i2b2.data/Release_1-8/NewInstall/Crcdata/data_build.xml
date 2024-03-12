@@ -93,7 +93,7 @@ $Id: data_build.xml,v 1.3 2010/05/23 20:21:51 rk903 Exp $
 
 		<parallel>
 
-        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" escapeprocessing="true">
+        <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" keepformat="true" escapeprocessing="true">
 			 <path>
 			 	<sort>
 				    <fileset dir="./${db.project}/scripts/${db.type}">
