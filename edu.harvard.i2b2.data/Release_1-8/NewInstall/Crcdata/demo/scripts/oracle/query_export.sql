@@ -164,13 +164,13 @@ The i2b2 Team
       ,b.concept_cd as "Procedure Code"
       ,a.quantity_num as "Quantity"
       ,a.location_cd as "Clinic"
-      ,case v.inout_cd  when 'O' then 'Outpatient' when 'I' then 'Inpatient' else 'Unknown' end as "Inpatient or Outpatient"
+      ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' else ''Unknown'' end as "Inpatient or Outpatient"
      ,p.name_char as "Provider"
      ,a.encounter_num as "Encounter Number"
   FROM observation_fact  a 
     inner  join concept_dimension b on 
     a.concept_cd = b.concept_cd and
-   b.concept_path like '\i2b2\Procedures\%'
+   b.concept_path like ''\i2b2\Procedures\%''
    left outer join {{{DX}}} c on
    a.patient_num = c.patient_num
  left join provider_dimension p on
@@ -227,13 +227,13 @@ The i2b2 Team
       ,b.name_char as "Diagnosis Name"
       ,b.concept_cd as "Diagnosis Code"
       ,a.location_cd as "Clinic"
-      ,case v.inout_cd  when 'O' then 'Outpatient' when 'I' then 'Inpatient' else 'Unknown' end as "Inpatient or Outpatient"
+      ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' else ''Unknown'' end as "Inpatient or Outpatient"
      ,p.name_char as "Provider"
      ,a.encounter_num as "Encounter Number"
   FROM observation_fact  a 
     inner  join concept_dimension b on 
     a.concept_cd = b.concept_cd and
-   b.concept_path like '\i2b2\Diagnoses\%'
+   b.concept_path like ''\i2b2\Diagnoses\%''
    left outer join {{{DX}}} c on
    a.patient_num = c.patient_num
  left join provider_dimension p on
@@ -288,16 +288,16 @@ The i2b2 Team
         ,m.patient_ide as ”MRN"
 ,a.start_date as "Start Date"
       ,b.name_char as ”Lab Name"
-      ,case when a.valtype_cd = 'T' then tval_char else to_char(nval_num) end as "Lab Results"
+      ,case when a.valtype_cd = ''T'' then tval_char else to_char(nval_num) end as "Lab Results"
       ,b.concept_cd as ”Lab Code"
       ,a.location_cd as "Clinic"
-      ,case v.inout_cd  when 'O' then 'Outpatient' when 'I' then 'Inpatient' else 'Unknown' end as "Inpatient or Outpatient"
+      ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' else ''Unknown'' end as "Inpatient or Outpatient"      
      ,p.name_char as "Provider"
      ,a.encounter_num as "Encounter Number"
   FROM observation_fact  a 
     inner  join concept_dimension b on 
     a.concept_cd = b.concept_cd and
-   b.concept_path like '\i2b2\Labtests\%'
+   b.concept_path like ''\i2b2\Labtests\%''
    left outer join {{{DX}}} c on
    a.patient_num = c.patient_num
  left join provider_dimension p on
