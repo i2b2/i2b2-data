@@ -134,7 +134,7 @@ Thank you,
 The i2b2 Team </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/EncounterMapping.csv</Filename>
-	<Query>SELECT DISTINCT to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT DISTINCT to_char(a.ENCOUNTER_NUM) as "I2B2_ENCOUNTER_NUMBER"
       ,a.PATIENT_IDE_SOURCE as "PATIENT_SOURCE"
       ,a.PATIENT_IDE as "PATIENT_IDE"
       ,a.ENCOUNTER_IDE_SOURCE as "ENCOUNTER_SOURCE"
@@ -201,7 +201,7 @@ The i2b2 Team
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
-    JOIN patient_mapping m on a.patient_num = m.patient_num;</Query>
+    JOIN patient_mapping m on a.patient_num = m.patient_num</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
 
@@ -250,7 +250,7 @@ The i2b2 Team
         ,b.name_char as "PROCEDURE_NAME"
         ,b.concept_cd as "PROCEDURE_CODE"
         ,a.quantity_num as "QUANTITY"
-        ,b.modifier_cd as "MODIFIER"
+        ,a.modifier_cd as "MODIFIER"
         ,a.location_cd as "FACILITY" 
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' else ''Unknown'' end as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
