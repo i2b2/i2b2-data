@@ -99,53 +99,6 @@ The i2b2 Team </Letter>
 
 </ValueExporter>',null,null,null)
 ;
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('ENCOUNTER_MAPPING_CSV','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
-  </RequestLetter>
-  <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
-Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
-
-Important notes about your data:
-	- Total number of patients returned in your data request: {{{PATIENT_COUNT}}}
-	- i2b2 reviewer:
-	
-Only persons specifically authorized and selected (as listed at the top of this letter) can download these files. If additional user access is needed, please ensure the person is listed on your project IRB protocol and contact the i2b2 team.
- 
-Specifically:
-	- Remove all PHI from computer, laptop, or mobile device after analysis is completed.
-	- Do NOT share PHI or PII with anyone who is not listed on the IRB protocol.
-
-Your guideline for the storage of Protected Health Information can be found at: https://www.site.com/guidelines_for_protecting_and_storing_phi.pdf
-
-*To download these files*
-- You must be logged onto your site
-
-These results are the data that was requested under the authority of the Institutional Review Board.  The query resulting in this identified patient data is included at the end of this letter.  A copy of this letter is kept on file and is available to the IRB in the event of an audit.
-
-Thank you,
-
-The i2b2 Team </Letter>
-  <Table>
-	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/EncounterMapping.csv</Filename>
-	<Query>SELECT DISTINCT to_char(a.ENCOUNTER_NUM) as "I2B2_ENCOUNTER_NUMBER"
-      ,a.PATIENT_IDE_SOURCE as "PATIENT_SOURCE"
-      ,a.PATIENT_IDE as "PATIENT_IDE"
-      ,a.ENCOUNTER_IDE_SOURCE as "ENCOUNTER_SOURCE"
-      ,a.ENCOUNTER_IDE as "ENCOUNTER_IDE"
-  FROM encounter_mapping a, {{{DX}}} c
-  where a.patient_num = c.patient_num</Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
-
-</ValueExporter>',null,null,null)
-;
 
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MEDICATION_CSV','<?xml version="1.0"?>
 <ValueExporter>
@@ -191,7 +144,7 @@ The i2b2 Team
         ,b.concept_cd as "NDC_CODE"
       ,a.units_cd as "UNIT"
       ,a.quantity_num as "DOSE_QUANTITY"        
-        ,b.modifier_cd as "MODIFIER"
+        ,a.modifier_cd as "MODIFIER"
         ,a.location_cd as "FACILITY" 
        ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' else ''Unknown'' end as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
