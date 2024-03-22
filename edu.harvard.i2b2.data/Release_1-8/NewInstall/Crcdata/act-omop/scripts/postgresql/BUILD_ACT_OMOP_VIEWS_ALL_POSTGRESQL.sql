@@ -76,10 +76,10 @@ download_date, import_date, sourcesystem_cd, upload_id, ethnicity_cd)
 as
 SELECT person_id AS patient_num,
 CASE
-WHEN year_of_birth IS NULL THEN 'Y'
-ELSE 'N'
+WHEN year_of_birth IS NULL THEN 'Y'::varchar(50)
+ELSE 'N'::varchar(50)
 END AS vital_status_cd,
-concat(year_of_birth, '-', month_of_birth, '-', day_of_birth) AS birth_date,
+TO_DATE(year_of_birth || '-' || TO_CHAR(month_of_birth, 'FM00') || '-' || TO_CHAR(day_of_birth, 'FM00'), 'YYYY-MM-DD') AS birth_date,
 NULL AS death_date,
 gender_concept_id::text AS sex_cd,
 trunc(EXTRACT(
@@ -141,7 +141,7 @@ source_value, domain_id)
 as
 SELECT visit_occurrence_id AS encounter_num,
 person_id AS patient_num,
-device_exposure_id AS concept_cd,
+device_exposure_id::varchar(50) AS concept_cd,
 COALESCE(provider_id::character varying(50), '@'::character varying)  AS provider_id,
 device_exposure_start_datetime AS start_date,
 device_exposure_end_datetime AS end_date,
