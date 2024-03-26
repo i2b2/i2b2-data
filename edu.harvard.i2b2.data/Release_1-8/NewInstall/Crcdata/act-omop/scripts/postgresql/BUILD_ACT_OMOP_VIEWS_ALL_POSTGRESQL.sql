@@ -378,12 +378,12 @@ SELECT
 
    cast(VISIT_SOURCE_concept_id as varchar(50)) AS CONCEPT_CD,
    	COALESCE(provider_id::character varying(50), '@'::character varying)  AS provider_id,
-   	VISIT_start_datetime AS START_DATE,
-	VISIT_end_datetime AS END_DATE,
+   	VISIT_start_datetime::timestamp AS START_DATE,
+	VISIT_end_datetime::timestamp AS END_DATE,
     	CAST('@' as varchar(100)) AS modifier_cd,
      	1 AS INSTANCE_NUM,
         CAST(NULL as varchar(50)) AS valtype_cd,
-        CARE_SITE_ID AS location_cd,
+        CARE_SITE_ID::varchar(50) AS location_cd,
         CAST(NULL as varchar(255)) AS tval_char,
         CAST(NULL as numeric) AS NVAL_NUM,
         CAST(NULL as varchar(50)) AS valueflag_cd,
@@ -396,8 +396,8 @@ SELECT
         NULL OBSERVATION_BLOB,
         CAST(NULL as int) AS upload_id,
         CAST(NULL as int) AS quantity_num,
-   	VISIT_SOURCE_concept_id AS SOURCE_CONCEPT_ID,
-        VISIT_source_value AS SOURCE_VALUE,
+   	VISIT_SOURCE_concept_id::integer AS SOURCE_CONCEPT_ID,
+        VISIT_source_value::varchar(50) AS SOURCE_VALUE,
         'VISIT' AS DOMAIN_ID
 FROM
 	visit_occurrence
@@ -634,7 +634,7 @@ SELECT
 PERSON_ID AS PATIENT_NUM,
 CASE WHEN LENGTH(L.ZIP) = 3 THEN 'DEM|ZIP3:' || L.ZIP
 WHEN LENGTH(L.ZIP) >= 5 THEN 'DEM|ZIPCODE:' || SUBSTRING(L.ZIP,1,5)
-END as CONCEPT_CD,
+END::varchar(50) as CONCEPT_CD,
 COALESCE(provider_id::character varying(50), '@'::character varying)  AS provider_id,
 birth_datetime AS START_DATE,
 CAST(NULL as timestamp) AS end_date,
@@ -654,7 +654,7 @@ CAST(NULL as timestamp) AS IMPORT_DATE,
 NULL AS OBSERVATION_BLOB,
 CAST(NULL as int) AS upload_id,
 CAST(NULL as int) AS quantity_num,
-NULL AS SOURCE_CONCEPT_ID,
+NULL::integer AS SOURCE_CONCEPT_ID,
 L.LOCATION_SOURCE_VALUE AS SOURCE_VALUE,
 'LOCATION' AS DOMAIN_ID
 FROM PERSON P
