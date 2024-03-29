@@ -1,7 +1,4 @@
-/*
 
-
-*/
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DEMOGRAPHIC_CSV','<?xml version="1.0"?>
 <ValueExporter>
   <Version>3.02</Version>
@@ -150,16 +147,17 @@ The i2b2 Team
         ,a.modifier_cd as "MODIFIER"
         ,m.name_char as "MODIFIER_NAME"
         ,a.location_cd as "FACILITY" 
-        ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
+        ,w.name_char as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
         ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
     FROM observation_fact  a 
-    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Medications\%''
+    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Medications\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
-    JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
-    </Query>
+    LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like '\ACT\Visit Details\Visit type\_'
+    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
+	</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
 
@@ -211,15 +209,16 @@ The i2b2 Team
         ,a.modifier_cd as "MODIFIER"
         ,m.name_char as "MODIFIER_NAME"        
         ,a.location_cd as "FACILITY" 
-        ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
+        ,w.name_char as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
         ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
     FROM observation_fact  a 
-    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Procedures\%''
+    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Procedures\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
-    JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like '\ACT\Visit Details\Visit type\_'
+    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
      </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
@@ -271,15 +270,16 @@ The i2b2 Team
        ,a.modifier_cd as "MODIFIER"
        ,m.name_char as "MODIFIER_NAME"       
        ,a.location_cd as "FACILITY" 
-        ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
+       ,w.name_char as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
        ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
    FROM observation_fact  a 
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Diagnoses\%''
+   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Diagnosis\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
-   LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-   LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
-   JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
+    LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like '\ACT\Visit Details\Visit type\_'
+    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
    </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
@@ -334,15 +334,16 @@ The i2b2 Team
        ,a.modifier_cd as "MODIFIER"
        ,m.name_char as "MODIFIER_NAME"
        ,a.location_cd as "FACILITY" 
-       ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
+       ,w.name_char as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
        ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
    FROM observation_fact  a 
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Labtests\%''
+   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and (b.concept_path like ''\ACT\Lab\%'' OR b.concept_path like ''\ACT\Labs\%'')
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
-   LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-   LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd       
-   JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
+    LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like '\ACT\Visit Details\Visit type\_'
+    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
 	</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </Table>
