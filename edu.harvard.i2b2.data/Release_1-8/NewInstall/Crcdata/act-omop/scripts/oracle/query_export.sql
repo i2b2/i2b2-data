@@ -350,3 +350,70 @@ The i2b2 Team
 
 </ValueExporter>',null,null,null)
 ;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MEDICATION_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
+  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
+  </RequestLetter>
+</ValueExporter>',null,null,null)
+;
+
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MAPPING_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
+  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
+  </RequestLetter>
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_PROCEDURE_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
+  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
+  </RequestLetter>
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_LAB_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
+  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
+  </RequestLetter>
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DEMOGRAPHIC_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
+  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
+  </RequestLetter>
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DIAGNOSIS_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}</RequesterEmailLetter>
+  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_ID}}}.
+  </RequestLetter>
+</ValueExporter>',null,null,null)
+;
