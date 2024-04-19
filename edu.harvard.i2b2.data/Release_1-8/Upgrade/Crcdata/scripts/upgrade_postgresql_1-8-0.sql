@@ -4,7 +4,7 @@
 
 
 
-alter table QT_BREAKDOWN_PATH alter column TEXT
+alter table QT_BREAKDOWN_PATH alter column VALUE type TEXT
 ;
 
 
