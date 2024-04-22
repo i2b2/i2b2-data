@@ -4,7 +4,7 @@
 
 
 
-alter table QT_BREAKDOWN_PATH alter column TEXT
+alter table QT_BREAKDOWN_PATH alter column VALUE type TEXT
 ;
 
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(14,'PATIENT_DEMOGRAPHIC_REQUEST','DATA_LDS','Request Demographics Data','CATNUM','LR','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientRequest')
