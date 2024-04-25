@@ -265,6 +265,10 @@ Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (85,'T','CRC','edu.harvard.i2b2.crc.smtp.username','none',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (86,'T','CRC','edu.harvard.i2b2.crc.smtp.password','none',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (87,'T','CRC','edu.harvard.i2b2.crc.exportcsv.datamanageremail','datamanager@site.org',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (88,'T','CRC','edu.harvard.i2b2.crc.smtp.enabled','true',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (89,'T','CRC','edu.harvard.i2b2.crc.smtp.from.fullname','Data Manager',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (90,'T','CRC','edu.harvard.i2b2.crc.smtp.from.email','datamanager@site.org',null,null,null,'A');
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (91,'T','CRC','edu.harvard.i2b2.crc.smtp.subject','i2b2 Data Request',null,null,null,'A');
   
   
   
