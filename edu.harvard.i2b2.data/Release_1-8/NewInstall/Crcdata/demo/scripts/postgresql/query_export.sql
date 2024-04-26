@@ -37,7 +37,7 @@ Thank you,
 The i2b2 Team </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Demographics.csv</Filename>
-	<Query>SELECT   to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT   to_char(a.PATIENT_NUM, 'FM999999999999999999') as "I2B2_PATIENT_NUMBER"
       ,a.BIRTH_DATE as "BIRTH_DATE"
       , a.DEATH_DATE as "DEATH_DATE"
       ,a.SEX_CD as "GENDER"
@@ -52,7 +52,7 @@ The i2b2 Team </Letter>
       ,a.VITAL_STATUS_CD as "VITAL_STATUS"
   FROM patient_dimension a, {{{DX}}} c
   where a.patient_num = c.patient_num</Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
+      	<SeparatorCharacter>\\t</SeparatorCharacter>
   </Table>
 
 </ValueExporter>',null,null,null)
@@ -92,12 +92,12 @@ Thank you,
 The i2b2 Team </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/PatientMapping.csv</Filename>
-	<Query>SELECT DISTINCT to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT DISTINCT to_char(a.PATIENT_NUM, 'FM999999999999999999') as "I2B2_PATIENT_NUMBER"
       ,a.PATIENT_IDE_SOURCE as "PATIENT_SOURCE"
       ,a.PATIENT_IDE as "PATIENT_IDE"
   FROM patient_mapping a, {{{DX}}} c
   where a.patient_num = c.patient_num</Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
+      	<SeparatorCharacter>\\t</SeparatorCharacter>
   </Table>
 
 </ValueExporter>',null,null,null)
@@ -139,7 +139,7 @@ The i2b2 Team
 </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Medication.csv</Filename>
-	<Query>SELECT to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT to_char(a.PATIENT_NUM, 'FM999999999999999999') as "I2B2_PATIENT_NUMBER"
         ,a.start_date as "START_DATE"
         ,a.start_date as "END_DATE"
         ,b.name_char as "MEDICATION_NAME"
@@ -152,15 +152,15 @@ The i2b2 Team
         ,a.location_cd as "FACILITY" 
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
-        ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
+        ,to_char(a.encounter_num, 'FM999999999999999999') as "ENCOUNTER_NUMBER"
     FROM observation_fact  a 
-    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Medications\%''
+    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\\i2b2\\Medications\\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
     JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
     </Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
+      	<SeparatorCharacter>\\t</SeparatorCharacter>
   </Table>
 
 </ValueExporter>',null,null,null)
@@ -201,7 +201,7 @@ The i2b2 Team
 </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Procedure.csv</Filename>
-	<Query>SELECT to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT to_char(a.PATIENT_NUM, 'FM999999999999999999') as "I2B2_PATIENT_NUMBER"
         ,a.start_date as "START_DATE"
         ,a.start_date as "END_DATE"
         ,b.name_char as "PROCEDURE_NAME"
@@ -213,15 +213,15 @@ The i2b2 Team
         ,a.location_cd as "FACILITY" 
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
-        ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
+        ,to_char(a.encounter_num, 'FM999999999999999999') as "ENCOUNTER_NUMBER"
     FROM observation_fact  a 
-    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Procedures\%''
+    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\\i2b2\\Procedures\\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
     JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
      </Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
+      	<SeparatorCharacter>\\t</SeparatorCharacter>
   </Table>
 
 </ValueExporter>',null,null,null)
@@ -262,7 +262,7 @@ The i2b2 Team
 </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Diagnosis.csv</Filename>
-	<Query>SELECT to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT to_char(a.PATIENT_NUM, 'FM999999999999999999') as "I2B2_PATIENT_NUMBER"
        ,a.start_date as "START_DATE"
        ,a.start_date as "END_DATE"
        ,b.name_char as "DIAGNOSIS_NAME"
@@ -273,15 +273,15 @@ The i2b2 Team
        ,a.location_cd as "FACILITY" 
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
-       ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
+       ,to_char(a.encounter_num, 'FM999999999999999999') as "ENCOUNTER_NUMBER"
    FROM observation_fact  a 
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Diagnoses\%''
+   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\\i2b2\\Diagnoses\\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
    LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
    JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
    </Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
+      	<SeparatorCharacter>\\t</SeparatorCharacter>
   </Table>
 
 </ValueExporter>',null,null,null)
@@ -322,7 +322,7 @@ The i2b2 Team
 </Letter>
   <Table>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Lab.csv</Filename>
-	<Query>SELECT to_char(a.PATIENT_NUM) as "I2B2_PATIENT_NUMBER"
+	<Query>SELECT to_char(a.PATIENT_NUM, 'FM999999999999999999') as "I2B2_PATIENT_NUMBER"
        ,a.start_date as "START_DATE"
        ,a.start_date as "END_DATE"
        ,b.name_char as "LAB_NAME"
@@ -336,15 +336,15 @@ The i2b2 Team
        ,a.location_cd as "FACILITY" 
        ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
-       ,to_char(a.encounter_num) as "ENCOUNTER_NUMBER"
+       ,to_char(a.encounter_num, 'FM999999999999999999') as "ENCOUNTER_NUMBER"
    FROM observation_fact  a 
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Labtests\%''
+   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\\i2b2\\Labtests\\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
    LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd       
    JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
 	</Query>
-      	<SeparatorCharacter>\t</SeparatorCharacter>
+      	<SeparatorCharacter>\\t</SeparatorCharacter>
   </Table>
 
 </ValueExporter>',null,null,null)
