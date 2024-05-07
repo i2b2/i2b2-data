@@ -1,15 +1,24 @@
+/*
 
+
+*/
+
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DEMOGRAPHIC_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailMessage>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailMessage>
+  <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
+  </DataManagerEmailMessage>
+</ValueExporter>',null,null,null)
+;
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DEMOGRAPHIC_CSV','<?xml version="1.0"?>
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-  <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
+  <DataManagerEmailMessage>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
 Important notes about your data:
@@ -31,8 +40,8 @@ These results are the data that was requested under the authority of the Institu
 
 Thank you,
 
-The i2b2 Team </Letter>
-  <Table>
+The i2b2 Team </DataManagerEmailMessage>
+  <File>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Demographics.csv</Filename>
 	<Query>SELECT   cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
       ,a.BIRTH_DATE as "BIRTH_DATE"
@@ -50,21 +59,26 @@ The i2b2 Team </Letter>
   FROM patient_dimension a, {{{DX}}} c
   where a.patient_num = c.patient_num</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
+  </File>
 
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MAPPING_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailMessage>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailMessage>
+  <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
+  </DataManagerEmailMessage>
 </ValueExporter>',null,null,null)
 ;
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MAPPING_CSV','<?xml version="1.0"?>
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-  <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
+  <DataManagerEmailMessage>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
 Important notes about your data:
@@ -86,8 +100,8 @@ These results are the data that was requested under the authority of the Institu
 
 Thank you,
 
-The i2b2 Team </Letter>
-  <Table>
+The i2b2 Team </DataManagerEmailMessage>
+  <File>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/PatientMapping.csv</Filename>
 	<Query>SELECT DISTINCT cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
       ,a.PATIENT_IDE_SOURCE as "PATIENT_SOURCE"
@@ -95,8 +109,19 @@ The i2b2 Team </Letter>
   FROM patient_mapping a, {{{DX}}} c
   where a.patient_num = c.patient_num</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
+  </File>
 
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MEDICATION_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailMessage>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailMessage>
+  <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
+  </DataManagerEmailMessage>
 </ValueExporter>',null,null,null)
 ;
 
@@ -104,13 +129,7 @@ insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) value
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-  <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
+  <DataManagerEmailMessage>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
 Important notes about your data:
@@ -133,8 +152,8 @@ These results are the data that was requested under the authority of the Institu
 Thank you,
 
 The i2b2 Team 
-</Letter>
-  <Table>
+</DataManagerEmailMessage>
+  <File>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Medication.csv</Filename>
 	<Query>SELECT cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
         ,a.start_date as "START_DATE"
@@ -159,21 +178,26 @@ The i2b2 Team
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
     </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
+  </File>
 
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_PROCEDURE_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailMessage>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailMessage>
+  <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
+  </DataManagerEmailMessage>
 </ValueExporter>',null,null,null)
 ;
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_PROCEDURE_CSV','<?xml version="1.0"?>
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-  <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
+  <DataManagerEmailMessage>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
 Important notes about your data:
@@ -196,8 +220,8 @@ These results are the data that was requested under the authority of the Institu
 Thank you,
 
 The i2b2 Team 
-</Letter>
-  <Table>
+</DataManagerEmailMessage>
+  <File>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Procedure.csv</Filename>
 	<Query>SELECT cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
         ,a.start_date as "START_DATE"
@@ -212,7 +236,7 @@ The i2b2 Team
         ,w.name_char as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
         ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-    FROM (SELECT * FROM PROCEDURE_VIEW UNION ALL SELECT * FROM PROCEDURE_NS_VIEW) A
+    FROM (SELECT * FROM PROCEDURE_VIEW UNION ALL SELECT * FROM PROCEDURE_NS_VIEW) A 
     INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Procedures\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
@@ -221,21 +245,27 @@ The i2b2 Team
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
      </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
+  </File>
 
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DIAGNOSIS_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
+  <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
+  </DataManagerEmailMessage>
 </ValueExporter>',null,null,null)
 ;
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DIAGNOSIS_CSV','<?xml version="1.0"?>
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
   <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
+  <DataManagerEmailMessage>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
 Important notes about your data:
@@ -258,8 +288,8 @@ These results are the data that was requested under the authority of the Institu
 Thank you,
 
 The i2b2 Team 
-</Letter>
-  <Table>
+</DataManagerEmailMessage>
+  <File>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Diagnosis.csv</Filename>
 	<Query>SELECT cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
        ,a.start_date as "START_DATE"
@@ -270,10 +300,10 @@ The i2b2 Team
        ,a.modifier_cd as "MODIFIER"
        ,m.name_char as "MODIFIER_NAME"       
        ,a.location_cd as "FACILITY" 
-       ,w.name_char as "ENCOUNTER_TYPE"
+       ,w.name_char as "ENCOUNTER_TYPE"       
        ,p.name_char as "PROVIDER"
        ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-   FROM (SELECT * FROM CONDITION_VIEW UNION ALL SELECT * FROM CONDITION_NS_VIEW) A
+   FROM (SELECT * FROM CONDITION_VIEW UNION ALL SELECT * FROM CONDITION_NS_VIEW) A 
    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Diagnosis\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
@@ -282,21 +312,27 @@ The i2b2 Team
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
    </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
+  </File>
 
+</ValueExporter>',null,null,null)
+;
+insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_LAB_REQUEST','<?xml version="1.0"?>
+<ValueExporter>
+  <Version>3.02</Version>
+  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailMessage>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailMessage>
+  <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
+  </DataManagerEmailMessage>
 </ValueExporter>',null,null,null)
 ;
 insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_LAB_CSV','<?xml version="1.0"?>
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
   <LetterFilename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Readme.txt</LetterFilename>
-  <Letter>
+  <DataManagerEmailMessage>
 Results of the i2b2 request entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, are available.
 
 Important notes about your data:
@@ -319,8 +355,8 @@ These results are the data that was requested under the authority of the Institu
 Thank you,
 
 The i2b2 Team 
-</Letter>
-  <Table>
+</DataManagerEmailMessage>
+  <File>
 	<Filename>/{{{USER_NAME}}}/{{{QUERY_MASTER_ID}}}/Lab.csv</Filename>
 	<Query>SELECT cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
        ,a.start_date as "START_DATE"
@@ -337,8 +373,8 @@ The i2b2 Team
        ,w.name_char as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
        ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-   FROM (SELECT * FROM MEASUREMENT_VIEW UNION ALL SELECT * FROM MEASUREMENT_NS_VIEW) A
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and (b.concept_path like ''\ACT\Lab\%'' OR b.concept_path like ''\ACT\Labs\%'')
+   FROM (SELECT * FROM MEASUREMENT_VIEW UNION ALL SELECT * FROM MEASUREMENT_NS_VIEW) A 
+   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Lab\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
@@ -346,74 +382,11 @@ The i2b2 Team
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
 	</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
-  </Table>
+  </File>
 
 </ValueExporter>',null,null,null)
 ;
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MEDICATION_REQUEST','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-</ValueExporter>',null,null,null)
-;
 
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_MAPPING_REQUEST','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-</ValueExporter>',null,null,null)
-;
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_PROCEDURE_REQUEST','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-</ValueExporter>',null,null,null)
-;
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_LAB_REQUEST','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-</ValueExporter>',null,null,null)
-;
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DEMOGRAPHIC_REQUEST','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-</ValueExporter>',null,null,null)
-;
-insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) values ('PATIENT_DIAGNOSIS_REQUEST','<?xml version="1.0"?>
-<ValueExporter>
-  <Version>3.02</Version>
-  <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
-  <RequesterEmailLetter>Your request on {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailLetter>
-  <RequestLetter>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
- entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
-  </RequestLetter>
-</ValueExporter>',null,null,null)
-;
+
+
+
