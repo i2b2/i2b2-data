@@ -251,6 +251,8 @@ insert into QT_BREAKDOWN_PATH (NAME,VALUE,CREATE_DATE,UPDATE_DATE,USER_ID) value
 <ValueExporter>
   <Version>3.02</Version>
   <CreationDateTime>08/09/2024 12:00:00</CreationDateTime>
+  <RequesterEmailMessage>Your request on {{{PROJECT_ID}}} requested i2b2 request
+ entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}</RequesterEmailMessage>
   <DataManagerEmailMessage>This user {{{USER_NAME}}} in project {{{PROJECT_ID}}} requested i2b2 request
  entitled - "{{{QUERY_NAME}}}", submitted on {{{QUERY_STARTDATE}}}, with the query master of {{{QUERY_MASTER_ID}}}.
   </DataManagerEmailMessage>
