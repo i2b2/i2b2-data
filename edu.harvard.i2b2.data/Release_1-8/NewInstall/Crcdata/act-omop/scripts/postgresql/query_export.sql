@@ -174,7 +174,7 @@ The i2b2 Team
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
-    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
+    LEFT JOIN concept_dimension w on w.concept_cd = to_char(v.inout_cd, ''FM999999999999999999'') and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
     </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
@@ -241,7 +241,7 @@ The i2b2 Team
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
-    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
+    LEFT JOIN concept_dimension w on w.concept_cd = to_char(v.inout_cd, ''FM999999999999999999'') and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
      </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
@@ -308,7 +308,7 @@ The i2b2 Team
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
-    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
+    LEFT JOIN concept_dimension w on w.concept_cd = to_char(v.inout_cd, ''FM999999999999999999'') and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
    </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
@@ -378,7 +378,7 @@ The i2b2 Team
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
     LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
     LEFT JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
-    LEFT JOIN concept_dimension w on w.concept_cd = v.inout_cd and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
+    LEFT JOIN concept_dimension w on w.concept_cd = to_char(v.inout_cd, ''FM999999999999999999'') and w.concept_path like ''\\ACT\\Visit Details\\Visit type\\%''
     LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd
 	</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
