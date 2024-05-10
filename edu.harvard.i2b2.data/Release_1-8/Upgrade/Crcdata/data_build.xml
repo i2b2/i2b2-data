@@ -24,7 +24,7 @@ $Id: data_build.xml,v 1.6 2010/06/01 18:13:30 rk903 Exp $
                 <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}"
                                         print="true"
                         delimitertype="row"
-                        delimiter="GO"
+                        delimiter=";"
                         keepformat="true"
                 autocommit="true" classpathref="classpath" onerror="continue">
                          <path>
