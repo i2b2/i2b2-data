@@ -56,7 +56,7 @@ The i2b2 Team </DataManagerEmailMessage>
       ,a.STATECITYZIP_PATH as "STATE_CITY_ZIP"
       ,a.INCOME_CD as "INCOME"
       ,a.VITAL_STATUS_CD as "VITAL_STATUS"
-  FROM patient_dimension a, {{{DX}}} c
+  FROM {{{FULL_SCHEMA}}}patient_dimension a, {{{DX}}} c
   where a.patient_num = c.patient_num</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </File>
@@ -106,7 +106,7 @@ The i2b2 Team </DataManagerEmailMessage>
 	<Query>SELECT DISTINCT cast(a.PATIENT_NUM as varchar) as "I2B2_PATIENT_NUMBER"
       ,a.PATIENT_IDE_SOURCE as "PATIENT_SOURCE"
       ,a.PATIENT_IDE as "PATIENT_IDE"
-  FROM patient_mapping a, {{{DX}}} c
+  FROM {{{FULL_SCHEMA}}}patient_mapping a, {{{DX}}} c
   where a.patient_num = c.patient_num</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </File>
@@ -169,12 +169,12 @@ The i2b2 Team
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
         ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-    FROM observation_fact  a 
-    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Medications\%''
+    FROM {{{FULL_SCHEMA}}}observation_fact  a 
+    INNER  JOIN {{{FULL_SCHEMA}}}concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Medications\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
-    LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
-    JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT OUTER JOIN {{{FULL_SCHEMA}}}provider_dimension p on a.provider_id = p.provider_id
+    LEFT JOIN {{{FULL_SCHEMA}}}modifier_dimension m on m.modifier_cd = a.modifier_cd    
+    JOIN {{{FULL_SCHEMA}}}visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
     </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </File>
@@ -235,12 +235,12 @@ The i2b2 Team
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
         ,p.name_char as "PROVIDER"
         ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-    FROM observation_fact  a 
-    INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Procedures\%''
+    FROM {{{FULL_SCHEMA}}}observation_fact  a 
+    INNER  JOIN {{{FULL_SCHEMA}}}concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Procedures\%''
     JOIN {{{DX}}} c on a.patient_num = c.patient_num
-    LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-    LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
-    JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+    LEFT OUTER JOIN {{{FULL_SCHEMA}}}provider_dimension p on a.provider_id = p.provider_id
+    LEFT JOIN {{{FULL_SCHEMA}}}modifier_dimension m on m.modifier_cd = a.modifier_cd    
+    JOIN {{{FULL_SCHEMA}}}visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
      </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </File>
@@ -300,12 +300,12 @@ The i2b2 Team
         ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
        ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-   FROM observation_fact  a 
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Diagnoses\%''
+   FROM {{{FULL_SCHEMA}}}observation_fact  a 
+   INNER  JOIN {{{FULL_SCHEMA}}}concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Diagnoses\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
-   LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-   LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd    
-   JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+   LEFT OUTER JOIN {{{FULL_SCHEMA}}}provider_dimension p on a.provider_id = p.provider_id
+   LEFT JOIN {{{FULL_SCHEMA}}}modifier_dimension m on m.modifier_cd = a.modifier_cd    
+   JOIN {{{FULL_SCHEMA}}}visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
    </Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </File>
@@ -368,12 +368,12 @@ The i2b2 Team
        ,case v.inout_cd  when ''O'' then ''Outpatient'' when ''I'' then ''Inpatient'' when ''E'' then ''Emergency'' else ''Unknown'' end as "ENCOUNTER_TYPE"
        ,p.name_char as "PROVIDER"
        ,cast(a.encounter_num as varchar) as "ENCOUNTER_NUMBER"
-   FROM observation_fact  a 
-   INNER  JOIN concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Labtests\%''
+   FROM {{{FULL_SCHEMA}}}observation_fact  a 
+   INNER  JOIN {{{FULL_SCHEMA}}}concept_dimension b on a.concept_cd = b.concept_cd and b.concept_path like ''\i2b2\Labtests\%''
    JOIN {{{DX}}} c on a.patient_num = c.patient_num
-   LEFT OUTER JOIN provider_dimension p on a.provider_id = p.provider_id
-   LEFT JOIN modifier_dimension m on m.modifier_cd = a.modifier_cd       
-   JOIN visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
+   LEFT OUTER JOIN {{{FULL_SCHEMA}}}provider_dimension p on a.provider_id = p.provider_id
+   LEFT JOIN {{{FULL_SCHEMA}}}modifier_dimension m on m.modifier_cd = a.modifier_cd       
+   JOIN {{{FULL_SCHEMA}}}visit_dimension v on a.encounter_num = v.encounter_num and a.patient_num = v.patient_num
 	</Query>
       	<SeparatorCharacter>\t</SeparatorCharacter>
   </File>
