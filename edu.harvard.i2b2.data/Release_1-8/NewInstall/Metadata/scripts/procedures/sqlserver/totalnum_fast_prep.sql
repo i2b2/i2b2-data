@@ -9,7 +9,7 @@
 -- 2) Run with: exec FastTotalnumPrep or exec FastTotalnumPrep 'dbo' 
 --       (Optionally you can specify the schemaname)
 --
--- Note that this presently hardcoded (change if your table names are different): ACT_VISIT_DETAILS_V4 and ACT_DEM_V4
+-- Note that this presently hardcoded (change if your table names are different): ACT_VISIT_DETAILS_V41 and ACT_DEM_V41
 -- Note that if you use more than one fact table, the obsfact_pairs view will need to be customized.
 -----------------------------------------------------------------------------------------------------------------
 
@@ -154,7 +154,7 @@ SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, case when charind
                         then concat(c_tablename,'|',c_columnname,':',c_basecode) 
                         else c_basecode 
                         end as c_basecode, c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, c_operator, c_dimcode, m_applied_path
-FROM DBO.ACT_DEM_V4
+FROM DBO.ACT_DEM_V41
 )M LEFT JOIN CTE_BASECODE_OVERRIDE BO
   ON M.c_fullname = BO.c_fullname
 where C_FACTTABLECOLUMN != 'concept_cd';
