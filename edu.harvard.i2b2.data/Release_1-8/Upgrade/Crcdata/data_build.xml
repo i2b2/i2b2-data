@@ -77,7 +77,7 @@ $Id: data_build.xml,v 1.6 2010/06/01 18:13:30 rk903 Exp $
         </target>
 
         <target name="upgrade_tables_release_1-8-0" depends="init,rebuild_procedures">
-                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue" print="true" delimiter=";">
+                <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" keepformat="true" onerror="continue" print="true" delimiter=";">
                                         <transaction src="./scripts/upgrade_${db.type}_1-8-0.sql" />
                                         <transaction src="../../NewInstall/Crcdata/${db.project}/scripts/${db.type}/query_export.sql"/>
                 </sql>
