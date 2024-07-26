@@ -132,11 +132,22 @@ END;
 		    </fileset>
 		</unzip>
 
-		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
+		<!--<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
 			<transaction src="./${db.project}/scripts/schemes_insert_data.sql" />
 		</sql>
                 <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" onerror="continue">
                         <transaction src="./${db.project}/scripts/table_access_insert_data.sql" />
+		</sql>-->
+		
+		<!-- Table Access and Schemes -->
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" autocommit="true" keepformat="true" classpathref="classpath" onerror="continue">
+			 <path>
+			 	<sort>
+				    <fileset dir="./${db.project}/scripts">
+				      <include name="*.sql"/>
+				    </fileset>
+			 	</sort>
+			  </path>
 		</sql>
 			
         <sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" autocommit="true" keepformat="true" classpathref="classpath" onerror="continue">
