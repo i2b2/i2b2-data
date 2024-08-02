@@ -2,6 +2,7 @@
 -- Database Script to upgrade ONT from 1.8.0 to 1.8.1                 
 --==============================================================
 
+Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (72,'T','CRC','edu.harvard.i2b2.crc.exportcsv.defaultescapecharacter','"',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (73,'T','CRC','edu.harvard.i2b2.crc.exportcsv.maxfetchrows','-1',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (74,'T','CRC','edu.harvard.i2b2.crc.exportcsv.defaultlineend','\n',null,null,null,'A');
 Insert into HIVE_CELL_PARAMS (ID,DATATYPE_CD,CELL_ID,PARAM_NAME_CD,VALUE,CHANGE_DATE,ENTRY_DATE,CHANGEBY_CHAR,STATUS_CD) values (75,'T','CRC','edu.harvard.i2b2.crc.exportcsv.defaultseperator','\t',null,null,null,'A');
