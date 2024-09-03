@@ -154,7 +154,7 @@ END;
 			 <path>
 			 	<sort>
 				    <fileset dir="./${db.project}/scripts/${db.type}">
-				      <include name="*.sql"/>
+				      <include name="**/*.sql"/>
 				    </fileset>
 			 	</sort>
 			  </path>
