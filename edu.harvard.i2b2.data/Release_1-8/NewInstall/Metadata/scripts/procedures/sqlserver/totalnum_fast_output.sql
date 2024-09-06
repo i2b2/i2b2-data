@@ -59,6 +59,11 @@ BEGIN
 		set @sqlstr='update '+@sqltext+'  set c_totalnum=null';
 		PRINT @sqlstr;
 		execute sp_executesql @sqlstr
+		
+		-- Zero the counts in the ontology
+		set @sqlstr='update '+@sqltext+'  set c_totalnum=0 where c_operator=''LIKE'' and c_visualattributes LIKE ''%A%''';
+		PRINT @sqlstr;
+		execute sp_executesql @sqlstr
 
 		-- This updates counts in the ontology but will only work on the same day the counts are performed
 		set @sqlstr='UPDATE o  set c_totalnum=agg_count from '+ @sqltext+
