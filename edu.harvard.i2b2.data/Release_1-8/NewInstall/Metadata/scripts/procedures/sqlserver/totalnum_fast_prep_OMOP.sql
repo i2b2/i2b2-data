@@ -14,6 +14,13 @@
 -----------------------------------------------------------------------------------------------------------------
 
 
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'FastTotalnumPrepOMOP')
+                    AND type IN ( N'P', N'PC' ) ) 
+DROP PROCEDURE FastTotalnumPrepOMOP;
+GO
+
 CREATE  PROCEDURE [dbo].[FastTotalnumPrepOMOP]  (@schemaname varchar(50) = 'dbo') as --, @tablename varchar(50)='@') as
 DECLARE @sqlstr NVARCHAR(4000);
 DECLARE @sqltext NVARCHAR(4000);
