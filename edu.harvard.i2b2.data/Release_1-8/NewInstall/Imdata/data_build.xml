@@ -16,6 +16,7 @@ $Id: data_build.xml,v 1.1 2013/01/05 13:53:58 lcp5 Exp $
 			<pathelement location="../../ojdbc8.jar" />
 			<pathelement location="../../mssql-jdbc-8.2.2.jre8.jar"/>
 			<pathelement location="../../postgresql-42.2.14.jar"/>
+			<pathelement location="../../snowflake-jdbc-3.20.0.jar"/>
 		</path>
 	</target>
 
@@ -41,5 +42,3 @@ $Id: data_build.xml,v 1.1 2013/01/05 13:53:58 lcp5 Exp $
 	</target>
 
 </project>
-
-
