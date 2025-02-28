@@ -125,9 +125,9 @@ DEALLOCATE CUR
 
 
 /* THIS ONTOLOGY WILL BE USED TO CONVERT PATIENT DATA IN THE PATIENT_DIMENSION TABLE INTO FACTS THAT CAN BE AGGREGATED IN THE SAME FASHION AS THE FACT(S) TABLES */
+/* THE COMMON TABLE EXPRESSION CTE_BASECODE_OVERRIDE CREATES PSEUDO ONTOLOGY ITEMS FOR FOLDER/CONTAINER LEVEL ONTOLOGY ITEMS THAT WILL REQUIRE SPECIAL HANDLING */
 ;WITH CTE_BASECODE_OVERRIDE AS (
 SELECT '\ACT\Visit Details\Length of stay\ > 10 days\' AS c_fullname, 'visit_dimension|length_of_stay:>10' c_basecode union all
-SELECT '\ACT\Visit Details\Length of stay\' AS c_fullname, 'visit_dimension|length_of_stay:>0' c_basecode union all
 SELECT '\ACT\Visit Details\Length of stay\' AS c_fullname, 'visit_dimension|length_of_stay:>0' c_basecode union all
 SELECT '\ACT\Visit Details\Age at visit\>= 65 years old\' AS c_fullname, 'VIS|AGE:>=65' AS c_basecode union all
 SELECT '\ACT\Visit Details\Age at visit\>= 85 years old\' AS c_fullname, 'VIS|AGE:>=85' AS c_basecode union all
@@ -157,7 +157,7 @@ SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, case when charind
 FROM DBO.ACT_DEM_V41
 )M LEFT JOIN CTE_BASECODE_OVERRIDE BO
   ON M.c_fullname = BO.c_fullname
-where C_FACTTABLECOLUMN != 'concept_cd';
+where M.C_FULLNAME LIKE '\ACT\Demographics%';
 /* END TNUM_ONTOLOGY LOAD */
 
 CREATE INDEX IDX_ONT_ITEMS ON TNUM_ONTOLOGY (C_FULLNAME) INCLUDE (C_HLEVEL, C_BASECODE);
