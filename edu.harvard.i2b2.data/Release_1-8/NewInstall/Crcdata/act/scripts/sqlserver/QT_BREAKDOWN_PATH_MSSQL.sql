@@ -1,7 +1,39 @@
 INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_GENDER_COUNT_XML', N'\\ACT_DEMO\ACT\Demographics\sex\', N'2020-05-15 15:38:25.260', N'2020-05-19 13:14:51.943', null);
 INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_RACE_COUNT_XML', N'\\ACT_DEMO\ACT\Demographics\Race\', N'2020-05-15 15:38:25.260', N'2020-05-19 13:14:55.790', null);
 INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_VITALSTATUS_COUNT_XML', N'\\ACT_DEMO\ACT\Demographics\Vital Status\', N'2020-05-15 15:38:25.260', N'2020-05-19 13:14:58.970', null);
-INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_AGE_COUNT_XML', N'\\ACT_DEMO\ACT\Demographics\Age\', N'2020-05-15 15:38:25.263', N'2020-05-19 13:15:03.103', null);
+-- INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_AGE_COUNT_XML', N'\\ACT_DEMO\ACT\Demographics\Age\', N'2020-05-15 15:38:25.263', N'2020-05-19 13:15:03.103', null);
+-- PATIENT_AGE_COUNT_XML
+-- This overrides the default age breakdown.
+INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_AGE_COUNT_XML', N'select top 100
+(case
+when x.a=9 then ''90+ years old''
+else cast(x.a*10 as varchar(10))+''-''+cast(x.a*10+9 as varchar(10))+'' years old''
+end) patient_range, t.patient_count
+from (
+select 0 a
+union all select 1
+union all select 2
+union all select 3
+union all select 4
+union all select 5
+union all select 6
+union all select 7
+union all select 8
+union all select 9
+) x left outer join (
+select a, count(*) patient_count
+from (
+select (case when a>9 then 9 else a end) a
+from (
+select floor(AGE_IN_YEARS_NUM/10) a
+from {{{DATABASE_NAME}}}patient_dimension
+where patient_num in (select patient_num from {{{DX}}})
+) t
+) t
+where a between 0 and 9
+group by a
+) t on x.a=t.a
+order by x.a', N'2020-05-15 15:38:25.263', N'2020-05-19 13:15:03.103', null);
 INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_TOTALNUM_XML', N'select c_fullname as patient_range, agg_count as patient_count from  {{{DATABASE_NAME}}}totalnum_report where agg_count is not null and agg_count >= 10 
 			and c_fullname like ''\ACT\UMLS_C0031437\%''', N'2020-05-19 13:20:32.657', null, null);
 INSERT INTO QT_BREAKDOWN_PATH (NAME, VALUE, CREATE_DATE, UPDATE_DATE, USER_ID) VALUES (N'PATIENT_LOS_XML', N'select length_of_stay as patient_range, count(distinct a.PATIENT_num) as patient_count from {{{DATABASE_NAME}}}visit_dimension a, {{{DATABASE_NAME}}}#DX b where a.patient_num = b.patient_num group by a.length_of_stay order by 1', N'2023-12-13 11:29:01.827', null, null);
@@ -41,4 +73,3 @@ ingredient as (select p.concept_path drug_path, p.concept_cd drug, o.concept_cd 
  ingredient i join {{{DATABASE_NAME}}}observation_fact f on f.concept_cd = i.drug
  join #DX c on c.patient_num = f.patient_num
  group by i.ingred_name   order by 2 desc', null, null, null);
-

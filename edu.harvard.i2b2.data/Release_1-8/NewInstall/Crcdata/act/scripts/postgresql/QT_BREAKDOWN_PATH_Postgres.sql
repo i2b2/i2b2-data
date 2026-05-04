@@ -1,4 +1,41 @@
-INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_AGE_COUNT_XML', '\\ACT_DEMO\ACT\Demographics\Age\', '2024-02-06 22:01:34.091135', null, null);
+-- INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_AGE_COUNT_XML', '\\ACT_DEMO\ACT\Demographics\Age\', '2024-02-06 22:01:34.091135', null, null);
+-- PATIENT_AGE_COUNT_XML
+-- This overrides the default age breakdown.
+INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_AGE_COUNT_XML', $SQL$
+select
+case
+when x.a = 9 then '90+ years old'
+else cast(x.a*10 as varchar(10)) || '-' || cast(x.a*10+9 as varchar(10)) || ' years old'
+end as patient_range,
+t.patient_count
+from (
+select 0 as a
+union all select 1
+union all select 2
+union all select 3
+union all select 4
+union all select 5
+union all select 6
+union all select 7
+union all select 8
+union all select 9
+) x
+left outer join (
+select a, count(*) as patient_count
+from (
+select case when a > 9 then 9 else a end as a
+from (
+select floor(age_in_years_num/10) as a
+from {{{DATABASE_NAME}}}patient_dimension
+where patient_num in (select patient_num from {{{DX}}})
+) t
+) t
+where a between 0 and 9
+group by a
+) t on x.a = t.a
+order by x.a
+limit 100
+$SQL$, '2024-02-06 22:01:34.091135', null, null);
 INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_VITALSTATUS_COUNT_XML', '\\ACT_DEMO\ACT\Demographics\Vital Status\', '2024-02-06 22:01:34.074910', null, null);
 INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_RACE_COUNT_XML', '\\ACT_DEMO\ACT\Demographics\Race\', '2024-02-06 22:01:34.055906', null, null);
 INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_GENDER_COUNT_XML', '\\ACT_DEMO\ACT\Demographics\Sex\', '2024-02-06 22:01:34.041046', null, null);

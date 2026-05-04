@@ -19,7 +19,43 @@ INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) V
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_GENDER_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, '\\ACT_DEMO\ACT\Demographics\Sex\');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_RACE_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, '\\ACT_DEMO\ACT\Demographics\Race\');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_VITALSTATUS_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, '\\ACT_DEMO\ACT\Demographics\Vital Status\');
-INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_AGE_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, '\\ACT_DEMO\ACT\Demographics\Age\');
+-- INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_AGE_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, '\\ACT_DEMO\ACT\Demographics\Age\');
+-- PATIENT_AGE_COUNT_XML
+-- This overrides the default age breakdown.
+INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_AGE_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, 'select * from (
+select
+case
+when x.a = 9 then ''90+ years old''
+else to_char(x.a*10) || ''-'' || to_char(x.a*10+9) || '' years old''
+end as patient_range,
+t.patient_count
+from (
+select 0 as a from dual
+union all select 1 from dual
+union all select 2 from dual
+union all select 3 from dual
+union all select 4 from dual
+union all select 5 from dual
+union all select 6 from dual
+union all select 7 from dual
+union all select 8 from dual
+union all select 9 from dual
+) x
+left outer join (
+select a, count(*) as patient_count
+from (
+select case when a > 9 then 9 else a end as a
+from (
+select floor(age_in_years_num/10) as a
+from {{{DATABASE_NAME}}}patient_dimension
+where patient_num in (select patient_num from {{{DX}}})
+) t
+) t
+where a between 0 and 9
+group by a
+) t on x.a = t.a
+order by x.a
+) where rownum <= 100');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_LOS_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, 'select length_of_stay as patient_range, count(distinct a.PATIENT_num)
     as patient_count from visit_dimension a,{{{DX}}} b where a.patient_num = b.patient_num group by a.length_of_stay order by 1');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_TOP20DIAG_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, 'select * from (select b.name_char as patient_range, count(distinct a.patient_num) as patient_count from {{{DATABASE_NAME}}}observation_fact a, {{{DATABASE_NAME}}}concept_dimension b, {{{DX}}} c where a.concept_cd = b.concept_cd and b.concept_path like ''\ACT\Diagnosis\%'' and a.patient_num = c.patient_num   group by name_char order by patient_count desc ) where rownum <= 20');
