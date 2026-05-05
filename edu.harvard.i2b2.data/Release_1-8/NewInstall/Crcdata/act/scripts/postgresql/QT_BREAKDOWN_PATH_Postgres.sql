@@ -52,7 +52,47 @@ from {{{DATABASE_NAME}}}observation_fact a, {{{DATABASE_NAME}}}concept_dimension
     c where a.concept_cd = b.concept_cd
      and concept_path like \'\\\\ACT\\\\Diagnosis\\\\%\' and a.patient_num = c.patient_num
   group by name_char order by patient_count desc limit 20', '2024-02-06 22:01:34.110501', null, null);
-INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_NIH_ENROLLMENT_XML', '\\ACT_RESEARCH\ACT\Research\NIH Enrollment\', '2024-06-06 17:34:32.000000', null, null);
+-- INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_NIH_ENROLLMENT_XML', '\\ACT_RESEARCH\ACT\Research\NIH Enrollment\', '2024-06-06 17:34:32.000000', null, null);
+-- PATIENT_NIH_ENROLLMENT_XML
+-- Update the innermost subquery based on how you store sex, race, and ethnicity.
+INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_NIH_ENROLLMENT_XML', $SQL$
+select r.name || '-' || s.name || '-' || e.name as patient_range,
+       sum(case when p.race_cd is not null then 1 else 0 end) as patient_count
+from
+(
+select 'NI' as race_cd, 'No Race Info' as name
+union all select 'AS', 'Asian'
+union all select 'B', 'Black or African American'
+union all select 'H', 'Native Hawaiian or Other Pacific Islander'
+union all select 'M', 'Multiple race'
+union all select 'NA', 'American Indian or Alaska Native'
+union all select 'W', 'White'
+) r
+cross join (
+select 'NI' as sex_cd, 'No Sex Info' as name
+union all select 'F', 'Female'
+union all select 'M', 'Male'
+) s
+cross join (
+select 'NI' as ethnic_cd, 'No Ethnicity Info' as name
+union all select 'Y', 'Hispanic'
+union all select 'N', 'Not Hispanic'
+) e
+left outer join (
+select
+case when race_cd in ('AS','B','H','M','NA','W') then race_cd else 'NI' end as race_cd,
+case when sex_cd in ('F','M') then sex_cd else 'NI' end as sex_cd,
+case when ethnic_cd in ('Y','N') then ethnic_cd else 'NI' end as ethnic_cd
+from (
+select race_cd, sex_cd, case when race_cd='Hispanic' then 'Y' else 'N' end as ethnic_cd
+from {{{DATABASE_NAME}}}patient_dimension
+where patient_num in (select patient_num from {{{DX}}})
+) t
+) p
+on p.race_cd = r.race_cd and p.sex_cd = s.sex_cd and p.ethnic_cd = e.ethnic_cd
+group by r.name, s.name, e.name
+order by patient_count
+$SQL$, '2024-06-06 17:34:32.000000', null, null);
 INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_HISTORICAL_DATA_XML', '\\ACT_RESEARCH\ACT\Research\Historical Data\', null, null, null);
 INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_ELIXHAUSER_XML', '\\ACT_RESEARCH\ACT\Research\Comorbidities\Elixhauser\', '2024-06-06 17:34:32.000000', null, null);
 INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id) VALUES ('PATIENT_CHARLSON_XML', '\\ACT_RESEARCH\ACT\Research\Comorbidities\Charlson\CharlsonComorbidity\', null, null, null);

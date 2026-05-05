@@ -4,32 +4,6 @@ INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_typ
 INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_type_id, visual_attribute_type_id, user_role_cd, classname) VALUES (17, 'PATIENT_ELIXHAUSER_XML', 'Elixhauser Comorbid Conditions', 'CATNUM', 'LA', null, 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator');
 INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_type_id, visual_attribute_type_id, user_role_cd, classname) VALUES (18, 'PATIENT_TOP20DIAG_CLASS_XML', 'Most Frequent Diagnosis', 'CATNUM', 'LA', 'DATA_LDS', 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator');
 INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_type_id, visual_attribute_type_id, user_role_cd, classname) VALUES (19, 'PATIENT_TOP20MEDS_CLASS_XML', 'Most Frequent Med Ingredients', 'CATNUM', 'LA', 'DATA_LDS', 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator');
-INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_type_id, visual_attribute_type_id, user_role_cd, classname) VALUES (20, 'PATIENT_NIH_ENROLLMENT_XML', 'NIH Enrollment', 'CATNUM', 'LA', 'DATA_LDS', 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator');
+-- INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_type_id, visual_attribute_type_id, user_role_cd, classname) VALUES (20, 'PATIENT_NIH_ENROLLMENT_XML', 'NIH Enrollment', 'CATNUM', 'LA', 'DATA_LDS', 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator');
 
-IF NOT EXISTS (
-    SELECT 1
-    FROM QT_QUERY_RESULT_TYPE
-    WHERE name = 'PATIENT_NIH_ENROLLMENT_XML'
-       OR result_type_id = 30
-)
-BEGIN
-    INSERT INTO QT_QUERY_RESULT_TYPE (
-        result_type_id,
-        name,
-        description,
-        display_type_id,
-        visual_attribute_type_id,
-        user_role_id,
-        classname
-    )
-    VALUES (
-        30,
-        'PATIENT_NIH_ENROLLMENT_XML',
-        'NIH Enrollment Table',
-        'CATNUM',
-        'LA',
-        NULL,
-        'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator'
-    );
-END
-GO
+INSERT INTO QT_QUERY_RESULT_TYPE (result_type_id, name, description, display_type_id, visual_attribute_type_id, user_role_cd, classname) VALUES (30, 'PATIENT_NIH_ENROLLMENT_XML', 'NIH Enrollment Table', 'CATNUM', 'LA', NULL, 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator');

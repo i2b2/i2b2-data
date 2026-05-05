@@ -2,7 +2,44 @@ INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) V
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_CHARLSON_XML', DATE '2023-10-02', null, null, '\\ACT_RESEARCH\ACT\Research\Comorbidities\Charlson\CharlsonComorbidity\');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_COMMON_LAB_XML', DATE '2023-10-02', null, null, '\\ACT_COVID_V1\ACT\UMLS_C0031437\SNOMED_3947185011\UMLS_C0242656\LABS_OF_INTEREST\');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_TOP20DIAG_CLASS_XML', DATE '2023-10-02', null, null, 'select * from ( with three_dig_path as (select substr(concept_path, 1, instr(concept_path,''\'',1,9)) dx3_path, concept_path, concept_cd from {{{DATABASE_NAME}}}concept_dimension where concept_path like ''\ACT\Diagnosis\ICD10\V2_2018AA\A20098492\%''),dx3 as (select p.concept_path dx_path, p.concept_cd dx_code, o.concept_cd dx3_code, o.name_char as dx3_name from three_dig_path p join {{{DATABASE_NAME}}}concept_dimension o on o.concept_path = p.dx3_path where o.concept_path like ''\ACT\Diagnosis\ICD10\V2_2018AA\A20098492\%'') select i.dx3_name as patient_range, count(distinct f.patient_num) as patient_count from dx3 i join {{{DATABASE_NAME}}}observation_fact f on f.concept_cd = i.dx_code join {{{DX}}} c on c.patient_num = f.patient_num group by i.dx3_name order by 2 desc) where rownum <= 20');
-INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_NIH_ENROLLMENT_XML', DATE '2023-10-02', null, null, '\\ACT_RESEARCH\ACT\Research\NIH Enrollment\');
+-- INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_NIH_ENROLLMENT_XML', DATE '2023-10-02', null, null, '\\ACT_RESEARCH\ACT\Research\NIH Enrollment\');
+-- PATIENT_NIH_ENROLLMENT_XML
+-- Update the innermost subquery based on how you store sex, race, and ethnicity.
+INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_NIH_ENROLLMENT_XML', DATE '2023-10-02', null, null, 'select r.name || ''-'' || s.name || ''-'' || e.name as patient_range, sum(case when p.race_cd is not null then 1 else 0 end) as patient_count
+from
+(
+select ''NI'' as race_cd, ''No Race Info'' as name from dual
+union all select ''AS'', ''Asian'' from dual
+union all select ''B'', ''Black or African American'' from dual
+union all select ''H'', ''Native Hawaiian or Other Pacific Islander'' from dual
+union all select ''M'', ''Multiple race'' from dual
+union all select ''NA'', ''American Indian or Alaska Native'' from dual
+union all select ''W'', ''White'' from dual
+) r
+cross join (
+select ''NI'' as sex_cd, ''No Sex Info'' as name from dual
+union all select ''F'', ''Female'' from dual
+union all select ''M'', ''Male'' from dual
+) s
+cross join (
+select ''NI'' as ethnic_cd, ''No Ethnicity Info'' as name from dual
+union all select ''Y'', ''Hispanic'' from dual
+union all select ''N'', ''Not Hispanic'' from dual
+) e
+left outer join (
+select
+case when race_cd in (''AS'',''B'',''H'',''M'',''NA'',''W'') then race_cd else ''NI'' end as race_cd,
+case when sex_cd in (''F'',''M'') then sex_cd else ''NI'' end as sex_cd,
+case when ethnic_cd in (''Y'',''N'') then ethnic_cd else ''NI'' end as ethnic_cd
+from (
+select race_cd, sex_cd, case when race_cd=''Hispanic'' then ''Y'' else ''N'' end as ethnic_cd
+from {{{DATABASE_NAME}}}patient_dimension
+where patient_num in (select patient_num from {{{DX}}})
+) t
+) p
+on p.race_cd = r.race_cd and p.sex_cd = s.sex_cd and p.ethnic_cd = e.ethnic_cd
+group by r.name, s.name, e.name
+order by patient_count');
 INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_TOP20MEDS_CLASS_XML', DATE '2023-10-02', null, null, ' select * from ( with ingredient_path as (select substr(concept_path, 1, instr(concept_path,''\'',1,8))
      ingred_path, concept_path, concept_cd from {{{DATABASE_NAME}}}concept_dimension where concept_path like
       ''\ACT\Medications\MedicationsByAlpha\V2_12112018\RxNormUMLSRxNav\%''),
