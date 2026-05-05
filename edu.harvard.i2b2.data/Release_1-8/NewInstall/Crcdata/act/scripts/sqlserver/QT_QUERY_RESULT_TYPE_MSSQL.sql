@@ -33,8 +33,3 @@ BEGIN
     );
 END
 GO
-
-UPDATE QT_QUERY_RESULT_TYPE
-SET classname = 'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator'
-WHERE name = 'PATIENT_AGE_COUNT_XML'
-;
