@@ -176,7 +176,7 @@ jobs:
           core_server_tag="master"
           mkdir test_mssql
           cd test_mssql
-          git clone https://github.com/adityapersistent/i2b2-docker
+          git clone https://github.com/i2b2/i2b2-docker
           cd i2b2-docker/mssql
           echo "Running MSSQL test cases for tag: $data_tag"
           source test_case.sh "$core_server_tag" "$data_tag" 
@@ -216,7 +216,7 @@ jobs:
           core_server_tag="master"
           mkdir test_pgsql
           cd test_pgsql
-          git clone https://github.com/adityapersistent/i2b2-docker
+          git clone https://github.com/i2b2/i2b2-docker
           cd i2b2-docker/pg
           echo "Running PGSQL test cases for tag: $data_tag"
           source test_case.sh "$core_server_tag" "$data_tag"
@@ -256,7 +256,7 @@ jobs:
           core_server_tag="master"
           mkdir test_oracle
           cd test_oracle
-          git clone https://github.com/adityapersistent/i2b2-docker
+          git clone https://github.com/i2b2/i2b2-docker
           cd i2b2-docker/oracle
           echo "Running ORACLE test cases for tag: $data_tag"
           source test_case.sh "$core_server_tag" "$data_tag"
