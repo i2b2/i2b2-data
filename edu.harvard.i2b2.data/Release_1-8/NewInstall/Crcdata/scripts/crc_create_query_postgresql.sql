@@ -359,7 +359,7 @@ insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DI
 ;
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(126,'PATIENT_MAPPING_REQUEST','DATA_LDS','Request Patient Mapping','CATNUM','LR','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientRequest')
 ;
-INSERT INTO public.qt_breakdown_path (name, value, create_date, update_date, user_id, group_id) VALUES ('ADMIN_QUERY_DASHBOARD_CLASS_XML', e'SELECT query_name, patient_range, patient_count
+INSERT INTO qt_breakdown_path (name, value, create_date, update_date, user_id, group_id) VALUES ('ADMIN_QUERY_DASHBOARD_CLASS_XML', e'SELECT query_name, patient_range, patient_count
 FROM (
     SELECT
         \'ADMIN_TOPUSERS\' AS query_name,
