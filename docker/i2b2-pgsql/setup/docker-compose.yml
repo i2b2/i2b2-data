@@ -14,9 +14,9 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ${DB_INIT_DIR:-../../../}:/i2b2/
+      - ${DB_INIT_DIR:-../../../../}:/i2b2/
       - /var/run/docker.sock:/var/run/docker.sock
-    command: bash -c "source /i2b2/i2b2-data/docker/i2b2-pgsql/db-initialize.sh"
+    command: bash -c "source /i2b2/i2b2-data/docker/i2b2-pgsql/setup/install_pgsql_server.sh"
 
 
 networks:

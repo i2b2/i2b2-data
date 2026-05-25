@@ -48,12 +48,14 @@ I2B2_WORKDATA_USER="i2b2workdata"
 echo "Base Directory: $BASE_DIR"
 echo "Creating i2b2 database.."
 echo
-psql -U "$PG_USER" -f "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/create-db.sql"
+psql -U "$PG_USER" -f "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/create-db.sql"
 echo 
 echo "Creating i2b2 schema.."
 echo
-psql -U "$I2B2_USER" -w -f "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/create-schema.sql"
+psql -U "$I2B2_USER" -w -f "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/create-schema.sql"
 echo
+
+# Removing the temporary 'trust' rules and replace them with 'scram-sha-256'
 
 echo "Loading CRC Data..."
 CELL="i2b2demodata"
@@ -64,7 +66,7 @@ sed -e "s|localhost|$PG_HOST|g" \
     -e "s|PWD|$DEMO_PASS|g" \
     -e "s|USER_NAME|$CELL|g" \
     -e "s|DB_NAME|$CELL|g" \
-    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/db.properties" > db.properties
+    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/db.properties" > db.properties
 ant -f data_build.xml create_crcdata_tables_release_1-8
 ant -f data_build.xml create_procedures_release_1-8
 ant -f data_build.xml db_demodata_load_data
@@ -76,7 +78,7 @@ sed -e "s|localhost|$PG_HOST|g" \
     -e "s|PWD|$DEMO_PASS|g" \
     -e "s|USER_NAME|$CELL|g" \
     -e "s|DB_NAME|$CELL|g" \
-    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/db.properties" > db.properties
+    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/db.properties" > db.properties
 ant -f data_build.xml create_hivedata_tables_release_1-8
 ant -f data_build.xml db_hivedata_load_data
 
@@ -87,7 +89,7 @@ sed -e "s|localhost|$PG_HOST|g" \
     -e "s|PWD|$DEMO_PASS|g" \
     -e "s|USER_NAME|$CELL|g" \
     -e "s|DB_NAME|$CELL|g" \
-    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/db.properties" > db.properties
+    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/db.properties" > db.properties
 ant -f data_build.xml create_metadata_tables_release_1-8
 ant -f data_build.xml db_metadata_load_data 
 ant -f data_build.xml create_metadata_procedures_release_1-8
@@ -100,7 +102,7 @@ sed -e "s|localhost|$PG_HOST|g" \
     -e "s|PWD|$DEMO_PASS|g" \
     -e "s|USER_NAME|$CELL|g" \
     -e "s|DB_NAME|$CELL|g" \
-    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/db.properties" > db.properties
+    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/db.properties" > db.properties
 ant -f data_build.xml create_pmdata_tables_release_1-8
 ant -f data_build.xml create_triggers_release_1-8
 
@@ -116,7 +118,7 @@ sed -e "s|localhost|$PG_HOST|g" \
     -e "s|PWD|$DEMO_PASS|g" \
     -e "s|USER_NAME|$CELL|g" \
     -e "s|DB_NAME|$CELL|g" \
-    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/db.properties" > db.properties
+    "$BASE_DIR/i2b2-data/docker/i2b2-pgsql/setup/db.properties" > db.properties
 ant -f data_build.xml create_workdata_tables_release_1-8
 ant -f data_build.xml db_workdata_load_data
 
@@ -131,8 +133,8 @@ psql -U "$I2B2_METADATA_USER" -d i2b2 -w -c "update i2b2metadata.i2b2 set c_dimc
 
 echo "Demodata inserted successfully."
 
-echo "Cleaning up temporary installation files..."
-rm -rf /i2b2/i2b2-data/edu.harvard.i2b2.data/
+# echo "Cleaning up temporary installation files..."
+# rm -rf /i2b2/i2b2-data/edu.harvard.i2b2.data/
 
 # # for act 
 # CELL="i2b2demodata"

@@ -5,11 +5,11 @@ on:
     branches: ['*']
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Tag/Branch name to use for build & tests"
+      core_server_branch:
+        description: "Core Server branch name for the Docker image used in testing"
         required: true
-        default: "main"
-        type: string
+        default: "master"
+        type: string    
  
 jobs:
   build_pgsql:
@@ -33,24 +33,19 @@ jobs:
       - name: Determine tag (manual or push)
         id: vars
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "data_tag=${{ inputs.tag }}" >> $GITHUB_ENV
-          else
-            echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "Using tag: $data_tag"
- 
+
       - name: Build i2b2-data-pgsql image
         run: | 
           export DATABASE_TAG="$data_tag"
           echo "Building image with tag: $DATABASE_TAG"
  
-          export date=$(date +"%Y%m%d")
           export docker_username=${{ secrets.DOCKER_HOST }}
           export docker_reponame=${{ secrets.DOCKER_REPO }}
  
           cd docker/i2b2-pgsql/
-          sh create_pgsql_image.sh "$DATABASE_TAG"
+          bash create_pgsql_image.sh "$DATABASE_TAG"
  
       - name: List docker images
         run: docker images
@@ -76,11 +71,7 @@ jobs:
       - name: Determine tag (manual or push)
         id: vars
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "data_tag=${{ inputs.tag }}" >> $GITHUB_ENV
-          else
-            echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "Using tag: $data_tag"
  
       - name: Build i2b2-data-mssql image
@@ -88,12 +79,11 @@ jobs:
           export DATABASE_TAG="$data_tag"
           echo "Building image with tag: $DATABASE_TAG"
  
-          export date=$(date +"%Y%m%d")
           export docker_username=${{ secrets.DOCKER_HOST }}
           export docker_reponame=${{ secrets.DOCKER_REPO }}
  
           cd docker/i2b2-mssql/
-          sh create_mssql_image.sh "$DATABASE_TAG"
+          bash create_mssql_image.sh "$DATABASE_TAG"
  
       - name: List docker images
         run: docker images
@@ -119,11 +109,7 @@ jobs:
       - name: Determine tag (manual or push)
         id: vars
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "data_tag=${{ inputs.tag }}" >> $GITHUB_ENV
-          else
-            echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "Using tag: $data_tag"
  
       - name: Build i2b2-data-oracle image
@@ -131,12 +117,11 @@ jobs:
           export DATABASE_TAG="$data_tag"
           echo "Building image with tag: $DATABASE_TAG"
  
-          export date=$(date +"%Y%m%d")
           export docker_username=${{ secrets.DOCKER_HOST }}
           export docker_reponame=${{ secrets.DOCKER_REPO }}
  
           cd docker/i2b2-oracle/
-          sh create_oracle_image.sh "$DATABASE_TAG"
+          bash create_oracle_image.sh "$DATABASE_TAG"
  
       - name: List docker images
         run: docker images        
@@ -165,15 +150,17 @@ jobs:
         id: vars
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "data_tag=${{ inputs.tag }}" >> $GITHUB_ENV
+            echo "core_server_tag=${{ inputs.core_server_branch }}" >> $GITHUB_ENV
           else
-            echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "core_server_tag=master" >> $GITHUB_ENV
           fi
+
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "Using tag: $data_tag"
-                
+
       - name: Test with MSSQL
         run: |
-          core_server_tag="master"
+          core_server_tag=$core_server_tag
           mkdir test_mssql
           cd test_mssql
           git clone https://github.com/i2b2/i2b2-docker
@@ -205,15 +192,17 @@ jobs:
         id: vars
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "data_tag=${{ inputs.tag }}" >> $GITHUB_ENV
+            echo "core_server_tag=${{ inputs.core_server_branch }}" >> $GITHUB_ENV
           else
-            echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "core_server_tag=master" >> $GITHUB_ENV
           fi
+
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "Using tag: $data_tag"
 
       - name: Test with PostgreSQL
         run: |
-          core_server_tag="master"
+          core_server_tag=$core_server_tag
           mkdir test_pgsql
           cd test_pgsql
           git clone https://github.com/i2b2/i2b2-docker
@@ -245,15 +234,17 @@ jobs:
         id: vars
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "data_tag=${{ inputs.tag }}" >> $GITHUB_ENV
+            echo "core_server_tag=${{ inputs.core_server_branch }}" >> $GITHUB_ENV
           else
-            echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "core_server_tag=master" >> $GITHUB_ENV
           fi
+
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "Using tag: $data_tag"
 
       - name: Test with oracle
         run: |
-          core_server_tag="master"
+          core_server_tag=$core_server_tag
           mkdir test_oracle
           cd test_oracle
           git clone https://github.com/i2b2/i2b2-docker
