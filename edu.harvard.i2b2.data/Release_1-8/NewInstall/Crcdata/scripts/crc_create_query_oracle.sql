@@ -32,7 +32,7 @@ CREATE INDEX QT_IDX_QM_UGID ON QT_QUERY_MASTER(USER_ID,GROUP_ID,MASTER_TYPE_CD)
 -- Table: QT_QUERY_RESULT_TYPE										          
 --============================================================================
 CREATE TABLE QT_QUERY_RESULT_TYPE (
-	RESULT_TYPE_ID				NUMBER(3,0) PRIMARY KEY,
+	RESULT_TYPE_ID				NUMBER(4,0) PRIMARY KEY,
 	NAME						VARCHAR2(100),
 	DESCRIPTION					VARCHAR2(200),
 	DISPLAY_TYPE_ID				VARCHAR2(500),
@@ -86,7 +86,7 @@ CREATE INDEX QT_IDX_QI_MSTARTID ON QT_QUERY_INSTANCE(QUERY_MASTER_ID,START_DATE)
 CREATE TABLE QT_QUERY_RESULT_INSTANCE (
 	RESULT_INSTANCE_ID	NUMBER(5,0) PRIMARY KEY,
 	QUERY_INSTANCE_ID	NUMBER(5,0),
-	RESULT_TYPE_ID		NUMBER(3,0) NOT NULL,
+	RESULT_TYPE_ID		NUMBER(4,0) NOT NULL,
 	SET_SIZE			NUMBER(10,0),
 	START_DATE			DATE NOT NULL,
 	END_DATE			DATE,
@@ -382,7 +382,7 @@ insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID
 ;
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(7,'PATIENT_RACE_COUNT_XML','Race patient breakdown','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator')
 ;
-insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(8,'PATIENT_AGE_COUNT_XML','Age patient breakdown','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultGenerator')
+insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(8,'PATIENT_AGE_COUNT_XML','Age patient breakdown','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator')
 ;
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(10,'PATIENT_LOS_XML','DATA_LDS','Length of stay breakdown','CATNUM','LA','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator')
 ;
@@ -417,6 +417,187 @@ insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DI
 insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(126,'PATIENT_MAPPING_REQUEST','DATA_LDS','Request Patient Mapping','CATNUM','LR','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientRequest')
 ;
 
+insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(9999,'ADMIN_QUERY_DASHBOARD_CLASS_XML','ADMIN','Query Dashboard','CATNUM','LH','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator')
+;
+insert into QT_BREAKDOWN_PATH
+(NAME,CREATE_DATE,UPDATE_DATE,USER_ID,VALUE,GROUP_ID)
+values
+(
+'ADMIN_QUERY_DASHBOARD_CLASS_XML',
+NULL,
+NULL,
+NULL,
+
+TO_CLOB(q'[
+SELECT query_name, patient_range, patient_count
+FROM  (
+    SELECT
+        'ADMIN_TOPUSERS' AS query_name,
+        user_id AS patient_range,
+        COUNT(user_id) AS patient_count
+    FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+   where  delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+    GROUP BY user_id
+    ORDER BY patient_count DESC
+)
+WHERE ROWNUM <= 10
+
+
+
+UNION
+
+SELECT query_name, patient_range, patient_count
+FROM (
+    SELECT
+        'ADMIN_TOPUSERS_30_DAYS' AS query_name,
+        user_id AS patient_range,
+        COUNT(user_id) AS patient_count
+    FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+    WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '30' DAY
+    and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+    GROUP BY user_id
+    ORDER BY patient_count DESC
+)
+WHERE ROWNUM <= 10
+
+UNION
+
+SELECT query_name, patient_range, patient_count
+FROM (
+    SELECT
+        'ADMIN_TOPUSERS_7_DAYS' AS query_name,
+        user_id AS patient_range,
+        COUNT(user_id) AS patient_count
+    FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+    WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '7' DAY
+    and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+    GROUP BY user_id
+    ORDER BY patient_count DESC
+)
+WHERE ROWNUM <= 10
+]')
+||
+
+TO_CLOB(q'[
+
+UNION
+
+SELECT query_name, patient_range, patient_count
+FROM (
+    SELECT
+        'ADMIN_TOPUSERS_1_DAY' AS query_name,
+        user_id AS patient_range,
+        COUNT(user_id) AS patient_count
+    FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+    WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '1' DAY
+    and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+    GROUP BY user_id
+    ORDER BY patient_count DESC
+)
+WHERE ROWNUM <= 10
+
+UNION
+
+SELECT
+    'ADMIN_COUNT' AS query_name,
+    TO_CHAR(create_date, 'YYYY-MM') AS patient_range,
+    COUNT(create_date) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER where delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+GROUP BY TO_CHAR(create_date, 'YYYY-MM')
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_QUERY' AS query_name,
+    'total_queries' AS patient_range,
+    COUNT(query_master_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER where delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_QUERY_30DAYS' AS query_name,
+    'total_queries' AS patient_range,
+    COUNT(query_master_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '30' DAY
+and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+]')
+||
+
+TO_CLOB(q'[
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_QUERY_7DAYS' AS query_name,
+    'total_queries' AS patient_range,
+    COUNT(query_master_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '7' DAY
+and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_QUERY_1DAYS' AS query_name,
+    'total_queries' AS patient_range,
+    COUNT(query_master_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '1' DAY
+and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_USER_QUERY_30DAYS' AS query_name,
+    'total_user_queries' AS patient_range,
+    COUNT(DISTINCT user_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '30' DAY
+and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_USER_QUERY_7DAYS' AS query_name,
+    'total_user_queries' AS patient_range,
+    COUNT(DISTINCT user_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '7' DAY
+and delete_flag <>'Y'
+ and group_id = '{{{PROJECT_ID}}}'
+]')
+||
+
+TO_CLOB(q'[
+
+
+UNION
+
+SELECT
+    'ADMIN_TOTAL_USER_QUERY_1DAYS' AS query_name,
+    'total_user_queries' AS patient_range,
+    COUNT(DISTINCT user_id) AS patient_count
+FROM {{{DATABASE_NAME}}}QT_QUERY_MASTER
+WHERE create_date >= CURRENT_TIMESTAMP - INTERVAL '1' DAY
+and delete_flag <>'Y'
+and group_id = '{{{PROJECT_ID}}}'
+]')
+,
+NULL
+)
+;
 insert into QT_PRIVILEGE(PROTECTION_LABEL_CD, DATAPROT_CD, HIVEMGMT_CD) values ('PDO_WITHOUT_BLOB','DATA_LDS','USER')
 ;
 insert into QT_PRIVILEGE(PROTECTION_LABEL_CD, DATAPROT_CD, HIVEMGMT_CD) values ('PDO_WITH_BLOB','DATA_DEID','USER')
@@ -444,8 +625,6 @@ CREATE OR REPLACE TYPE QT_PDO_QRY_INT_ARRAY AS varray(100000) of  NUMBER(20)
 
 CREATE OR REPLACE TYPE QT_PDO_QRY_STRING_ARRAY AS varray(100000) of  VARCHAR2(150)
 ;
-
-
 
 
 
