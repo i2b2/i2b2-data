@@ -29,5 +29,22 @@ union
 select ''ADMIN_TOTAL_USER_QUERY_1DAYS'' as query_name, ''total_user_queries'' as patient_range, count(distinct user_id)  as patient_count from {{{DATABASE_NAME}}}QT_QUERY_MASTER where create_date >= CURRENT_TIMESTAMP -1 and delete_flag <>''Y'' and group_id = ''{{{PROJECT_ID}}}''
 ', null, null, null, null);
 
-insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(9999,'ADMIN_QUERY_DASHBOARD_CLASS_XML','ADMIN','Query Dashboard','CATNUM','LH','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator')
-;
+INSERT INTO QT_QUERY_RESULT_TYPE
+(
+    RESULT_TYPE_ID,
+    NAME,
+    USER_ROLE_CD,
+    DESCRIPTION,
+    DISPLAY_TYPE_ID,
+    VISUAL_ATTRIBUTE_TYPE_ID,
+    CLASSNAME
+)
+SELECT
+    ISNULL(MAX(RESULT_TYPE_ID), 0) + 1,
+    'ADMIN_QUERY_DASHBOARD_CLASS_XML',
+    'ADMIN',
+    'Query Dashboard',
+    'CATNUM',
+    'LH',
+    'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator'
+FROM QT_QUERY_RESULT_TYPE;
