@@ -1,0 +1,253 @@
+name: CI Pipeline
+ 
+on:
+  push:
+    branches: ['*']
+  workflow_dispatch:
+    inputs:
+      core_server_branch:
+        description: "Core Server branch name for the Docker image used in testing"
+        required: true
+        default: "master"
+        type: string    
+ 
+jobs:
+  build_pgsql:
+    name: i2b2-data pgsql image Build & Publish to private docker registry
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Unset docker host 
+        run: unset DOCKER_HOST
+ 
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HOST }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+
+      - name: Determine tag (manual or push)
+        id: vars
+        run: |
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Using tag: $data_tag"
+
+      - name: Build i2b2-data-pgsql image
+        run: | 
+          export DATABASE_TAG="$data_tag"
+          echo "Building image with tag: $DATABASE_TAG"
+ 
+          export docker_username=${{ secrets.DOCKER_HOST }}
+          export docker_reponame=${{ secrets.DOCKER_REPO }}
+ 
+          cd docker/i2b2-pgsql/
+          bash create_pgsql_image.sh "$DATABASE_TAG"
+ 
+      - name: List docker images
+        run: docker images
+      
+  build_mssql:
+    name: i2b2-data mssql Build & Publish image to private docker registry
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Unset docker host 
+        run: unset DOCKER_HOST
+ 
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HOST }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+
+      - name: Determine tag (manual or push)
+        id: vars
+        run: |
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Using tag: $data_tag"
+ 
+      - name: Build i2b2-data-mssql image
+        run: | 
+          export DATABASE_TAG="$data_tag"
+          echo "Building image with tag: $DATABASE_TAG"
+ 
+          export docker_username=${{ secrets.DOCKER_HOST }}
+          export docker_reponame=${{ secrets.DOCKER_REPO }}
+ 
+          cd docker/i2b2-mssql/
+          bash create_mssql_image.sh "$DATABASE_TAG"
+ 
+      - name: List docker images
+        run: docker images
+
+  build_oracle:
+    name: i2b2-data oracle Build & Publish image to private docker registry
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Unset docker host 
+        run: unset DOCKER_HOST
+ 
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HOST }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+
+      - name: Determine tag (manual or push)
+        id: vars
+        run: |
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Using tag: $data_tag"
+ 
+      - name: Build i2b2-data-oracle image
+        run: | 
+          export DATABASE_TAG="$data_tag"
+          echo "Building image with tag: $DATABASE_TAG"
+ 
+          export docker_username=${{ secrets.DOCKER_HOST }}
+          export docker_reponame=${{ secrets.DOCKER_REPO }}
+ 
+          cd docker/i2b2-oracle/
+          bash create_oracle_image.sh "$DATABASE_TAG"
+ 
+      - name: List docker images
+        run: docker images        
+      
+  test_mssql:   
+    name: Running mssql Tests 
+    needs: build_mssql
+    runs-on: ubuntu-latest
+    environment: dev
+ 
+    steps:
+      - name: Unset docker host 
+        run: unset DOCKER_HOST
+ 
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HOST }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+      
+      - name: Export docker variables
+        run: |
+          echo "docker_username=${{ secrets.DOCKER_HOST }}" >> $GITHUB_ENV
+          echo "docker_reponame=${{ secrets.DOCKER_REPO }}" >> $GITHUB_ENV
+      - name: Determine tag (manual or push)
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "core_server_tag=${{ inputs.core_server_branch }}" >> $GITHUB_ENV
+          else
+            echo "core_server_tag=master" >> $GITHUB_ENV
+          fi
+
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Using tag: $data_tag"
+
+      - name: Test with MSSQL
+        run: |
+          core_server_tag=$core_server_tag
+          mkdir test_mssql
+          cd test_mssql
+          git clone https://github.com/i2b2/i2b2-docker
+          cd i2b2-docker/mssql
+          echo "Running MSSQL test cases for tag: $data_tag"
+          source test_case.sh "$core_server_tag" "$data_tag" 
+ 
+  test_pgsql:   
+    name: Running pgsql Tests 
+    needs: build_pgsql
+    runs-on: ubuntu-latest
+    environment: dev
+ 
+    steps:
+      - name: Unset docker host 
+        run: unset DOCKER_HOST
+ 
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HOST }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+      
+      - name: Export docker variables
+        run: |
+          echo "docker_username=${{ secrets.DOCKER_HOST }}" >> $GITHUB_ENV
+          echo "docker_reponame=${{ secrets.DOCKER_REPO }}" >> $GITHUB_ENV
+      - name: Determine tag (manual or push)
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "core_server_tag=${{ inputs.core_server_branch }}" >> $GITHUB_ENV
+          else
+            echo "core_server_tag=master" >> $GITHUB_ENV
+          fi
+
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Using tag: $data_tag"
+
+      - name: Test with PostgreSQL
+        run: |
+          core_server_tag=$core_server_tag
+          mkdir test_pgsql
+          cd test_pgsql
+          git clone https://github.com/i2b2/i2b2-docker
+          cd i2b2-docker/pg
+          echo "Running PGSQL test cases for tag: $data_tag"
+          source test_case.sh "$core_server_tag" "$data_tag"
+
+  test_oracle:   
+    name: Running oracle Tests 
+    needs: build_oracle
+    runs-on: ubuntu-latest
+    environment: dev
+ 
+    steps:
+      - name: Unset docker host 
+        run: unset DOCKER_HOST
+ 
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HOST }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+      
+      - name: Export docker variables
+        run: |
+          echo "docker_username=${{ secrets.DOCKER_HOST }}" >> $GITHUB_ENV
+          echo "docker_reponame=${{ secrets.DOCKER_REPO }}" >> $GITHUB_ENV
+      - name: Determine tag (manual or push)
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "core_server_tag=${{ inputs.core_server_branch }}" >> $GITHUB_ENV
+          else
+            echo "core_server_tag=master" >> $GITHUB_ENV
+          fi
+
+          echo "data_tag=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Using tag: $data_tag"
+
+      - name: Test with oracle
+        run: |
+          core_server_tag=$core_server_tag
+          mkdir test_oracle
+          cd test_oracle
+          git clone https://github.com/i2b2/i2b2-docker
+          cd i2b2-docker/oracle
+          echo "Running ORACLE test cases for tag: $data_tag"
+          source test_case.sh "$core_server_tag" "$data_tag"
