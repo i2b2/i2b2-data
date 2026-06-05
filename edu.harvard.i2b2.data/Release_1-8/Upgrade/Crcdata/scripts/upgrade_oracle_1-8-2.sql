@@ -225,5 +225,23 @@ and group_id = '{{{PROJECT_ID}}}'
 NULL
 )
 ;
-insert into QT_QUERY_RESULT_TYPE(RESULT_TYPE_ID,NAME,USER_ROLE_CD,DESCRIPTION,DISPLAY_TYPE_ID,VISUAL_ATTRIBUTE_TYPE_ID,CLASSNAME) values(9999,'ADMIN_QUERY_DASHBOARD_CLASS_XML','ADMIN','Query Dashboard','CATNUM','LH','edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator')
+INSERT INTO QT_QUERY_RESULT_TYPE
+(
+    RESULT_TYPE_ID,
+    NAME,
+    USER_ROLE_CD,
+    DESCRIPTION,
+    DISPLAY_TYPE_ID,
+    VISUAL_ATTRIBUTE_TYPE_ID,
+    CLASSNAME
+)
+SELECT
+    NVL(MAX(RESULT_TYPE_ID), 0) + 1,
+    'ADMIN_QUERY_DASHBOARD_CLASS_XML',
+    'ADMIN',
+    'Query Dashboard',
+    'CATNUM',
+    'LH',
+    'edu.harvard.i2b2.crc.dao.setfinder.QueryResultPatientSQLCountGenerator'
+FROM QT_QUERY_RESULT_TYPE
 ;
