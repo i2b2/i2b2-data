@@ -5,11 +5,47 @@
 ALTER TABLE QT_QUERY_RESULT_TYPE
 MODIFY RESULT_TYPE_ID NUMBER(4,0)
 ;
-
 ALTER TABLE QT_QUERY_RESULT_INSTANCE
 MODIFY RESULT_TYPE_ID NUMBER(4,0)
 ;
-
+DELETE FROM QT_BREAKDOWN_PATH
+WHERE NAME = 'PATIENT_AGE_COUNT_XML'
+;
+INSERT INTO QT_BREAKDOWN_PATH (NAME, CREATE_DATE, UPDATE_DATE, USER_ID, VALUE) VALUES ('PATIENT_AGE_COUNT_XML', TIMESTAMP '2024-05-15 01:18:24', null, null, 'select * from (
+select
+case
+when x.a = 9 then ''90+ years old''
+else to_char(x.a*10) || ''-'' || to_char(x.a*10+9) || '' years old''
+end as patient_range,
+t.patient_count
+from (
+select 0 as a from dual
+union all select 1 from dual
+union all select 2 from dual
+union all select 3 from dual
+union all select 4 from dual
+union all select 5 from dual
+union all select 6 from dual
+union all select 7 from dual
+union all select 8 from dual
+union all select 9 from dual
+) x
+left outer join (
+select a, count(*) as patient_count
+from (
+select case when a > 9 then 9 else a end as a
+from (
+select floor(age_in_years_num/10) as a
+from {{{DATABASE_NAME}}}patient_dimension
+where patient_num in (select patient_num from {{{DX}}})
+) t
+) t
+where a between 0 and 9
+group by a
+) t on x.a = t.a
+order by x.a
+) where rownum <= 100')
+;
 insert into QT_BREAKDOWN_PATH
 (NAME,CREATE_DATE,UPDATE_DATE,USER_ID,VALUE,GROUP_ID)
 values
