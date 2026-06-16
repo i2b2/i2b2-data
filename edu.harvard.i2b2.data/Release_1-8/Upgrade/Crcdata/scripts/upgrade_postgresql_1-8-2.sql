@@ -146,7 +146,7 @@ SELECT
     \'ADMIN_COUNT\' AS query_name,
     TO_CHAR(create_date, \'YYYY-MM\') AS patient_range,
     COUNT(create_date) AS patient_count
-FROM qt_query_master 
+FROM {{{DATABASE_NAME}}}qt_query_master
 where delete_flag <>\'Y\'
  and group_id = \'{{{PROJECT_ID}}}\'
 GROUP BY TO_CHAR(create_date, \'YYYY-MM\')

@@ -503,7 +503,7 @@ SELECT
     \'ADMIN_COUNT\' AS query_name,
     TO_CHAR(create_date, \'YYYY-MM\') AS patient_range,
     COUNT(create_date) AS patient_count
-FROM qt_query_master 
+FROM {{{DATABASE_NAME}}}qt_query_master
 where delete_flag <>\'Y\'
  and group_id = \'{{{PROJECT_ID}}}\'
 GROUP BY TO_CHAR(create_date, \'YYYY-MM\')
@@ -524,8 +524,6 @@ insert into QT_PRIVILEGE(PROTECTION_LABEL_CD,DATAPROT_CD,HIVEMGMT_CD) values ('U
 insert into QT_PRIVILEGE(PROTECTION_LABEL_CD,DATAPROT_CD,HIVEMGMT_CD) values ('SETFINDER_QRY_WITH_LGTEXT','DATA_DEID','USER'); 
 insert into QT_PRIVILEGE(PROTECTION_LABEL_CD, DATAPROT_CD, HIVEMGMT_CD) values ('SETFINDER_QRY_PROTECTED','DATA_PROT','USER');
 ;
-
-
 
 
 
