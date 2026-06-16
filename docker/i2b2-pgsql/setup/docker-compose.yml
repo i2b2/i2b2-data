@@ -1,0 +1,25 @@
+version: '3.5'
+ 
+services:
+
+  i2b2-pg:
+    image: ubuntu:24.04
+    container_name: i2b2-pg
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+    networks:
+      - i2b2-net
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${DB_INIT_DIR:-../../../../}:/i2b2/
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: bash -c "source /i2b2/i2b2-data/docker/i2b2-pgsql/setup/install_pgsql_server.sh"
+
+
+networks:
+  i2b2-net:
+    name: i2b2-net
+    driver: bridge
