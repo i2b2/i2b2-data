@@ -9,9 +9,8 @@ Description:
   This procedure performs all preparatory work that must happen once when the
   ontology changes, prior to running FastTotalnumRun. It performs the following tasks:
     1) Creates a view (OBSFACT_PAIRS) of distinct concept codes and patient numbers
-       from the OBSERVATION_FACT table.
-    2) Creates a unified ontology table (TNUM_ONTOLOGY) based on metadata from TABLE_ACCESS
-       and hardcoded fact table names (ACT_VISIT_DETAILS_V41 and ACT_DEM_V41).
+       from either OBSERVATION_FACT or ACT-OMOP views, based on source_mode.
+    2) Creates a unified ontology table (TNUM_ONTOLOGY) based on metadata from TABLE_ACCESS.
     3) Builds a transitive closure table (CONCEPT_CLOSURE) that captures ancestor/descendant
        relationships. For example, if C_FULLNAME is '\apple\fruit\', then an entry is made
        where the descendant represents 'fruit' and the ancestor represents 'apple'.
@@ -32,6 +31,32 @@ Or, to specify a different schema:
   END;
   /
 
+Or, to use ACT-OMOP views:
+
+  BEGIN
+    FastTotalnumPrep('I2B2', 'omop');
+  END;
+  /
+
+Required Oracle privileges:
+--------------------------------------------------------------------------------
+Because this procedure uses EXECUTE IMMEDIATE for DDL, required privileges must be
+granted directly to the procedure owner, not only through a role. At minimum:
+
+  GRANT CREATE PROCEDURE TO <metadata_schema>;
+  GRANT CREATE VIEW TO <metadata_schema>;
+  GRANT CREATE TABLE TO <metadata_schema>;
+  GRANT CREATE SEQUENCE TO <metadata_schema>;
+
+CREATE SEQUENCE is required because TNUM_ONTOLOGY uses an identity column.
+The metadata schema also needs quota on its default tablespace, for example:
+
+  ALTER USER <metadata_schema> QUOTA UNLIMITED ON <tablespace_name>;
+
+If OBSERVATION_FACT, ACT-OMOP views, TABLE_ACCESS ontology tables, or other
+metadata source tables are owned by another schema, grant SELECT on those objects
+directly to <metadata_schema>.
+
 */
 
 
@@ -39,13 +64,43 @@ Or, to specify a different schema:
 -- In Oracle you must drop the procedure manually (there’s no “IF EXISTS” clause)
 -- DROP PROCEDURE FastTotalnumPrep;
  
-CREATE OR REPLACE PROCEDURE FastTotalnumPrep (schemaname IN VARCHAR2 DEFAULT 'I2B2')
+CREATE OR REPLACE PROCEDURE FastTotalnumPrep (
+  schemaname IN VARCHAR2 DEFAULT 'I2B2',
+  source_mode IN VARCHAR2 DEFAULT 'i2b2'
+)
 IS
   -- Variables used for dynamic SQL
   sqlstr   VARCHAR2(4000);
   v_sql    CLOB;  -- For longer SQL statements
   startime DATE;
+  visit_table VARCHAR2(400);
+  demo_table  VARCHAR2(400);
+  source_mode_norm VARCHAR2(20);
 BEGIN
+  source_mode_norm := LOWER(NVL(NULLIF(source_mode, ''), 'i2b2'));
+
+  IF source_mode_norm NOT IN ('i2b2','omop') THEN
+    RAISE_APPLICATION_ERROR(-20003, 'Invalid source_mode. Use i2b2 or omop.');
+  END IF;
+
+  SELECT MAX(C_TABLE_NAME)
+    INTO visit_table
+    FROM TABLE_ACCESS
+   WHERE UPPER(C_TABLE_CD) = 'ACT_VISIT';
+
+  SELECT MAX(C_TABLE_NAME)
+    INTO demo_table
+    FROM TABLE_ACCESS
+   WHERE UPPER(C_TABLE_CD) = 'ACT_DEMO';
+
+  IF visit_table IS NULL THEN
+    DBMS_OUTPUT.PUT_LINE('Skipping ACT_VISIT ontology supplement: TABLE_ACCESS has no row for C_TABLE_CD = ACT_VISIT.');
+  END IF;
+
+  IF demo_table IS NULL THEN
+    DBMS_OUTPUT.PUT_LINE('Skipping ACT_DEMO ontology supplement: TABLE_ACCESS has no row for C_TABLE_CD = ACT_DEMO.');
+  END IF;
+
   ---------------------------------------------------------------------------
   -- 1. Build the OBSFACT_PAIRS view
   ---------------------------------------------------------------------------
@@ -61,10 +116,28 @@ BEGIN
   END;
   
   -- Create (or replace) the view.
-  EXECUTE IMMEDIATE 
-    'CREATE OR REPLACE VIEW OBSFACT_PAIRS AS 
-       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD 
+  IF source_mode_norm = 'omop' THEN
+    EXECUTE IMMEDIATE
+      'CREATE OR REPLACE VIEW OBSFACT_PAIRS AS
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM CONDITION_NS_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM CONDITION_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM DRUG_NS_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM DEVICE_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM DEVICE_NS_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM DRUG_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM MEASUREMENT_NS_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM MEASUREMENT_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM OBSERVATION_NS_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM OBSERVATION_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM PROCEDURE_NS_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM PROCEDURE_VIEW UNION ALL
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM VISIT_NS_VIEW';
+  ELSE
+    EXECUTE IMMEDIATE
+      'CREATE OR REPLACE VIEW OBSFACT_PAIRS AS
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD
          FROM observation_fact';
+  END IF;
   
   -- (If you have a logging or timing procedure named EndTime, call it here.)
   BEGIN
@@ -142,6 +215,7 @@ BEGIN
   --    (This block uses a CTE. Note that Oracle string functions differ slightly:
   --     INSTR replaces CHARINDEX, and Oracle’s empty string is NULL.)
   ---------------------------------------------------------------------------
+  IF visit_table IS NOT NULL AND demo_table IS NOT NULL THEN
   v_sql := 
   'INSERT INTO TNUM_ONTOLOGY (C_HLEVEL, C_FULLNAME, C_SYNONYM_CD, C_VISUALATTRIBUTES, ' ||
   '   C_BASECODE, C_FACTTABLECOLUMN, C_TABLENAME, C_COLUMNNAME, C_COLUMNDATATYPE, ' ||
@@ -173,7 +247,7 @@ BEGIN
   '         END AS c_basecode, ' ||
   '         c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, ' ||
   '         c_operator, c_dimcode, m_applied_path ' ||
-  '  FROM ' || schemaname || '.ACT_VISIT_DETAILS_V41 ' ||
+  '  FROM ' || schemaname || '.' || visit_table || ' ' ||
   '  UNION ' ||
   '  SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, ' ||
   '         CASE WHEN INSTR(c_basecode, '':'') = 0 AND c_basecode IS NOT NULL THEN ' ||
@@ -182,13 +256,14 @@ BEGIN
   '         END AS c_basecode, ' ||
   '         c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, ' ||
   '         c_operator, c_dimcode, m_applied_path ' ||
-  '  FROM ' || schemaname || '.ACT_DEM_V41 ' ||
+  '  FROM ' || schemaname || '.' || demo_table || ' ' ||
   ') M LEFT JOIN CTE_BASECODE_OVERRIDE BO ' ||
   '  ON M.c_fullname = BO.c_fullname ' ||
   'WHERE C_FACTTABLECOLUMN <> ''concept_cd''';
 
 DBMS_OUTPUT.PUT_LINE(v_sql);
 EXECUTE IMMEDIATE v_sql;
+  END IF;
 
   
   -- Create an index on TNUM_ONTOLOGY.
@@ -290,4 +365,3 @@ BEGIN
   --  there is no direct NOWAIT equivalent.)
   DBMS_OUTPUT.PUT_LINE('(BENCH) ' || label || ',' || label2 || ',' || duration);
 END EndTime;
-
