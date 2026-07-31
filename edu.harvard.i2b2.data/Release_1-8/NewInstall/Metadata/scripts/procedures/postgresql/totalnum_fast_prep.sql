@@ -7,10 +7,9 @@ Written by Darren Henderson (DARREN.HENDERSON@UKY.EDU) and Jeff Klann, PhD.
 Description:
   This function prepares the environment for the FastTotalnum process by performing
   the following steps:
-    1) Re-creates the "obsfact_pairs" view, which selects distinct patient numbers and 
-       concept codes from the "observation_fact" table.
-    2) Creates the unified ontology table "tnum_ontology" that consolidates metadata 
-       from various fact tables (e.g., act_visit_details_v41 and act_dem_v41).
+    1) Re-creates the "obsfact_pairs" view, which selects distinct patient numbers and
+       concept codes from either "observation_fact" or ACT-OMOP views, based on source_mode.
+    2) Creates the unified ontology table "tnum_ontology" that consolidates metadata.
     3) Loads additional ontology override entries into "tnum_ontology" from hardcoded 
        values to accommodate specific business rules.
     4) Constructs the transitive closure table "concept_closure" using a recursive CTE.
@@ -24,13 +23,18 @@ Usage Examples:
   
   -- Run the function on a specified schema (e.g., "my_schema"):
   SELECT fasttotalnumprep('my_schema');
+
+  -- Run the function using ACT-OMOP views:
+  SELECT fasttotalnumprep('public', 'omop');
   
 Acknowledgements:
   This PostgreSQL conversion by Jeff Klann, with assistance from ChatGPT.
 --------------------------------------------------------------------------------
 */
 
-CREATE OR REPLACE FUNCTION fasttotalnumprep(schemaname text DEFAULT 'public')
+DROP FUNCTION IF EXISTS fasttotalnumprep(text);
+
+CREATE OR REPLACE FUNCTION fasttotalnumprep(schemaname text DEFAULT 'public', source_mode text DEFAULT 'i2b2')
 RETURNS void
 LANGUAGE plpgsql
 AS $sql$
@@ -39,15 +43,61 @@ DECLARE
     v_sql text;
     startime timestamp;
     rec record;
+    visit_table text;
+    demo_table text;
+    source_mode_norm text;
 BEGIN
+    source_mode_norm := lower(coalesce(nullif(source_mode, ''), 'i2b2'));
+
+    IF source_mode_norm NOT IN ('i2b2','omop') THEN
+      RAISE EXCEPTION 'Invalid source_mode. Use i2b2 or omop.';
+    END IF;
+
+    SELECT max(c_table_name)
+    INTO visit_table
+    FROM table_access
+    WHERE lower(c_table_cd) = 'act_visit';
+
+    SELECT max(c_table_name)
+    INTO demo_table
+    FROM table_access
+    WHERE lower(c_table_cd) = 'act_demo';
+
+    IF visit_table IS NULL THEN
+      RAISE NOTICE 'Skipping ACT_VISIT ontology supplement: TABLE_ACCESS has no row for C_TABLE_CD = ACT_VISIT.';
+    END IF;
+
+    IF demo_table IS NULL THEN
+      RAISE NOTICE 'Skipping ACT_DEMO ontology supplement: TABLE_ACCESS has no row for C_TABLE_CD = ACT_DEMO.';
+    END IF;
+
     --------------------------------------------------------------------------
     -- 1. Create the OBSFACT_PAIRS view
     --------------------------------------------------------------------------
     EXECUTE 'DROP VIEW IF EXISTS obsfact_pairs';
-    EXECUTE '
-      CREATE OR REPLACE VIEW obsfact_pairs AS
-      SELECT DISTINCT patient_num, concept_cd FROM observation_fact
-    ';
+    IF source_mode_norm = 'omop' THEN
+      EXECUTE '
+        CREATE OR REPLACE VIEW obsfact_pairs AS
+        SELECT DISTINCT patient_num, concept_cd FROM condition_ns_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM condition_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM drug_ns_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM device_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM device_ns_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM drug_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM measurement_ns_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM measurement_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM observation_ns_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM observation_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM procedure_ns_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM procedure_view UNION ALL
+        SELECT DISTINCT patient_num, concept_cd FROM visit_ns_view
+      ';
+    ELSE
+      EXECUTE '
+        CREATE OR REPLACE VIEW obsfact_pairs AS
+        SELECT DISTINCT patient_num, concept_cd FROM observation_fact
+      ';
+    END IF;
 
     startime := now();
     -- If you have an endtime function, you can call it here:
@@ -103,6 +153,7 @@ BEGIN
     --------------------------------------------------------------------------
     -- 4. Load additional ontology overrides into TNUM_ONTOLOGY
     --------------------------------------------------------------------------
+ IF visit_table IS NOT NULL AND demo_table IS NOT NULL THEN
  v_sql := 'WITH cte_basecode_override AS ( ' ||
            '  SELECT ''\ACT\Visit Details\Length of stay\ > 10 days'' AS c_fullname, ''visit_dimension|length_of_stay:>10'' AS c_basecode UNION ALL ' ||
            '  SELECT ''\ACT\Visit Details\Length of stay'' AS c_fullname, ''visit_dimension|length_of_stay:>0'' UNION ALL ' ||
@@ -133,7 +184,7 @@ BEGIN
            '         END AS c_basecode, ' ||
            '         c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, ' ||
            '         c_operator, c_dimcode, m_applied_path ' ||
-           '  FROM ' || schemaname || '.act_visit_details_v41 ' ||
+           '  FROM ' || schemaname || '.' || visit_table || ' ' ||
            '  UNION ' ||
            '  SELECT c_hlevel, c_fullname, c_synonym_cd, c_visualattributes, ' ||
            '         CASE WHEN position('':'' in c_basecode) = 0 AND c_basecode IS NOT NULL THEN ' ||
@@ -142,12 +193,13 @@ BEGIN
            '         END AS c_basecode, ' ||
            '         c_facttablecolumn, c_tablename, c_columnname, c_columndatatype, ' ||
            '         c_operator, c_dimcode, m_applied_path ' ||
-           '  FROM ' || schemaname || '.act_dem_v41 ' ||
+           '  FROM ' || schemaname || '.' || demo_table || ' ' ||
            ') m LEFT JOIN cte_basecode_override bo ' ||
            '  ON m.c_fullname = bo.c_fullname ' ||
            'WHERE c_facttablecolumn <> ''concept_cd''';
     RAISE NOTICE '%', v_sql;
     EXECUTE v_sql;
+ END IF;
 
         --------------------------------------------------------------------------
     -- 5. Build the closure table: CONCEPT_CLOSURE

@@ -11,6 +11,8 @@ It assumes that:
   - Supporting procedures (e.g., FastTotalnumCount, EndTime, BuildTotalnumReport) have been converted to Oracle.
   - Any dynamic SQL used in this procedure is executed via EXECUTE IMMEDIATE.
   - Date functions (SYSDATE, TRUNC) and string operations are used in Oracle-compatible form.
+  - The procedure runs with AUTHID CURRENT_USER so unqualified ontology table names
+    from TABLE_ACCESS resolve in the caller's schema, matching the classic runtotalnum behavior.
 
 Usage Example in Oracle:
 ------------------------------------------------------------
@@ -37,10 +39,24 @@ This Oracle conversion was assisted by ChatGPT.
 CREATE OR REPLACE PROCEDURE FastTotalnumOutput(
   schemaname IN VARCHAR2 DEFAULT 'DBO',
   tablename  IN VARCHAR2 DEFAULT '@'
-) IS
+)
+AUTHID CURRENT_USER
+IS
   sqlstr  VARCHAR2(4000);
   sqltext VARCHAR2(4000);
   start_time DATE;
+
+  PROCEDURE run_sql(p_sql IN VARCHAR2) IS
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE(p_sql);
+    EXECUTE IMMEDIATE p_sql;
+    DBMS_OUTPUT.PUT_LINE('Rows affected: ' || SQL%ROWCOUNT);
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE('Failed SQL: ' || p_sql);
+      DBMS_OUTPUT.PUT_LINE('Oracle error: ' || SQLERRM);
+      RAISE;
+  END;
 BEGIN
   start_time := SYSDATE;
   
@@ -62,8 +78,7 @@ BEGIN
       -- Null the counts in the ontology table
       -----------------------------------------------------------------------
       sqlstr := 'UPDATE ' || sqltext || ' SET c_totalnum = NULL';
-      DBMS_OUTPUT.PUT_LINE(sqlstr);
-      EXECUTE IMMEDIATE sqlstr;
+      run_sql(sqlstr);
       
       -----------------------------------------------------------------------
       -- Zero the counts in the ontology where c_operator = 'LIKE' and 
@@ -72,8 +87,7 @@ BEGIN
       sqlstr := 'UPDATE ' || sqltext ||
                 ' SET c_totalnum = 0 WHERE c_operator = ''LIKE'' ' ||
                 '  AND c_visualattributes LIKE ''%A%''';
-      DBMS_OUTPUT.PUT_LINE(sqlstr);
-      EXECUTE IMMEDIATE sqlstr;
+      run_sql(sqlstr);
       
       -----------------------------------------------------------------------
       -- Update counts in the ontology (only works on the same day the counts
@@ -94,8 +108,7 @@ BEGIN
             'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
          ') t WHERE t.c_fullname = o.c_fullname AND rn = 1' ||
        ')';
-      DBMS_OUTPUT.PUT_LINE(sqlstr);
-      EXECUTE IMMEDIATE sqlstr;
+      run_sql(sqlstr);
       
       -----------------------------------------------------------------------
       -- Update counts in the top-level TABLE_ACCESS.
@@ -108,8 +121,7 @@ BEGIN
        ') WHERE EXISTS (' ||
          'SELECT 1 FROM ' || sqltext || ' x WHERE x.c_fullname = t.c_fullname' ||
        ')';
-      DBMS_OUTPUT.PUT_LINE(sqlstr);
-      EXECUTE IMMEDIATE sqlstr;
+      run_sql(sqlstr);
       
       -----------------------------------------------------------------------
       -- Null out cases that are actually 0 in the ontology table where
@@ -118,17 +130,37 @@ BEGIN
       sqlstr := 'UPDATE ' || sqltext ||
                 ' SET c_totalnum = NULL WHERE c_totalnum = 0 ' ||
                 '   AND c_visualattributes LIKE ''C%''';
-      DBMS_OUTPUT.PUT_LINE(sqlstr);
-      EXECUTE IMMEDIATE sqlstr;
+      run_sql(sqlstr);
     END IF;
   END LOOP;
   
   ---------------------------------------------------------------------------
+  -- Refresh top-level TABLE_ACCESS counts directly from the latest TOTALNUM
+  -- rows. This avoids depending on the per-ontology copy-back above for roots
+  -- whose C_FULLNAME exists in TOTALNUM but was not populated in the ontology
+  -- table during the same run.
+  ---------------------------------------------------------------------------
+  sqlstr :=
+   'UPDATE table_access t SET c_totalnum = (' ||
+     'SELECT agg_count FROM (' ||
+        'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) rn, ' ||
+               'c_fullname, agg_count, agg_date ' ||
+        'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
+     ') x WHERE x.c_fullname = t.c_fullname AND rn = 1' ||
+   ') WHERE EXISTS (' ||
+     'SELECT 1 FROM (' ||
+        'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) rn, ' ||
+               'c_fullname, agg_count, agg_date ' ||
+        'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
+     ') x WHERE x.c_fullname = t.c_fullname AND rn = 1' ||
+   ')';
+  run_sql(sqlstr);
+
+  ---------------------------------------------------------------------------
   -- Cleanup: update table_access so that c_totalnum is set to null where 0.
   ---------------------------------------------------------------------------
   sqlstr := 'UPDATE table_access SET c_totalnum = NULL WHERE c_totalnum = 0';
-  DBMS_OUTPUT.PUT_LINE(sqlstr);
-  EXECUTE IMMEDIATE sqlstr;
+  run_sql(sqlstr);
   
   ---------------------------------------------------------------------------
   -- Denominator: if no row exists in totalnum for c_fullname='\denominator\facts\'
@@ -146,8 +178,16 @@ BEGIN
        'INSERT INTO totalnum(c_fullname, agg_date, agg_count, typeflag_cd) ' ||
        'SELECT ''\denominator\facts\'', SYSDATE, COUNT(DISTINCT patient_num), ''PX'' ' ||
        'FROM ' || schemaname || '.observation_fact';
-      DBMS_OUTPUT.PUT_LINE(sqlstr);
-      EXECUTE IMMEDIATE sqlstr;
+      BEGIN
+        run_sql(sqlstr);
+      EXCEPTION
+        WHEN OTHERS THEN
+          IF SQLCODE = -942 THEN
+            DBMS_OUTPUT.PUT_LINE('Skipping denominator insert: ' || schemaname || '.observation_fact is not visible.');
+          ELSE
+            RAISE;
+          END IF;
+      END;
     END IF;
   END;
   
@@ -156,7 +196,15 @@ BEGIN
   -- (This call assumes that the BuildTotalnumReport procedure exists and accepts
   -- two parameters, e.g. BuildTotalnumReport(10, 6.5);)
   ---------------------------------------------------------------------------
-  BuildTotalnumReport(10, 6.5);
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Calling BuildTotalnumReport(10, 6.5)');
+    BuildTotalnumReport(10, 6.5);
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE('BuildTotalnumReport failed. Verify TOTALNUM_REPORT exists and is visible to the caller.');
+      DBMS_OUTPUT.PUT_LINE('Oracle error: ' || SQLERRM);
+      RAISE;
+  END;
   
   COMMIT;
 EXCEPTION

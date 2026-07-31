@@ -117,7 +117,7 @@ AS
 SELECT  
 	visit_occurrence_id AS ENCOUNTER_NUM, 
  	PERSON_ID AS PATIENT_NUM, 
-   	cast(VISIT_SOURCE_concept_id as varchar(50)) AS CONCEPT_CD, 
+   	VISIT_SOURCE_concept_id AS CONCEPT_CD, 
    	ISNULL(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    	VISIT_start_datetime AS START_DATE, 
 	VISIT_end_datetime AS END_DATE, 
@@ -188,7 +188,7 @@ CREATE  VIEW CONDITION_VIEW AS
 SELECT  
 			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM, 
-   			cast(condition_concept_id as varchar(50)) AS CONCEPT_CD, 
+   			condition_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			condition_start_datetime AS START_DATE, 
 			condition_end_datetime AS END_DATE, 
@@ -224,7 +224,7 @@ CREATE  VIEW DEVICE_VIEW AS
 SELECT 
 			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM,
-   			CAST(device_exposure_id AS VARCHAR(50)) AS CONCEPT_CD, 
+   			device_exposure_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			device_exposure_start_datetime AS START_DATE, 
 			device_exposure_end_datetime AS END_DATE, 
@@ -258,7 +258,7 @@ CREATE  VIEW DRUG_VIEW AS
 SELECT 
  			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM, 
-   			cast(drug_concept_id as varchar(50)) AS CONCEPT_CD, 
+   			drug_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			drug_exposure_start_datetime AS START_DATE, 
 			drug_exposure_END_datetime AS END_DATE, 
@@ -301,7 +301,7 @@ FROM DRUG_EXPOSURE;
   SELECT
 	VISIT_OCCURRENCE_ID ENCOUNTER_NUM,
 	PERSON_ID PATIENT_NUM,
-	CAST(MEASUREMENT_CONCEPT_ID AS VARCHAR(50)) CONCEPT_CD,
+	MEASUREMENT_CONCEPT_ID CONCEPT_CD,
 	isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
 	MEASUREMENT_DATE AS START_DATE,
     NULL AS end_DATE,
@@ -349,7 +349,7 @@ CREATE  VIEW OBSERVATION_VIEW AS
 SELECT
 	VISIT_OCCURRENCE_ID AS ENCOUNTER_NUM,
 	PERSON_ID AS PATIENT_NUM,
-    CAST(OBSERVATION_CONCEPT_ID AS VARCHAR(50)) AS CONCEPT_CD, 
+    OBSERVATION_CONCEPT_ID AS CONCEPT_CD, 
     isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
 	OBSERVATION_DATE AS START_DATE,
     NULL AS END_DATE,
@@ -386,7 +386,7 @@ CREATE  VIEW PROCEDURE_VIEW AS
 SELECT
  			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM, 
-   			cast(procedure_concept_id as varchar(50)) AS CONCEPT_CD, 
+   			procedure_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			procedure_datetime AS START_DATE, 
 			NULL AS END_DATE, 
@@ -475,7 +475,7 @@ CREATE  VIEW CONDITION_NS_VIEW AS
 SELECT  
 			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM, 
-   			cast(condition_source_concept_id as varchar(50)) AS CONCEPT_CD, 
+   			condition_source_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			condition_start_datetime AS START_DATE, 
 			condition_end_datetime AS END_DATE, 
@@ -511,7 +511,7 @@ CREATE  VIEW DEVICE_NS_VIEW AS
 SELECT 
 			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM,
-   			CAST(device_source_concept_id AS VARCHAR(50)) AS CONCEPT_CD, 
+   			device_source_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			device_exposure_start_datetime AS START_DATE, 
 			device_exposure_end_datetime AS END_DATE, 
@@ -545,7 +545,7 @@ CREATE  VIEW DRUG_NS_VIEW AS
 SELECT 
  			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM, 
-   			cast(drug_source_concept_id as varchar(50)) AS CONCEPT_CD, 
+   			drug_source_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			drug_exposure_start_datetime AS START_DATE, 
 			drug_exposure_END_datetime AS END_DATE, 
@@ -588,7 +588,7 @@ FROM DRUG_EXPOSURE;
   SELECT
 	VISIT_OCCURRENCE_ID ENCOUNTER_NUM,
 	PERSON_ID PATIENT_NUM,
-	CAST(MEASUREMENT_SOURCE_CONCEPT_ID AS VARCHAR(50)) CONCEPT_CD,
+	MEASUREMENT_SOURCE_CONCEPT_ID CONCEPT_CD,
 	isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
 	MEASUREMENT_DATE AS START_DATE,
     NULL AS end_DATE,
@@ -636,7 +636,7 @@ CREATE  VIEW OBSERVATION_NS_VIEW AS
 SELECT
 	VISIT_OCCURRENCE_ID AS ENCOUNTER_NUM,
 	PERSON_ID AS PATIENT_NUM,
-    CAST(OBSERVATION_SOURCE_CONCEPT_ID AS VARCHAR(50)) AS CONCEPT_CD, 
+    OBSERVATION_SOURCE_CONCEPT_ID AS CONCEPT_CD, 
     isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
 	OBSERVATION_DATE AS START_DATE,
     NULL AS END_DATE,
@@ -673,7 +673,7 @@ CREATE  VIEW PROCEDURE_NS_VIEW AS
 SELECT
  			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM, 
-   			cast(procedure_source_concept_id as varchar(50)) AS CONCEPT_CD, 
+   			procedure_source_concept_id AS CONCEPT_CD, 
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			procedure_datetime AS START_DATE, 
 			NULL AS END_DATE, 
