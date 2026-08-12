@@ -3,7 +3,7 @@
 --==============================================================
 
 ALTER TABLE QT_QUERY_RESULT_TYPE
-ADD VISUAL_TYPE TEXT
+ADD VISUAL_TYPE CLOB
 ;
 
 UPDATE QT_QUERY_RESULT_TYPE
