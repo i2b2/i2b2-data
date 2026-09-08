@@ -1,15 +1,17 @@
 -- By Mike Mendis, Partners Healthcare based on SQL Server code by Griffin Weber, MD, PhD at Harvard Medical School
 -- Performance improvements by Jeff Green and Jeff Klann, PhD 03-20
  
--- Count totalnumbers of patients for all metadata tables in table access.
+-- Classic/legacy count totalnumbers of patients for all metadata tables in table access.
 -- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
--- Run the procedure like this (but with your schema name instead of i2b2demodata):
+-- The runtotalnum compatibility wrapper at the end of this file defaults to the fast totalnum workflow.
+-- Use mode => 'classic' to force this legacy implementation, or mode => 'omop' for fast ACT-OMOP prep.
+-- Run the classic procedure like this (but with your schema name instead of i2b2demodata):
 --begin
---  runtotalnum('observation_fact','i2b2demodata');
+--  RunTotalnumClassic('observation_fact','i2b2demodata');
 -- end;
 -- You can optionally include a table named if you only want to count one ontology table (this IS case sensitive):
 --begin
---  runtotalnum('observation_fact','i2b2demodata','I2B2');
+--  RunTotalnumClassic('observation_fact','i2b2demodata','I2B2');
 -- end;
 --   To use with multi-fact setups: Create a fact table view as the union of all your fact tables. (This is essentially going back to a single fact table,  but it is only used
 --     for totalnum counting. This is needed to correctly count patients that mention multiple fact tables within a hierarchy.)
@@ -19,10 +21,10 @@
 --       union all
 --       select * from drug_view
 --    And then run the totalnum counter on that fact table:
---      e.g., runtotalnum('observation_fact_view','i2b2demodata');
+--      e.g., RunTotalnumClassic('observation_fact_view','i2b2demodata');
 --    Note this approach does not work if you have conflicting concept_cds across fact tables.
 
-create or replace PROCEDURE                           runtotalnum  (observationTable IN VARCHAR, schemaName in VARCHAR, tableName IN VARCHAR DEFAULT '@')
+create or replace PROCEDURE                           RunTotalnumClassic  (observationTable IN VARCHAR, schemaName in VARCHAR, tableName IN VARCHAR DEFAULT '@')
 AUTHID CURRENT_USER
 IS
 
@@ -136,4 +138,38 @@ END IF;
 
  BuildTotalnumReport(10, 6.5);
  -- :ERRORMSG := ERRORMSG;
+END;
+
+create or replace PROCEDURE                           runtotalnum  (
+  observationTable IN VARCHAR,
+  schemaName IN VARCHAR,
+  tableName IN VARCHAR DEFAULT '@',
+  mode IN VARCHAR DEFAULT 'fast'
+)
+AUTHID CURRENT_USER
+IS
+  mode_norm VARCHAR2(20);
+  source_mode VARCHAR2(20);
+BEGIN
+  mode_norm := LOWER(NVL(NULLIF(mode, ''), 'fast'));
+
+  IF mode_norm = 'classic' THEN
+    RunTotalnumClassic(observationTable, schemaName, tableName);
+    RETURN;
+  END IF;
+
+  IF mode_norm IN ('fast','i2b2') AND LOWER(observationTable) <> 'observation_fact' THEN
+    DBMS_OUTPUT.PUT_LINE('runtotalnum compatibility mode: custom fact table requested, using RunTotalnumClassic.');
+    RunTotalnumClassic(observationTable, schemaName, tableName);
+    RETURN;
+  END IF;
+
+  IF mode_norm NOT IN ('fast','i2b2','omop') THEN
+    RAISE_APPLICATION_ERROR(-20004, 'Invalid totalnum mode. Use fast, i2b2, omop, or classic.');
+  END IF;
+
+  source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
+  FastTotalnumPrep(schemaName, source_mode);
+  FastTotalnumCount;
+  FastTotalnumOutput(schemaName, tableName);
 END;

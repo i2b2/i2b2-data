@@ -1,11 +1,13 @@
 -----------------------------------------------------------------------------------------------------------------
--- Function to run totalnum counts on all tables in table_access 
+-- Classic/legacy function to run totalnum counts on all tables in table_access
 -- 6/8/2016 - modified for PostgreSQL by Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
 -- 2019 - Modified for i2b2 1.7.12 release by Mike Mendis, Partners Healthcare
 -- 2020 - Updated to support reporting and single-table runs by Jeff Klann, Massachusetts General Hospital
+-- The runtotalnum compatibility wrapper at the end of this file defaults to the fast totalnum workflow.
+-- Use mode => 'classic' to force this legacy implementation, or mode => 'omop' for fast ACT-OMOP prep.
 
 -- Usage example:
---     select runtotalnum('observation_fact','public')
+--     select runtotalnumclassic('observation_fact','public')
 --   (replace 'public' by the schema name for the fact table)
 -- If using a schema other than public for metadata, you might need to run "set search_path to 'i2b2metadata','public' " first as well
 -- You can optionally specify a single table name, to count using only one ontology table. This is case sensitive.
@@ -18,11 +20,13 @@
 --       union all
 --       select * from drug_view
 --    And then run the totalnum counter on that fact table:
---      e.g., runtotalnum('observation_fact_view','public');
+--      e.g., runtotalnumclassic('observation_fact_view','public');
 --    Note this approach does not work if you have conflicting concept_cds across fact tables.
 -----------------------------------------------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION runtotalnum(observationTable text, schemaName text, tableName text default '@')
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text);
+
+CREATE OR REPLACE FUNCTION runtotalnumclassic(observationTable text, schemaName text, tableName text default '@')
   RETURNS void AS
 $BODY$
 DECLARE 
@@ -34,7 +38,7 @@ DECLARE
     v_duration text = '';
     denom int;
 begin
-    raise info 'At %, running RunTotalnum()',clock_timestamp();
+    raise info 'At %, running runtotalnumclassic()',clock_timestamp();
     v_startime := clock_timestamp();
 
     for curRecord IN 
@@ -91,6 +95,44 @@ begin
     perform BuildTotalnumReport(10, 6.5);
     
 end; 
+$BODY$
+  LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+  COST 100;
+
+CREATE OR REPLACE FUNCTION runtotalnum(
+    observationTable text,
+    schemaName text,
+    tableName text default '@',
+    mode text default 'fast'
+)
+  RETURNS void AS
+$BODY$
+DECLARE
+    mode_norm text;
+    source_mode text;
+BEGIN
+    mode_norm := lower(coalesce(nullif(mode, ''), 'fast'));
+
+    IF mode_norm = 'classic' THEN
+        PERFORM runtotalnumclassic(observationTable, schemaName, tableName);
+        RETURN;
+    END IF;
+
+    IF mode_norm IN ('fast','i2b2') AND lower(observationTable) <> 'observation_fact' THEN
+        RAISE NOTICE 'runtotalnum compatibility mode: custom fact table requested, using runtotalnumclassic.';
+        PERFORM runtotalnumclassic(observationTable, schemaName, tableName);
+        RETURN;
+    END IF;
+
+    IF mode_norm NOT IN ('fast','i2b2','omop') THEN
+        RAISE EXCEPTION 'Invalid totalnum mode. Use fast, i2b2, omop, or classic.';
+    END IF;
+
+    source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
+    PERFORM fasttotalnumprep(schemaName, source_mode);
+    CALL fasttotalnumcount();
+    CALL fasttotalnumoutput(schemaName, tableName);
+END;
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;

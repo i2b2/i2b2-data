@@ -32,9 +32,9 @@ DECLARE @facttablecolumn_prefix NVARCHAR(4000);
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
---select 'exec run_all_counts '+c_table_name+','+c_obsfact from TABLE_ACCESS where c_visualattributes like '%A%' 
+--select 'exec RunTotalnumClassic '+c_table_name+','+c_obsfact from TABLE_ACCESS where c_visualattributes like '%A%'
 --ELSE
--- select distinct 'exec run_all_counts '+c_table_name+','+@schemaname+','+@obsfact   from TABLE_ACCESS where c_visualattributes like '%A%'
+-- select distinct 'exec RunTotalnumClassic '+c_table_name+','+@schemaname+','+@obsfact   from TABLE_ACCESS where c_visualattributes like '%A%'
 
 declare getsql cursor local for select distinct c_table_name from TABLE_ACCESS where c_visualattributes like '%A%' 
 
