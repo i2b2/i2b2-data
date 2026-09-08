@@ -3,8 +3,7 @@
 -- 6/8/2016 - modified for PostgreSQL by Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
 -- 2019 - Modified for i2b2 1.7.12 release by Mike Mendis, Partners Healthcare
 -- 2020 - Updated to support reporting and single-table runs by Jeff Klann, Massachusetts General Hospital
--- The runtotalnum compatibility wrapper at the end of this file defaults to the fast totalnum workflow.
--- Use mode => 'classic' to force this legacy implementation, or mode => 'omop' for fast ACT-OMOP prep.
+-- The runtotalnum compatibility wrapper is defined in totalnum_run.sql and defaults to the fast totalnum workflow.
 
 -- Usage example:
 --     select runtotalnumclassic('observation_fact','public')
@@ -23,8 +22,6 @@
 --      e.g., runtotalnumclassic('observation_fact_view','public');
 --    Note this approach does not work if you have conflicting concept_cds across fact tables.
 -----------------------------------------------------------------------------------------------------------------
-
-DROP FUNCTION IF EXISTS runtotalnum(text, text, text);
 
 CREATE OR REPLACE FUNCTION runtotalnumclassic(observationTable text, schemaName text, tableName text default '@')
   RETURNS void AS
@@ -95,44 +92,6 @@ begin
     perform BuildTotalnumReport(10, 6.5);
     
 end; 
-$BODY$
-  LANGUAGE plpgsql VOLATILE SECURITY DEFINER
-  COST 100;
-
-CREATE OR REPLACE FUNCTION runtotalnum(
-    observationTable text,
-    schemaName text,
-    tableName text default '@',
-    mode text default 'fast'
-)
-  RETURNS void AS
-$BODY$
-DECLARE
-    mode_norm text;
-    source_mode text;
-BEGIN
-    mode_norm := lower(coalesce(nullif(mode, ''), 'fast'));
-
-    IF mode_norm = 'classic' THEN
-        PERFORM runtotalnumclassic(observationTable, schemaName, tableName);
-        RETURN;
-    END IF;
-
-    IF mode_norm IN ('fast','i2b2') AND lower(observationTable) <> 'observation_fact' THEN
-        RAISE NOTICE 'runtotalnum compatibility mode: custom fact table requested, using runtotalnumclassic.';
-        PERFORM runtotalnumclassic(observationTable, schemaName, tableName);
-        RETURN;
-    END IF;
-
-    IF mode_norm NOT IN ('fast','i2b2','omop') THEN
-        RAISE EXCEPTION 'Invalid totalnum mode. Use fast, i2b2, omop, or classic.';
-    END IF;
-
-    source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
-    PERFORM fasttotalnumprep(schemaName, source_mode);
-    CALL fasttotalnumcount();
-    CALL fasttotalnumoutput(schemaName, tableName);
-END;
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
   COST 100;

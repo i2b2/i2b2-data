@@ -3,8 +3,7 @@
  
 -- Classic/legacy count totalnumbers of patients for all metadata tables in table access.
 -- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
--- The runtotalnum compatibility wrapper at the end of this file defaults to the fast totalnum workflow.
--- Use mode => 'classic' to force this legacy implementation, or mode => 'omop' for fast ACT-OMOP prep.
+-- The runtotalnum compatibility wrapper is defined in totalnum_run.sql and defaults to the fast totalnum workflow.
 -- Run the classic procedure like this (but with your schema name instead of i2b2demodata):
 --begin
 --  RunTotalnumClassic('observation_fact','i2b2demodata');
@@ -138,38 +137,4 @@ END IF;
 
  BuildTotalnumReport(10, 6.5);
  -- :ERRORMSG := ERRORMSG;
-END;
-
-create or replace PROCEDURE                           runtotalnum  (
-  observationTable IN VARCHAR,
-  schemaName IN VARCHAR,
-  tableName IN VARCHAR DEFAULT '@',
-  mode IN VARCHAR DEFAULT 'fast'
-)
-AUTHID CURRENT_USER
-IS
-  mode_norm VARCHAR2(20);
-  source_mode VARCHAR2(20);
-BEGIN
-  mode_norm := LOWER(NVL(NULLIF(mode, ''), 'fast'));
-
-  IF mode_norm = 'classic' THEN
-    RunTotalnumClassic(observationTable, schemaName, tableName);
-    RETURN;
-  END IF;
-
-  IF mode_norm IN ('fast','i2b2') AND LOWER(observationTable) <> 'observation_fact' THEN
-    DBMS_OUTPUT.PUT_LINE('runtotalnum compatibility mode: custom fact table requested, using RunTotalnumClassic.');
-    RunTotalnumClassic(observationTable, schemaName, tableName);
-    RETURN;
-  END IF;
-
-  IF mode_norm NOT IN ('fast','i2b2','omop') THEN
-    RAISE_APPLICATION_ERROR(-20004, 'Invalid totalnum mode. Use fast, i2b2, omop, or classic.');
-  END IF;
-
-  source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
-  FastTotalnumPrep(schemaName, source_mode);
-  FastTotalnumCount;
-  FastTotalnumOutput(schemaName, tableName);
 END;
