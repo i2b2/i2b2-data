@@ -15,6 +15,7 @@ Provisioning and data-installation scripts for running i2b2 on **Snowflake**.
 | `snowsight_admin_setup.sql` | **Run once in the Snowflake app (Snowsight) as ACCOUNTADMIN.** Creates the **role**, **warehouse**, **database**, the six i2b2 **schemas**, the **service user** (key-pair auth), and all **grants**. |
 | `db.properties` | Connection template (key-pair auth); the orchestrator generates the real per-cell file from it. |
 | `create_snowflake_image.sh` | Orchestrator: loads every cell via the ant data installer, connecting as the service user. Does **not** need ACCOUNTADMIN. |
+| `Makefile` | Convenience wrapper around the whole workflow (`make keys`, `make pubkey`, `make load`). |
 
 ## Two-step split
 
@@ -24,6 +25,13 @@ Provisioning and data-installation scripts for running i2b2 on **Snowflake**.
 ## Authentication
 
 The functional user is a Snowflake **`TYPE = SERVICE`** account using **key-pair (RSA) auth** — no password. Generate a key pair before running the admin script:
+
+```bash
+make keys      # generate the encrypted RSA key pair (rsa_key.p8, rsa_key.pub)
+make pubkey    # print the value to paste into RSA_PUBLIC_KEY in snowsight_admin_setup.sql
+```
+
+Equivalent manual commands:
 
 ```bash
 # private key (encrypted; omit -v2 aes-256-cbc for an unencrypted key)
@@ -54,24 +62,27 @@ All cells connect as the same user/role and differ only by schema.
 **Step 1 — provision (Snowsight, as ACCOUNTADMIN):** paste your public key into
 `snowsight_admin_setup.sql` and run it in a Snowsight worksheet.
 
-**Step 2 — load data:**
+**Step 2 — load data:** configuration lives in the `Makefile` — set
+`SNOWFLAKE_ACCOUNT` there (the rest default to values matching
+`snowsight_admin_setup.sql`: `I2B2_PRIVATE_KEY_FILE=rsa_key.p8`, `I2B2_ROLE=I2B2`,
+`I2B2_WAREHOUSE=I2B2_ETL_WH`, `I2B2_DB=I2B2_DEV`, `I2B2_USER=I2B2`,
+`I2B2_PRIVATE_KEY_PWD=`), then:
 
 ```bash
-export SNOWFLAKE_ACCOUNT=abc12345.us-east-2.aws
-export I2B2_PRIVATE_KEY_FILE=/path/to/rsa_key.p8
-
-# optional overrides (defaults shown) -- must match snowsight_admin_setup.sql
-export I2B2_ROLE=I2B2
-export I2B2_WAREHOUSE=I2B2_ETL_WH
-export I2B2_DB=I2B2_DEV
-export I2B2_USER=I2B2
-export I2B2_PRIVATE_KEY_PWD=          # only if rsa_key.p8 is encrypted
-
-bash create_snowflake_image.sh
+make load
 ```
 
-The data load connects as the service user via key-pair auth and never needs
-ACCOUNTADMIN.
+Or override any value on the command line without editing the file:
+
+```bash
+make load SNOWFLAKE_ACCOUNT=I2B2_TEST I2B2_PRIVATE_KEY_PWD=secret
+```
+
+`make load` runs `create_snowflake_image.sh`; it first checks that
+`SNOWFLAKE_ACCOUNT` is set and the private key exists, then passes the config to
+the loader directly — no shell `export` needed. Run `make help` to list all
+targets. The data load connects as the service user via key-pair auth and never
+needs ACCOUNTADMIN.
 
 ## Notes
 

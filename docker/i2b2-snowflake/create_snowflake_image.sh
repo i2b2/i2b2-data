@@ -39,18 +39,27 @@
 
 set -euo pipefail
 
-# ---- local vs CI bootstrap ---------------------------------------------------
-if [ "${CI:-}" = "true" ]; then
-    echo "Running in GitHub Actions.."
-else
-    echo "Running Locally.."
-    echo "This script requires sudo access to install ant."
-    sudo apt update && sudo apt install -y ant
-fi
+# ---- ant bootstrap -----------------------------------------------------------
+# Use the Apache Ant bundled in the repo -- no system install (no sudo/apt/brew)
+# is needed, only a JDK, which the ant scripts locate via JAVA_HOME or `java` on
+# PATH. Set ANT_HOME/PATH so the plain `ant ...` calls below resolve to it.
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+repo_root="$(cd "$script_dir/../.." && pwd)"
+ANT_HOME="$repo_root/edu.harvard.i2b2.data/Release_1-8/apache-ant"
+[ -x "$ANT_HOME/bin/ant" ] || { echo "Bundled ant not found at $ANT_HOME/bin/ant" >&2; exit 1; }
+export ANT_HOME
+export PATH="$ANT_HOME/bin:$PATH"
 
 # ---- configuration -----------------------------------------------------------
 : "${SNOWFLAKE_ACCOUNT:?Set SNOWFLAKE_ACCOUNT (e.g. abc12345.us-east-2.aws)}"
 : "${I2B2_PRIVATE_KEY_FILE:?Set I2B2_PRIVATE_KEY_FILE (path to the service user rsa_key.p8)}"
+
+# Resolve the key to an absolute path: db.properties is read by ant *after* it
+# cd's into each module dir, so a relative path would not be found there.
+case "$I2B2_PRIVATE_KEY_FILE" in
+    /*) : ;;
+    *)  I2B2_PRIVATE_KEY_FILE="$(pwd)/$I2B2_PRIVATE_KEY_FILE" ;;
+esac
 [ -f "$I2B2_PRIVATE_KEY_FILE" ] || { echo "Private key not found: $I2B2_PRIVATE_KEY_FILE" >&2; exit 1; }
 
 I2B2_ROLE="${I2B2_ROLE:-I2B2}"
@@ -59,8 +68,7 @@ I2B2_DB="${I2B2_DB:-I2B2_DEV}"
 I2B2_USER="${I2B2_USER:-I2B2}"
 I2B2_CORE_SERVER_HOST="${I2B2_CORE_SERVER_HOST:-i2b2-core-server}"
 
-script_dir="$(cd "$(dirname "$0")" && pwd)"
-i2b2_data_path="$script_dir/../.."
+i2b2_data_path="$repo_root"
 newinstall="$i2b2_data_path/edu.harvard.i2b2.data/Release_1-8/NewInstall"
 
 echo "NOTE: this script assumes snowsight_admin_setup.sql has already been run"
@@ -99,7 +107,6 @@ echo "=================== LOADING DATA INTO CELLS ==================="
 echo "Loading CRC Data..."
 prepare_cell "Crcdata" "I2B2DATA"
 ant -f data_build.xml create_crcdata_tables_release_1-8
-ant -f data_build.xml create_procedures_release_1-8   # no-op for snowflake (no CRC procedures)
 ant -f data_build.xml db_demodata_load_data
 
 # ---- Hive (I2B2HIVE) ---------------------------------------------------------
@@ -112,7 +119,7 @@ ant -f data_build.xml db_hivedata_load_data
 echo "Loading IM Data..."
 prepare_cell "Imdata" "I2B2IMDATA"
 ant -f data_build.xml create_imdata_tables_release_1-8
-ant -f data_build.xml db_imdata_load_data
+# ant -f data_build.xml db_imdata_load_data
 
 # ---- Metadata / ontology (I2B2METADATA) --------------------------------------
 echo "Loading Metadata..."
@@ -125,10 +132,10 @@ ant -f data_build.xml db_metadata_load_data
 echo "Loading PM Data..."
 prepare_cell "Pmdata" "I2B2PM"
 echo "Pointing pm_access cell URLs at the i2b2 core server..."
-sed -i "s|http://localhost/|http://$I2B2_CORE_SERVER_HOST/|g" \
+sed -i.bak "s|http://localhost/|http://$I2B2_CORE_SERVER_HOST/|g" \
     "$newinstall/Pmdata/scripts/act/pm_access_insert_data.sql"
+rm -f "$newinstall/Pmdata/scripts/act/pm_access_insert_data.sql.bak"
 ant -f data_build.xml create_pmdata_tables_release_1-8
-ant -f data_build.xml create_triggers_release_1-8     # empty for snowflake (IDs use sequence DEFAULTs)
 ant -f data_build.xml db_pmdata_load_data
 
 # ---- Workplace (I2B2WORKDATA) ------------------------------------------------

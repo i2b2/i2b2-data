@@ -1,0 +1,17 @@
+data-source add \
+--jndi-name=java:/QueryToolDemoDS \
+--name=QueryToolDemoDS \
+--connection-url=jdbc:snowflake://TKNLTGA-I2B2DB.snowflakecomputing.com/?db=I2B2_DEV&schema=I2B2DATA&warehouse=I2B2_DEV_WH&role=I2B2_DEV_APP_ROLE&CLIENT_RESULT_COLUMN_CASE_INSENSITIVE=true&JDBC_QUERY_RESULT_FORMAT=JSON&private_key_file=/opt/jboss/customization/rsa_key.p8 \
+--driver-name=snowflake \
+--user-name=I2B2_DEV_USER \
+--max-pool-size=200 \
+--enabled=true
+
+data-source add \
+--jndi-name=java:/OntologyDemoDS \
+--name=OntologyDemoDS \
+--connection-url=jdbc:snowflake://TKNLTGA-I2B2DB.snowflakecomputing.com/?db=I2B2_DEV&schema=I2B2METADATA&warehouse=I2B2_DEV_WH&role=I2B2_DEV_APP_ROLE&CLIENT_RESULT_COLUMN_CASE_INSENSITIVE=true&JDBC_QUERY_RESULT_FORMAT=JSON&private_key_file=/opt/jboss/customization/rsa_key.p8 \
+--driver-name=snowflake \
+--user-name=I2B2_DEV_USER \
+--max-pool-size=200 \
+--enabled=true
