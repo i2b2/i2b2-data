@@ -4,8 +4,9 @@
 -- Modified for the fast totalnum approach by Darren Henderson
 --
 --
--- Run with: exec FastTotalnumOutput or exec FastTotalnumOutput 'dbo','@' 
---  Optionally you can specify the schemaname and a single table name to run on a single ontology table (or @ for all).
+-- Run with: exec FastTotalnumOutput or exec FastTotalnumOutput 'dbo','@','all'
+--  Optionally you can specify the schemaname, a single table name to run on a single ontology table (or @ for all),
+--  and demographics_mode ('act' for PF fast counts only, or 'all' for supplemental non-ACT PA counts).
 -- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
 --
 -- Prior to this, load the stored procedures, make sure you have run FastTotalnumPrep once, and run FastTotalnum to compute the counts.
@@ -21,7 +22,11 @@ IF EXISTS ( SELECT  *
 DROP PROCEDURE FastTotalnumOutput;
 GO
 
-CREATE PROCEDURE [dbo].[FastTotalnumOutput]  (@schemaname varchar(50) = 'dbo', @tablename varchar(50)='@') as  
+CREATE PROCEDURE [dbo].[FastTotalnumOutput]  (
+    @schemaname varchar(50) = 'dbo',
+    @tablename varchar(50) = '@',
+    @demographics_mode varchar(20) = 'act'
+) as
 
 DECLARE @sqlstr NVARCHAR(4000);
 DECLARE @sqltext NVARCHAR(4000);
@@ -29,6 +34,10 @@ DECLARE @sqlcurs NVARCHAR(4000);
 DECLARE @startime datetime;
 DECLARE @derived_facttablecolumn NVARCHAR(4000);
 DECLARE @facttablecolumn_prefix NVARCHAR(4000);
+DECLARE @demographics_mode_norm varchar(20) = LOWER(ISNULL(NULLIF(@demographics_mode,''),'act'));
+DECLARE @is_act_demo bit;
+DECLARE @typeflag_predicate varchar(40);
+DECLARE @report_typeflag_pattern varchar(10) = CASE WHEN @demographics_mode_norm = 'all' THEN 'P[FA]' ELSE 'PF' END;
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
@@ -36,7 +45,18 @@ DECLARE @facttablecolumn_prefix NVARCHAR(4000);
 --ELSE
 -- select distinct 'exec RunTotalnumClassic '+c_table_name+','+@schemaname+','+@obsfact   from TABLE_ACCESS where c_visualattributes like '%A%'
 
-declare getsql cursor local for select distinct c_table_name from TABLE_ACCESS where c_visualattributes like '%A%' 
+IF @demographics_mode_norm NOT IN ('act','all')
+BEGIN
+    RAISERROR('Invalid demographics_mode. Use act or all.', 16, 1);
+    RETURN;
+END
+
+declare getsql cursor local for
+    select c_table_name,
+           max(case when upper(c_table_cd) = 'ACT_DEMO' then 1 else 0 end) as is_act_demo
+    from TABLE_ACCESS
+    where c_visualattributes like '%A%'
+    group by c_table_name
 
 begin
 
@@ -45,7 +65,7 @@ begin
 
 -- Iterate through each table and put in top-level counts and other cleanup
 OPEN getsql;
-FETCH NEXT FROM getsql INTO @sqltext;
+FETCH NEXT FROM getsql INTO @sqltext, @is_act_demo;
 WHILE @@FETCH_STATUS = 0
 BEGIN
     SET @derived_facttablecolumn ='';
@@ -65,9 +85,15 @@ BEGIN
 		PRINT @sqlstr;
 		execute sp_executesql @sqlstr
 
-		-- This updates counts in the ontology but will only work on the same day the counts are performed
-		set @sqlstr='UPDATE o  set c_totalnum=agg_count from '+ @sqltext+
- 			' o inner join (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd like ''P%'') '+
+			-- Update counts from the latest applicable TOTALNUM rows.
+			-- ACT ontologies always use the optimized PF rows. In all mode, other ontologies may
+			-- also use supplemental PA rows produced by FastTotalnumAdditionalDimensions.
+			set @typeflag_predicate = case
+			    when @demographics_mode_norm = 'all' and @is_act_demo = 0 then 'like ''P[FA]'''
+			    else '= ''PF'''
+			end;
+			set @sqlstr='UPDATE o  set c_totalnum=agg_count from '+ @sqltext+
+				' o inner join (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd '+@typeflag_predicate+') '+
  			' t on t.c_fullname=o.c_fullname  where t.c_fullname=o.c_fullname and rn=1';
  		execute sp_executesql @sqlstr
     
@@ -81,7 +107,7 @@ BEGIN
     END
                   
 --	exec sp_executesql @sqltext
-	FETCH NEXT FROM getsql INTO @sqltext;	
+		FETCH NEXT FROM getsql INTO @sqltext, @is_act_demo;
 END
 
 CLOSE getsql;
@@ -99,6 +125,6 @@ DEALLOCATE getsql;
     END
         
     -- Build the report table
-    exec BuildTotalnumReport 10, 6.5
+    exec BuildTotalnumReport 10, 6.5, @report_typeflag_pattern
 end;
 GO
