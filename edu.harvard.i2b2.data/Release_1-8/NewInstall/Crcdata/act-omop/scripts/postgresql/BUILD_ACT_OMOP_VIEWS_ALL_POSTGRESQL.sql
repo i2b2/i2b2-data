@@ -285,7 +285,7 @@ FROM observation;
 create or replace view  procedure_view
 (encounter_num, patient_num, concept_cd, provider_id, start_date, end_date, modifier_cd, instance_num,
 valtype_cd, location_cd, tval_char, nval_num, valueflag_cd, units_cd, confidence_num, sourcesystem_cd,
-update_date, download_date, import_date, upload_id, observation_blob, quantity_num, source_concept_id,
+update_date, download_date, import_date, observation_blob, upload_id, quantity_num, source_concept_id,
 source_value, domain_id)
 as
 SELECT visit_occurrence_id AS encounter_num,
@@ -574,7 +574,7 @@ SELECT
 	CAST(NULL as varchar(50)) AS location_cd,
     CASE 
         WHEN VALUE_AS_NUMBER IS NOT NULL THEN 'E' 
-        ELSE OBSERVATION_SOURCE_VALUE 
+        ELSE VALUE_AS_STRING
         END AS TVAL_CHAR,
     VALUE_AS_NUMBER AS NVAL_NUM,
     CAST(VALUE_AS_CONCEPT_ID AS VARCHAR(50)) AS VALUEFLAG_CD,
@@ -597,7 +597,7 @@ FROM
 create or replace view  procedure_NS_view
 (encounter_num, patient_num, concept_cd, provider_id, start_date, end_date, modifier_cd, instance_num,
 valtype_cd, location_cd, tval_char, nval_num, valueflag_cd, units_cd, confidence_num, sourcesystem_cd,
-update_date, download_date, import_date, upload_id, observation_blob, quantity_num, source_concept_id,
+update_date, download_date, import_date, observation_blob, upload_id, quantity_num, source_concept_id,
 source_value, domain_id)
 as
 SELECT visit_occurrence_id AS encounter_num,
