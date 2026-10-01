@@ -224,7 +224,7 @@ CREATE  VIEW DEVICE_VIEW AS
 SELECT 
 			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM,
-   			device_exposure_id AS CONCEPT_CD, 
+			device_concept_id AS CONCEPT_CD,
    			isnull(CAST(provider_id AS VARCHAR(50)),'@') AS PROVIDER_ID, 
    			device_exposure_start_datetime AS START_DATE, 
 			device_exposure_end_datetime AS END_DATE, 

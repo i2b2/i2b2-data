@@ -141,7 +141,7 @@ source_value, domain_id)
 as
 SELECT visit_occurrence_id AS encounter_num,
 person_id AS patient_num,
-device_exposure_id::varchar(50) AS concept_cd,
+device_concept_id::varchar(50) AS concept_cd,
 COALESCE(provider_id::character varying(50), '@'::character varying)  AS provider_id,
 device_exposure_start_datetime AS start_date,
 device_exposure_end_datetime AS end_date,
