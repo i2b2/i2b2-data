@@ -3,6 +3,7 @@
 --GO
 --DROP PROCEDURE IF EXISTS FastTotalnumWrapper;
 --GO
+--supports both i2b2 and OMOP data models
 
 IF EXISTS ( SELECT  *
             FROM    sys.objects
