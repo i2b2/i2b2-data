@@ -67,12 +67,27 @@ GO
 ON COMMIT PRESERVE ROWS;*/
 
 
-CREATE OR REPLACE PROCEDURE FastTotalnumCount IS
+CREATE OR REPLACE PROCEDURE FastTotalnumCount(
+    schemaname  IN VARCHAR2 DEFAULT 'DBO',
+    source_mode IN VARCHAR2 DEFAULT 'i2b2'
+)
+  IS
   start_time DATE;
+  source_mode_norm VARCHAR2(20);
 BEGIN
   -- Set the start time for benchmarking.
   start_time := SYSDATE;
-  
+  source_mode_norm := LOWER(
+        NVL(NULLIF(source_mode, ''), 'i2b2')
+    );
+
+    IF source_mode_norm NOT IN ('i2b2', 'omop') THEN
+        RAISE_APPLICATION_ERROR(
+            -20003,
+            'Invalid source_mode. Use i2b2 or omop.'
+        );
+    END IF;
+
   --------------------------------------------------------------------------
   -- CLEAR OUT TEMP DATA FROM PREVIOUS RUN
   --
