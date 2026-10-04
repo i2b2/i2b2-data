@@ -68,7 +68,7 @@ ON COMMIT PRESERVE ROWS;*/
 
 
 CREATE OR REPLACE PROCEDURE FastTotalnumCount(
-    schemaname  IN VARCHAR2 DEFAULT 'DBO',
+    schemaname  IN VARCHAR2 DEFAULT 'i2b2',
     source_mode IN VARCHAR2 DEFAULT 'i2b2'
 )
   IS
