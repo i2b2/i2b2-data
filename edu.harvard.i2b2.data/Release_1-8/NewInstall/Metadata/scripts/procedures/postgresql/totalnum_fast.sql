@@ -20,14 +20,19 @@ Acknowledgement:
   This Postgres conversion by Jeff Klann, assisted by ChatGPT.
 --------------------------------------------------------------------------------
 */
-CREATE OR REPLACE PROCEDURE fasttotalnumcount()
+CREATE OR REPLACE PROCEDURE fasttotalnumcount(schemaname text DEFAULT 'public', source_mode text DEFAULT 'i2b2')
 LANGUAGE plpgsql
 AS $sql$
 DECLARE
     start_time timestamp;
+source_mode_norm text;
 BEGIN
     start_time := now();
-    
+    source_mode_norm := lower(coalesce(nullif(source_mode, ''), 'i2b2'));
+
+    IF source_mode_norm NOT IN ('i2b2','omop') THEN
+      RAISE EXCEPTION 'Invalid source_mode. Use i2b2 or omop.';
+    END IF;
     --------------------------------------------------------------------------
     -- 
     --------------------------------------------------------------------------
