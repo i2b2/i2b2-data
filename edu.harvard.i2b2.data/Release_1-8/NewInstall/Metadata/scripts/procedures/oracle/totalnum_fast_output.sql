@@ -37,7 +37,7 @@ This Oracle conversion was assisted by ChatGPT.
 
 
 CREATE OR REPLACE PROCEDURE FastTotalnumOutput(
-  schemaname IN VARCHAR2 DEFAULT 'DBO',
+  schemaname IN VARCHAR2 DEFAULT 'i2b2',
   tablename  IN VARCHAR2 DEFAULT '@',
   source_mode IN VARCHAR2 DEFAULT 'i2b2'
 )
