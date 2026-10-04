@@ -38,14 +38,15 @@ This Oracle conversion was assisted by ChatGPT.
 
 CREATE OR REPLACE PROCEDURE FastTotalnumOutput(
   schemaname IN VARCHAR2 DEFAULT 'DBO',
-  tablename  IN VARCHAR2 DEFAULT '@'
+  tablename  IN VARCHAR2 DEFAULT '@',
+  source_mode IN VARCHAR2 DEFAULT 'i2b2'
 )
 AUTHID CURRENT_USER
 IS
   sqlstr  VARCHAR2(4000);
   sqltext VARCHAR2(4000);
   start_time DATE;
-
+  source_mode_norm VARCHAR2(20);
   PROCEDURE run_sql(p_sql IN VARCHAR2) IS
   BEGIN
     DBMS_OUTPUT.PUT_LINE(p_sql);
@@ -60,6 +61,17 @@ IS
 BEGIN
   start_time := SYSDATE;
   
+    source_mode_norm :=
+        LOWER(NVL(NULLIF(source_mode, ''), 'i2b2'));
+
+    IF source_mode_norm NOT IN ('i2b2', 'omop') THEN
+
+        RAISE_APPLICATION_ERROR(
+            -20003,
+            'Invalid source_mode. Use i2b2 or omop.'
+        );
+
+    END IF;
   ---------------------------------------------------------------------------
   -- Iterate through each ontology table specified in TABLE_ACCESS (those
   -- with c_visualattributes like '%A%')
