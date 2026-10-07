@@ -74,13 +74,10 @@ create or replace view PATIENT_DIMENSION
 marital_status_cd, religion_cd, zip_cd, statecityzip_path, income_cd, patient_blob, update_date,
 download_date, import_date, sourcesystem_cd, upload_id, ethnicity_cd)
 as
-SELECT person_id AS patient_num,
-CASE
-WHEN year_of_birth IS NULL THEN 'Y'::varchar(50)
-ELSE 'N'::varchar(50)
-END AS vital_status_cd,
+SELECT P.person_id AS patient_num,
+CAST(CASE WHEN D.person_id IS NOT NULL THEN '45885033' ELSE NULL END AS VARCHAR(50)) AS VITAL_STATUS_CD,
 TO_DATE(year_of_birth || '-' || TO_CHAR(month_of_birth, 'FM00') || '-' || TO_CHAR(day_of_birth, 'FM00'), 'YYYY-MM-DD') AS birth_date,
-NULL AS death_date,
+D.death_date AS DEATH_DATE,
 gender_concept_id::text AS sex_cd,
 trunc(EXTRACT(
                 EPOCH FROM (now() - (birth_datetime::date)
@@ -99,7 +96,8 @@ CAST(NULL as timestamp) AS IMPORT_DATE,
 CAST(NULL as varchar(50)) AS SOURCESYSTEM_CD,
 CAST(NULL as int) AS upload_id,
 ethnicity_concept_id AS ethnicity_cd
-FROM person;
+FROM PERSON P
+LEFT JOIN DEATH D ON D.person_id = P.person_id;
 
 /******* OMOP FACT TABLE VIEWS ************/
 

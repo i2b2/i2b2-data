@@ -169,9 +169,9 @@ CREATE  VIEW PATIENT_DIMENSION
     )
     AS
 
-SELECT        person_id AS PATIENT_NUM, CASE WHEN year_of_birth IS  NULL THEN 'Y' else 'N' END AS VITAL_STATUS_CD,
+SELECT P.person_id AS PATIENT_NUM, CAST(CASE WHEN D.person_id IS NOT NULL THEN '45885033' ELSE NULL END AS VARCHAR(50)) AS VITAL_STATUS_CD,
 (CONCAT(YEAR_OF_BIRTH,'-',  MONTH_OF_BIRTH,'-',day_of_birth) )AS BIRTH_DATE,
-cast (null as date) AS DEATH_DATE, CONVERT(char, gender_concept_id) AS SEX_CD,
+D.death_date AS DEATH_DATE, CONVERT(char, gender_concept_id) AS SEX_CD,
 DATEDIFF(hour, birth_datetime,
  getdate() )/8766 
                          AS AGE_IN_YEARS_NUM, NULL AS LANGUAGE_CD,CONVERT(char, RACE_CONCEPT_ID) AS RACE_CD, NULL AS MARITAL_STATUS_CD,
@@ -179,8 +179,8 @@ DATEDIFF(hour, birth_datetime,
                          AS PATIENT_BLOB, CAST(NULL AS DATE) AS UPDATE_DATE, CAST(NULL AS DATE) AS DOWNLOAD_DATE, CAST(NULL AS DATE) 
 						 AS IMPORT_DATE, CAST(NULL as varchar(50)) AS sourcesystem_cd, NULL AS UPLOAD_ID, 
                         CONVERT(char, ethnicity_concept_id) AS ETHNICITY_CD
-FROM            PERSON
-;
+FROM PERSON P
+LEFT JOIN DEATH D ON D.person_id = P.person_id;
 
 /******* OMOP FACT TABLE VIEWS ************/
 
