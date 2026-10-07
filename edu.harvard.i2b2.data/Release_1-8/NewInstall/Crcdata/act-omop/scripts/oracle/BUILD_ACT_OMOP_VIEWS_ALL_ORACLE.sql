@@ -190,7 +190,7 @@ CREATE OR REPLACE  VIEW DEVICE_VIEW AS
 SELECT 
 			visit_occurrence_id AS ENCOUNTER_NUM, 
  			PERSON_ID AS PATIENT_NUM,
-   			CAST(device_exposure_id AS VARCHAR2(50)) AS CONCEPT_CD, 
+			CAST(device_concept_id AS VARCHAR2(50)) AS CONCEPT_CD,
    			nvl(CAST(provider_id AS VARCHAR2(50)),'@') AS PROVIDER_ID, 
    			device_exposure_start_datetime AS START_DATE, 
 			device_exposure_end_datetime AS END_DATE, 
@@ -617,7 +617,7 @@ SELECT
 	NULL AS LOCATION_CD,
     CASE 
         WHEN VALUE_AS_NUMBER IS NOT NULL THEN 'E' 
-        ELSE OBSERVATION_SOURCE_VALUE 
+        ELSE VALUE_AS_STRING
         END AS TVAL_CHAR,
     VALUE_AS_NUMBER AS NVAL_NUM,
     CAST(VALUE_AS_CONCEPT_ID AS VARCHAR2(50)) AS VALUEFLAG_CD,

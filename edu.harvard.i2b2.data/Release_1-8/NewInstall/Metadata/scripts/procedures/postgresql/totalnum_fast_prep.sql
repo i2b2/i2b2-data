@@ -5,7 +5,7 @@ Postgres Version: fasttotalnumprep
 Written by Darren Henderson (DARREN.HENDERSON@UKY.EDU) and Jeff Klann, PhD.
 
 Description:
-  This function prepares the environment for the FastTotalnum process by performing
+  This PROCEDURE prepares the environment for the FastTotalnum process by performing
   the following steps:
     1) Re-creates the "obsfact_pairs" view, which selects distinct patient numbers and
        concept codes from either "observation_fact" or ACT-OMOP views, based on source_mode.
@@ -18,13 +18,13 @@ Description:
        ancestor and "fruit" the descendant.
        
 Usage Examples:
-  -- Run the function on the default schema:
+  -- Run the PROCEDURE on the default schema:
   SELECT fasttotalnumprep();
   
-  -- Run the function on a specified schema (e.g., "my_schema"):
-  SELECT fasttotalnumprep('my_schema');
+  -- Run the PROCEDURE on a specified schema (e.g., "my_schema"):
+  SELECT fasttotalnumprep('my_schema','i2b2');
 
-  -- Run the function using ACT-OMOP views:
+  -- Run the PROCEDURE using ACT-OMOP views:
   SELECT fasttotalnumprep('public', 'omop');
   
 Acknowledgements:
@@ -32,10 +32,10 @@ Acknowledgements:
 --------------------------------------------------------------------------------
 */
 
-DROP FUNCTION IF EXISTS fasttotalnumprep(text);
+DROP PROCEDURE IF EXISTS fasttotalnumprep(text);
 
-CREATE OR REPLACE FUNCTION fasttotalnumprep(schemaname text DEFAULT 'public', source_mode text DEFAULT 'i2b2')
-RETURNS void
+CREATE OR REPLACE PROCEDURE fasttotalnumprep(schemaname text DEFAULT 'public', source_mode text DEFAULT 'i2b2')
+--RETURNS void
 LANGUAGE plpgsql
 AS $sql$
 DECLARE

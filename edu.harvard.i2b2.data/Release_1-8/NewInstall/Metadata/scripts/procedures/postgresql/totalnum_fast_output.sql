@@ -14,16 +14,16 @@ Description:
   
 Usage Examples:
   -- To run on all ontology tables:
-  CALL fasttotalnumoutput();
+  CALL fasttotalnumoutput('dbo','@','i2b2');
   
   -- To run on a specific ontology table (e.g., 'my_ontology'):
-  CALL fasttotalnumoutput('dbo', 'my_ontology');
+  CALL fasttotalnumoutput('dbo', 'my_ontology','i2b2');
 
 Acknowledgement:
   This Postgres conversion was assisted by ChatGPT.
 --------------------------------------------------------------------------------
 */
-CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@')
+CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@',source_mode text DEFAULT 'i2b2')
 LANGUAGE plpgsql
 AS $sql$
 DECLARE
@@ -32,9 +32,14 @@ DECLARE
     rec record;
     start_time timestamp;
     row_count integer;
+   source_mode_norm text;
 BEGIN
     start_time := now();
-    
+    source_mode_norm := lower(coalesce(nullif(source_mode, ''), 'i2b2'));
+	
+    IF source_mode_norm NOT IN ('i2b2','omop') THEN
+      RAISE EXCEPTION 'Invalid source_mode. Use i2b2 or omop.';
+    END IF;
     -- Iterate through each distinct ontology table from table_access (with c_visualattributes like '%A%')
     FOR rec IN
       SELECT DISTINCT c_table_name FROM table_access WHERE c_visualattributes LIKE '%A%'
