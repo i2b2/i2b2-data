@@ -35,6 +35,10 @@ Only active `TABLE_ACCESS` rows, identified by `C_VISUALATTRIBUTES` containing
 `A`, are processed. Use `@` as the ontology-table argument to process all active
 ontology tables.
 
+The `\denominator\facts\` count comes from the prepared `OBSFACT_PAIRS` view, so
+it follows the i2b2 or OMOP source selected during prep. Report generation is
+optional; missing report objects do not discard successful ontology updates.
+
 ## Install or reload the procedures
 
 Configure the database connection and platform in:
@@ -73,6 +77,11 @@ ant -f data_build.xml db_metadata_run_total_count_postgresql
 These targets use the wrapper's defaults: fast counting, i2b2 source mode, and
 ACT-only fast demographics. Run SQL directly for OMOP, classic, SQL Server
 all-demographics mode, or a single ontology table.
+
+The historical `FastTotalnumWrapper` files remain in the procedure directories
+as commented reference implementations. Reloading procedures removes any
+previously installed copies; use `RunTotalnum` or `runtotalnum` as the supported
+entry point.
 
 ## Metadata requirements
 

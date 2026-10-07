@@ -120,11 +120,21 @@ DEALLOCATE getsql;
     BEGIN
         set @sqlstr = '
         insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
-            select ''\denominator\facts\'',getdate(),count(distinct patient_num),''PX'' from ' + @schemaName + '.' + 'observation_fact'
+            select ''\denominator\facts\'',getdate(),count(distinct patient_num),''PX'' from OBSFACT_PAIRS'
         execute sp_executesql @sqlstr;
     END
         
-    -- Build the report table
-    exec BuildTotalnumReport 10, 6.5, @report_typeflag_pattern
+    -- Build the report table when the optional report procedure is installed.
+    IF OBJECT_ID(N'dbo.BuildTotalnumReport', N'P') IS NULL
+        PRINT 'Skipping totalnum report build: dbo.BuildTotalnumReport is not installed.';
+    ELSE
+    BEGIN
+        BEGIN TRY
+            EXEC dbo.BuildTotalnumReport 10, 6.5, @report_typeflag_pattern;
+        END TRY
+        BEGIN CATCH
+            PRINT 'Skipping totalnum report build: ' + ERROR_MESSAGE();
+        END CATCH
+    END
 end;
 GO

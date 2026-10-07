@@ -14,16 +14,19 @@ Description:
   
 Usage Examples:
   -- To run on all ontology tables:
-  CALL fasttotalnumoutput('dbo','@','i2b2');
+  CALL fasttotalnumoutput('public','@');
   
   -- To run on a specific ontology table (e.g., 'my_ontology'):
-  CALL fasttotalnumoutput('dbo', 'my_ontology','i2b2');
+  CALL fasttotalnumoutput('public', 'my_ontology');
 
 Acknowledgement:
   This Postgres conversion was assisted by ChatGPT.
 --------------------------------------------------------------------------------
 */
-CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@',source_mode text DEFAULT 'i2b2')
+-- Remove the unused source_mode signature if it was installed by an upgrade.
+DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text, text);
+
+CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@')
 LANGUAGE plpgsql
 AS $sql$
 DECLARE
@@ -32,14 +35,8 @@ DECLARE
     rec record;
     start_time timestamp;
     row_count integer;
-   source_mode_norm text;
 BEGIN
     start_time := now();
-    source_mode_norm := lower(coalesce(nullif(source_mode, ''), 'i2b2'));
-	
-    IF source_mode_norm NOT IN ('i2b2','omop') THEN
-      RAISE EXCEPTION 'Invalid source_mode. Use i2b2 or omop.';
-    END IF;
     -- Iterate through each distinct ontology table from table_access (with c_visualattributes like '%A%')
     FOR rec IN
       SELECT DISTINCT c_table_name FROM table_access WHERE c_visualattributes LIKE '%A%'
@@ -120,15 +117,12 @@ BEGIN
           AND agg_date::date = current_date) = 0 THEN
       sqlstr := 'INSERT INTO totalnum(c_fullname, agg_date, agg_count, typeflag_cd) ' ||
                 'SELECT E''\denominator\\facts\\'', now(), COUNT(DISTINCT patient_num), ''PX'' ' ||
-                'FROM ' || schemaname || '.observation_fact';
+                'FROM obsfact_pairs';
       RAISE NOTICE '%', sqlstr;
       BEGIN
         EXECUTE sqlstr;
         GET DIAGNOSTICS row_count = ROW_COUNT;
         RAISE NOTICE 'Rows affected: %', row_count;
-      EXCEPTION
-        WHEN undefined_table THEN
-          RAISE NOTICE 'Skipping denominator insert: %.observation_fact is not visible.', schemaname;
       END;
     END IF;
     

@@ -27,7 +27,7 @@ IF EXISTS ( SELECT  *
 DROP PROCEDURE FastTotalnumCount;
 GO
 
-CREATE PROCEDURE [dbo].[FastTotalnumCount] (@schemaname varchar(50) = 'dbo', @source_mode varchar(20) = 'i2b2')  
+CREATE PROCEDURE [dbo].[FastTotalnumCount]
 
 AS BEGIN
 declare @sqlstr nvarchar(4000)
