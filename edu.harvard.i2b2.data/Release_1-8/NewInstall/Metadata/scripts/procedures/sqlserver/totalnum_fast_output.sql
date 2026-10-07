@@ -21,7 +21,7 @@ IF EXISTS ( SELECT  *
 DROP PROCEDURE FastTotalnumOutput;
 GO
 
-CREATE PROCEDURE [dbo].[FastTotalnumOutput]  (@schemaname varchar(50) = 'dbo', @tablename varchar(50)='@') as  
+CREATE PROCEDURE [dbo].[FastTotalnumOutput]  (@schemaname varchar(50) = 'dbo', @tablename varchar(50)='@',source_mode varchar(20) = 'i2b2') as  
 
 DECLARE @sqlstr NVARCHAR(4000);
 DECLARE @sqltext NVARCHAR(4000);

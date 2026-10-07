@@ -94,5 +94,10 @@ $Id: data_build.xml,v 1.6 2010/06/01 18:13:30 rk903 Exp $
 			 <transaction src="../../NewInstall/Crcdata/${db.project}/scripts/${db.type}/crc_NIH_BREAKDOWNS_${db.type}.sql" />
 		</sql>
 	  </target>
+	  <target name="upgrade_tables_release_1-8-3" depends="init,rebuild_procedures">
+		<sql driver="${db.driver}" url="${db.url}" userid="${db.username}" password="${db.password}" classpathref="classpath" keepformat="true" onerror="continue" print="true" delimiter=";">
+					<transaction src="./scripts/upgrade_${db.type}_1-8-3.sql" />
+		</sql>
+	  </target>
 
 </project>
