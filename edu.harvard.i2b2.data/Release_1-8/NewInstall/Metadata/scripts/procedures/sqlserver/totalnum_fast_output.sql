@@ -87,13 +87,13 @@ BEGIN
 
 			-- Update counts from the latest applicable TOTALNUM rows.
 			-- ACT ontologies always use the optimized PF rows. In all mode, other ontologies may
-			-- also use supplemental PA rows produced by FastTotalnumAdditionalDimensions.
+			-- also use supplemental PA rows produced by the metadata-driven counters.
 			set @typeflag_predicate = case
 			    when @demographics_mode_norm = 'all' and @is_act_demo = 0 then 'like ''P[FA]'''
 			    else '= ''PF'''
 			end;
 			set @sqlstr='UPDATE o  set c_totalnum=agg_count from '+ @sqltext+
-				' o inner join (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd '+@typeflag_predicate+') '+
+				' o inner join (select row_number() over (partition by c_fullname order by agg_date desc, case when typeflag_cd = ''PA'' then 1 else 0 end desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd '+@typeflag_predicate+') '+
  			' t on t.c_fullname=o.c_fullname  where t.c_fullname=o.c_fullname and rn=1';
  		execute sp_executesql @sqlstr
     
