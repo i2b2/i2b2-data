@@ -14,7 +14,9 @@ This guide covers SQL Server, Oracle, and PostgreSQL.
 | Standard i2b2 `observation_fact` | Fast, `i2b2` source mode | All |
 | ACT-OMOP fact views | Fast, `omop` source mode | All |
 | ACT demographics only | Fast default; named `act` on SQL Server | All |
+| Reuse existing fast prep structures | Fast with prep disabled | All |
 | ACT plus demographics from other ontology tables | Fast, `all` demographics mode | SQL Server only |
+| Numeric-value constrained fact metadata | Fast, `all` demographics mode | SQL Server only |
 | Custom or union fact table | Classic | All |
 | SQL Server wildcard fact-column matching | Classic | SQL Server |
 | Reproduce the previous totalnum algorithm | Classic | All |
@@ -411,6 +413,27 @@ END;
 
 Use `'omop'` instead of `'i2b2'` in `FastTotalnumPrep` for ACT-OMOP views.
 
+### Reuse prepared structures
+
+After one successful prepared run, later counts can skip prep:
+
+```sql
+BEGIN
+  RunTotalnum(
+    observationTable => 'observation_fact',
+    schemaName        => 'I2B2DEMODATA',
+    run_prep          => 0
+  );
+END;
+/
+```
+
+The wrapper verifies that `OBSFACT_PAIRS`, `TNUM_ONTOLOGY`, and
+`CONCEPT_CLOSURE` exist and are valid in the executing metadata schema. Run with
+`run_prep => 1` after ontology or `TABLE_ACCESS` changes, after relevant source
+views change, or before switching between i2b2 and OMOP source modes. Classic
+mode ignores this option.
+
 ## PostgreSQL
 
 If metadata and data objects are in different schemas, set a search path that
@@ -488,6 +511,24 @@ CALL fasttotalnumcount();
 CALL fasttotalnumoutput('public', '@');
 ```
 
+### Reuse prepared structures
+
+After one successful prepared run, later counts can skip prep:
+
+```sql
+SELECT runtotalnum(
+    'observation_fact',
+    'public',
+    run_prep => false
+);
+```
+
+The wrapper verifies that `obsfact_pairs`, `tnum_ontology`, and
+`concept_closure` are visible on the current search path. Run with
+`run_prep => true` after ontology or `table_access` changes, after relevant
+source views change, or before switching between i2b2 and OMOP source modes.
+Classic mode ignores this option.
+
 ## Multi-fact-table configurations
 
 The fast i2b2 workflow reads `observation_fact`. OMOP mode reads the configured
@@ -513,6 +554,7 @@ also supports its classic wildcard option for ontology fact-column references.
 | --- | --- | --- |
 | `RunTotalnum`/`runtotalnum` ran classic counting | The same name is a wrapper that defaults to fast | Add `mode = 'classic'` where classic behavior is required |
 | Fast users called prep, count, and output separately | The wrapper runs all three steps | Use the wrapper unless prep is deliberately scheduled separately |
+| Repeated fast runs always rebuilt prep structures | Every wrapper can reuse an existing prep | Disable prep only when the ontology and selected source mode are unchanged |
 | Classic implementation used the common procedure name | Classic is explicitly named `RunTotalnumClassic`/`runtotalnumclassic` | Update direct classic calls; old common calls now mean fast |
 | Classic implementation was presented as `run_all_counts.sql` | It is stored in `totalnum_classic.sql` | Load all procedure files rather than referring to the old filename |
 | i2b2 and OMOP prep could require separate script variants | One prep procedure uses `source_mode` | Pass `omop` instead of maintaining a separate prep copy |

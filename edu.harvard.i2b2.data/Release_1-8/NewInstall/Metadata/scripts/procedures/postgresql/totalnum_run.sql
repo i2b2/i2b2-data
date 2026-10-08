@@ -2,15 +2,19 @@
 -- Compatibility wrapper for totalnum counting.
 -- Defaults to the fast i2b2 totalnum workflow while preserving the legacy runtotalnum function name.
 -- Use mode => 'omop' for fast ACT-OMOP prep or mode => 'classic' to force the legacy/classic implementation.
+-- Use run_prep => false to reuse existing prepared structures; the default rebuilds them.
 -----------------------------------------------------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text, boolean);
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text);
 DROP FUNCTION IF EXISTS runtotalnum(text, text, text);
 
 CREATE OR REPLACE FUNCTION runtotalnum(
     observationTable text,
     schemaName text,
     tableName text default '@',
-    mode text default 'fast'
+    mode text default 'fast',
+    run_prep boolean default true
 )
   RETURNS void AS
 $BODY$
@@ -36,7 +40,19 @@ BEGIN
     END IF;
 
     source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
-    PERFORM fasttotalnumprep(schemaName, source_mode);
+
+    IF coalesce(run_prep, true) THEN
+        PERFORM fasttotalnumprep(schemaName, source_mode);
+    ELSE
+        RAISE NOTICE 'Skipping fasttotalnumprep; using existing obsfact_pairs, tnum_ontology, and concept_closure. Rerun prep after ontology changes or when switching source mode.';
+
+        IF to_regclass('obsfact_pairs') IS NULL
+           OR to_regclass('tnum_ontology') IS NULL
+           OR to_regclass('concept_closure') IS NULL THEN
+            RAISE EXCEPTION 'Cannot skip fasttotalnumprep because one or more prepared objects are missing.';
+        END IF;
+    END IF;
+
     CALL fasttotalnumcount();
     CALL fasttotalnumoutput(schemaName, tableName);
 END;
