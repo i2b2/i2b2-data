@@ -158,6 +158,10 @@ In this mode:
   `patient_dimension`.
 - Their `C_COLUMNNAME`, `C_OPERATOR`, and `C_DIMCODE` expressions are evaluated
   using the shared classic dimension-counting implementation.
+- SQL Server i2b2 fact metadata using the strict
+  `nval_num = number AND concept_cd` constraint form is also counted. Affected
+  fact-only hierarchy branches are rebuilt so constrained leaves and their
+  shortcut folders agree. Mixed higher roots retain the normal fast count.
 - Visit-dimension metadata outside ACT is not added by this option.
 - Supplemental patient counts are recorded in `TOTALNUM` with type `PA`.
 
@@ -173,12 +177,39 @@ EXEC dbo.RunTotalnum
     @demographics_mode = 'all';
 ```
 
+The additional `patient_dimension` pass works in both source modes. Constrained
+fact metadata currently requires the i2b2 `observation_fact` source and is
+skipped with a message in OMOP mode.
+
 The SQL Server validation script is
 [test_totalnum_demographics_mode.sql](../edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata/scripts/procedures/sqlserver/tests/test_totalnum_demographics_mode.sql).
 
-Run that script only in a test database or disposable copy. It updates counts
-and appends `TOTALNUM` history while comparing ACT-only, all-demographics, and
-optionally classic results.
+Constrained fact leaves can be checked against a direct `observation_fact`
+count with
+[test_totalnum_constrained_facts.sql](../edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata/scripts/procedures/sqlserver/tests/test_totalnum_constrained_facts.sql).
+
+Run the validation scripts only in a test database or disposable copy. They
+update counts and append `TOTALNUM` history while checking the selected modes
+and constrained leaves.
+
+### Reuse prepared structures
+
+By default, `RunTotalnum` rebuilds the fast prep structures before counting.
+After one successful prepared run, later counts can skip that work:
+
+```sql
+EXEC dbo.RunTotalnum
+    @schemaname = 'dbo',
+    @demographics_mode = 'all',
+    @run_prep = 0;
+```
+
+The wrapper checks that `OBSFACT_PAIRS`, `TNUM_ONTOLOGY`, and
+`CONCEPT_CLOSURE` exist before continuing. It cannot tell whether their content
+is stale. Run with `@run_prep = 1` (the default) after ontology or
+`TABLE_ACCESS` changes, after relevant source views change, or before switching
+between i2b2 and OMOP source modes. The option applies only to the fast path;
+classic routing ignores it.
 
 ### Single ontology table
 
@@ -227,8 +258,9 @@ EXEC dbo.RunTotalnumClassic
 
 ### Manual fast steps
 
-The wrapper runs all steps on every call. Sites that prepare only after an
-ontology change can run the steps separately.
+The wrapper runs all steps by default. Use `@run_prep = 0` as shown above to
+reuse prepared structures through the wrapper, or run the steps separately for
+more control.
 
 Standard i2b2 and ACT-only demographics:
 
@@ -245,7 +277,7 @@ EXEC dbo.FastTotalnumOutput
     @demographics_mode = 'act';
 ```
 
-All demographics adds one step between counting and output:
+All demographics adds two supplemental steps between counting and output:
 
 ```sql
 EXEC dbo.FastTotalnumPrep
@@ -257,6 +289,11 @@ EXEC dbo.FastTotalnumCount;
 EXEC dbo.FastTotalnumAdditionalDimensions
     @schemaname = 'dbo',
     @tablename = '@';
+
+EXEC dbo.FastTotalnumConstrainedFacts
+    @schemaname = 'dbo',
+    @tablename = '@',
+    @source_mode = 'i2b2';
 
 EXEC dbo.FastTotalnumOutput
     @schemaname = 'dbo',

@@ -17,8 +17,12 @@ Manual preparation:
 Expected behavior:
   - act uses the existing optimized ACT demographic path.
   - all produces the same ACT_DEMO counts as act.
+  - the all run reuses the structures prepared by the act run, exercising
+    RunTotalnum @run_prep = 0.
   - all additionally produces PA rows and ontology counts for non-ACT
     patient_dimension metadata.
+  - all also invokes the constrained-fact supplement. Validate those rows with
+    test_totalnum_constrained_facts.sql.
   - the classic PAT_COUNT_VISITS interface still counts patient and visit metadata.
 */
 
@@ -155,14 +159,20 @@ END;
 CLOSE capture_act;
 DEALLOCATE capture_act;
 
-/* Test 2: run and time fast counting with all additional demographics. */
+/*
+Test 2: run and time fast counting with all additional demographics.
+This deliberately skips prep and reuses the structures built by Test 1. Before
+using this shortcut in normal operation, rerun prep after ontology, TABLE_ACCESS,
+source-view, or source-mode changes.
+*/
 SET @StartedAt = SYSDATETIME();
 EXEC RunTotalnum
     @observationTable = @ObservationTable,
     @schemaname = @SchemaName,
     @tablename = '@',
     @mode = @SourceMode,
-    @demographics_mode = 'all';
+    @demographics_mode = 'all',
+    @run_prep = 0;
 INSERT INTO #TestTiming
 VALUES ('fast-all', DATEDIFF_BIG(millisecond, @StartedAt, SYSDATETIME()) / 1000.0);
 
