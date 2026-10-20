@@ -3,6 +3,8 @@
 -- e.g., to censor counts under ten and add Gaussian noise with a sigma of 2.8 - exec BuildTotalnumReport 9, 2.8
 -- Dependent on the random helper functions in this directory
 -- Example usage: exec BuildTotalnumReport 10, 6.5
+-- Fast ACT-only output can pass 'PF' as the optional third argument to exclude
+-- historical metadata-driven PD rows. The default preserves classic behavior.
 -- By Jeff Klann, PhD
 IF EXISTS ( SELECT  *
             FROM    sys.objects
@@ -11,7 +13,11 @@ IF EXISTS ( SELECT  *
 DROP PROCEDURE BuildTotalnumReport;
 GO
 
-CREATE PROCEDURE [dbo].[BuildTotalnumReport](@threshold int, @sigma float) AS
+CREATE PROCEDURE [dbo].[BuildTotalnumReport](
+    @threshold int,
+    @sigma float,
+    @typeflag_pattern varchar(10) = 'P%'
+) AS
 BEGIN
 
     -- Implements SHRINE's obfuscation (with user-specified threshold and sigma)
@@ -33,7 +39,7 @@ BEGIN
     insert into totalnum_report(c_fullname, agg_count, agg_date)
     select c_fullname, case sign(agg_count+1 - @threshold) when 1 then round(agg_count/5.0,0)*5+dbo.normalrand(@sigma, 0, @threshold) else -1 end agg_count, 
         convert(varchar(50),agg_date,23) agg_date --YYYY-MM-DD
-        from (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd like 'P%') x where rn=1;
+        from (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd like @typeflag_pattern) x where rn=1;
         
     update totalnum_report set agg_count=-1 where agg_count<@threshold;
 

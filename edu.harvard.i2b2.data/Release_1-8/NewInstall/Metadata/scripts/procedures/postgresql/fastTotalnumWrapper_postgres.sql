@@ -1,3 +1,8 @@
+-- Retained for reference, but disabled because runtotalnum is the supported wrapper.
+-- Remove any previously installed copy, then keep the implementation commented below.
+DROP PROCEDURE IF EXISTS fasttotalnumwrapper(text, text, text);
+
+/*
 ---------------------------------------------------------------------------
 -- FastTotalnumWrapper - PostgreSQL
 --
@@ -26,7 +31,7 @@ BEGIN
     -----------------------------------------------------------------------
     RAISE NOTICE 'Step 1: Prepare fast totalnum...';
 
-    CALL fasttotalnumprep(
+    PERFORM fasttotalnumprep(
         p_schemaname,
         p_source_mode
     );
@@ -39,10 +44,7 @@ BEGIN
     -----------------------------------------------------------------------
     RAISE NOTICE 'Step 2: Calculate fast totalnum...';
 
-    CALL fasttotalnumcount(
-        p_schemaname,
-        p_source_mode
-    );
+    CALL fasttotalnumcount();
 
     RAISE NOTICE 'Step 2 completed.';
 
@@ -54,8 +56,7 @@ BEGIN
 
     CALL fasttotalnumoutput(
         p_schemaname,
-        p_tablename,
-        p_source_mode
+        p_tablename
     );
 
     RAISE NOTICE 'Step 3 completed.';
@@ -72,3 +73,4 @@ EXCEPTION
 
 END;
 $$;
+*/

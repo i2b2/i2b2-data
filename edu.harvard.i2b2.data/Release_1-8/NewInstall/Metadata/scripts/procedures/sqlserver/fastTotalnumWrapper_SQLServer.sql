@@ -1,4 +1,11 @@
-/* SET TARGET DATABASE */
+-- Retained for reference, but disabled because RunTotalnum is the supported wrapper.
+-- Remove any previously installed copy, then keep the implementation commented below.
+IF OBJECT_ID(N'dbo.FastTotalnumWrapper', N'P') IS NOT NULL
+    DROP PROCEDURE dbo.FastTotalnumWrapper;
+GO
+
+/*
+-- SET TARGET DATABASE
 --USE I2B2ACT
 --GO
 --DROP PROCEDURE IF EXISTS FastTotalnumWrapper;
@@ -31,19 +38,18 @@ BEGIN
     -- Step 2: Calculate fast totalnum
     -----------------------------------------------------------------------
 	RAISERROR('Step 2: Calculate fast totalnum...', 0, 1) WITH NOWAIT;
-    EXEC FastTotalnumCount @schemaname,@source_mode;
+    EXEC FastTotalnumCount;
 
 
     -----------------------------------------------------------------------
     -- Step 3: Generate fast totalnum output
     -----------------------------------------------------------------------
 	RAISERROR('Step 3: Generate fast totalnum output...', 0, 1) WITH NOWAIT;
-    EXEC FastTotalnumOutput @schemaname,@tablename,@source_mode;
+    EXEC FastTotalnumOutput @schemaname,@tablename;
 RAISERROR('Finished', 0, 1) WITH NOWAIT;
 END;
 
-/*
-EXEC dbo.FastTotalnumWrapper 'dbo', '@', 'i2b2';
-
-EXEC dbo.FastTotalnumWrapper 'dbo', '@', 'omop';
+-- Examples:
+-- EXEC dbo.FastTotalnumWrapper 'dbo', '@', 'i2b2';
+-- EXEC dbo.FastTotalnumWrapper 'dbo', '@', 'omop';
 */

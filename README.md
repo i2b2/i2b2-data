@@ -7,6 +7,11 @@ The scripts to create a new i2b2 database as well as upgrade an existing databas
 The i2b2 database scripts are maintained by the i2b2 team.
 
 
+## Documentation
+
+[Running totalnum Patient Counts](docs/totalnum.md)
+
+
 ## Reporting Issues
 If an issue is found with the i2b2 database scripts please submit an issue in the [i2b2 Bug Tracker](http://community.i2b2.org/jira/secure/Dashboard.jspa "i2b2 Bug Tracker") under the *i2b2 Core Software* project.
     

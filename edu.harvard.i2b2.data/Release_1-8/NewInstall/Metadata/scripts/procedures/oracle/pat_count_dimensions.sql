@@ -1,4 +1,4 @@
--- To run this separately from run_all_counts, follow this example, substituting your local parameters:
+-- To run this separately from totalnum_classic, follow this example, substituting your local parameters:
 --DECLARE errorMsg VARCHAR2(700);
 --begin
 -- PAT_COUNT_DIMENSIONS( 'ACT_MED_VA_V2_092818' , 'I2B2DemoData', 'observation_fact' ,  'concept_cd', 'concept_dimension', 'concept_path', errorMsg  );

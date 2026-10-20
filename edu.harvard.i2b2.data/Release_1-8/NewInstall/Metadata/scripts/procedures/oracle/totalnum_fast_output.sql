@@ -8,7 +8,8 @@ This procedure writes the most recent totalnum counts from the TOTALNUM table in
 specified in the TABLE_ACCESS table and generates a report (TOTALNUM_REPORT) with obfuscated counts.
 It assumes that:
   - The ontology tables (listed in TABLE_ACCESS with c_visualattributes like '%A%') already exist.
-  - Supporting procedures (e.g., FastTotalnumCount, EndTime, BuildTotalnumReport) have been converted to Oracle.
+  - Supporting counting procedures have been converted to Oracle. Report generation
+    is skipped when BuildTotalnumReport or TOTALNUM_REPORT is unavailable.
   - Any dynamic SQL used in this procedure is executed via EXECUTE IMMEDIATE.
   - Date functions (SYSDATE, TRUNC) and string operations are used in Oracle-compatible form.
   - The procedure runs with AUTHID CURRENT_USER so unqualified ontology table names
@@ -38,15 +39,13 @@ This Oracle conversion was assisted by ChatGPT.
 
 CREATE OR REPLACE PROCEDURE FastTotalnumOutput(
   schemaname IN VARCHAR2 DEFAULT 'i2b2',
-  tablename  IN VARCHAR2 DEFAULT '@',
-  source_mode IN VARCHAR2 DEFAULT 'i2b2'
+  tablename  IN VARCHAR2 DEFAULT '@'
 )
 AUTHID CURRENT_USER
 IS
   sqlstr  VARCHAR2(4000);
   sqltext VARCHAR2(4000);
   start_time DATE;
-  source_mode_norm VARCHAR2(20);
   PROCEDURE run_sql(p_sql IN VARCHAR2) IS
   BEGIN
     DBMS_OUTPUT.PUT_LINE(p_sql);
@@ -60,18 +59,6 @@ IS
   END;
 BEGIN
   start_time := SYSDATE;
-  
-    source_mode_norm :=
-        LOWER(NVL(NULLIF(source_mode, ''), 'i2b2'));
-
-    IF source_mode_norm NOT IN ('i2b2', 'omop') THEN
-
-        RAISE_APPLICATION_ERROR(
-            -20003,
-            'Invalid source_mode. Use i2b2 or omop.'
-        );
-
-    END IF;
   ---------------------------------------------------------------------------
   -- Iterate through each ontology table specified in TABLE_ACCESS (those
   -- with c_visualattributes like '%A%')
@@ -189,33 +176,22 @@ BEGIN
       sqlstr :=
        'INSERT INTO totalnum(c_fullname, agg_date, agg_count, typeflag_cd) ' ||
        'SELECT ''\denominator\facts\'', SYSDATE, COUNT(DISTINCT patient_num), ''PX'' ' ||
-       'FROM ' || schemaname || '.observation_fact';
-      BEGIN
-        run_sql(sqlstr);
-      EXCEPTION
-        WHEN OTHERS THEN
-          IF SQLCODE = -942 THEN
-            DBMS_OUTPUT.PUT_LINE('Skipping denominator insert: ' || schemaname || '.observation_fact is not visible.');
-          ELSE
-            RAISE;
-          END IF;
-      END;
+       'FROM OBSFACT_PAIRS';
+      run_sql(sqlstr);
     END IF;
   END;
   
   ---------------------------------------------------------------------------
-  -- Build the report table.
-  -- (This call assumes that the BuildTotalnumReport procedure exists and accepts
-  -- two parameters, e.g. BuildTotalnumReport(10, 6.5);)
+  -- Build the report table when the optional report procedure is installed.
+  -- Dynamic invocation allows this procedure to compile when it is absent.
   ---------------------------------------------------------------------------
   BEGIN
     DBMS_OUTPUT.PUT_LINE('Calling BuildTotalnumReport(10, 6.5)');
-    BuildTotalnumReport(10, 6.5);
+    EXECUTE IMMEDIATE 'BEGIN BuildTotalnumReport(10, 6.5); END;';
   EXCEPTION
     WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('BuildTotalnumReport failed. Verify TOTALNUM_REPORT exists and is visible to the caller.');
+      DBMS_OUTPUT.PUT_LINE('Skipping totalnum report build. Verify BuildTotalnumReport and TOTALNUM_REPORT are available.');
       DBMS_OUTPUT.PUT_LINE('Oracle error: ' || SQLERRM);
-      RAISE;
   END;
   
   COMMIT;

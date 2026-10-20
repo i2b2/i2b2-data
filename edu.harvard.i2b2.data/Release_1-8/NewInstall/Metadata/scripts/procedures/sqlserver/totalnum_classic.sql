@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------------------------------------------------
--- Function to run totalnum counts on all tables in table_access 
+-- Legacy/classic totalnum counting implementation.
 -- By Mike Mendis and Jeff Klann, PhD with performance optimization by Darren Henderson (UKY)
--- Run with: exec RunTotalnum or exec RunTotalnum 'observation_fact','dbo','@' 
+-- Run directly with: exec RunTotalnumClassic 'observation_fact','dbo','@'
+-- The RunTotalnum compatibility wrapper is defined in totalnum_run.sql and defaults to the fast totalnum workflow.
 --  Optionally you can specify the observation table name (for multi-fact-table setups), the schemaname, 
 --    a single table name to run on a single ontology table, and a wildcard flag that will ignore multifact references in the ontology if 'Y'.
 -- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
@@ -11,7 +12,7 @@
 --
 -- To use with multi-fact-table setups: 
 --   Option 1) If you have at most one fact table per ontology, run this once with each fact table specified! 
---        e.g., to use on a fact table called derived_fact with just the act_covid ontology: exec RunTotalnum 'derived_fact','dbo','act_covid' 
+--        e.g., to use on a fact table called derived_fact with just the act_covid ontology: exec RunTotalnumClassic 'derived_fact','dbo','act_covid'
 --   Option 2) Create a fact table view as the union of all your fact tables. (This is essentially going back to a single fact table,  but it is only used
 --     for totalnum counting. This is needed to correctly count patients that mention multiple fact tables within a hierarchy.)
 --    e.g., 
@@ -20,18 +21,18 @@
 --       union all
 --       select * from drug_view
 --    And then run the totalnum counter with the wildcard flag, to ignore multifact references in the ontology
---      e.g., exec RunTotalnum 'observation_fact_view','dbo','@','Y'
+--      e.g., exec RunTotalnumClassic 'observation_fact_view','dbo','@','Y'
 --    Note this approach does not work if you have conflicting concept_cds across fact tables.
 -----------------------------------------------------------------------------------------------------------------
 
 IF EXISTS ( SELECT  *
             FROM    sys.objects
-            WHERE   object_id = OBJECT_ID(N'RunTotalnum')
-                    AND type IN ( N'P', N'PC' ) ) 
-DROP PROCEDURE RunTotalnum;
+            WHERE   object_id = OBJECT_ID(N'RunTotalnumClassic')
+                    AND type IN ( N'P', N'PC' ) )
+DROP PROCEDURE RunTotalnumClassic;
 GO
 
-CREATE PROCEDURE [dbo].[RunTotalnum]  (@observationTable varchar(50) = 'observation_fact', @schemaname varchar(50) = 'dbo', @tablename varchar(50)='@', @wildcard_factcolumn varchar(1)='N') as  
+CREATE PROCEDURE [dbo].[RunTotalnumClassic]  (@observationTable varchar(50) = 'observation_fact', @schemaname varchar(50) = 'dbo', @tablename varchar(50)='@', @wildcard_factcolumn varchar(1)='N') as  
 
 DECLARE @sqlstr NVARCHAR(4000);
 DECLARE @sqltext NVARCHAR(4000);
@@ -59,12 +60,12 @@ EXEC sp_executesql @sqlstr
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
---select 'exec run_all_counts '+c_table_name+','+c_obsfact from TABLE_ACCESS where c_visualattributes like '%A%' 
+--select 'exec RunTotalnumClassic '+c_table_name+','+c_obsfact from TABLE_ACCESS where c_visualattributes like '%A%'
 --ELSE 
 declare getsql cursor local for select distinct c_table_name from TABLE_ACCESS where c_visualattributes like '%A%'
 
 
--- select distinct 'exec run_all_counts '+c_table_name+','+@schemaname+','+@obsfact   from TABLE_ACCESS where c_visualattributes like '%A%'
+-- select distinct 'exec RunTotalnumClassic '+c_table_name+','+@schemaname+','+@obsfact   from TABLE_ACCESS where c_visualattributes like '%A%'
 
 
 begin
