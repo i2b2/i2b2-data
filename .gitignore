@@ -4,3 +4,7 @@ edu.harvard.i2b2.data/.DS_Store
 edu.harvard.i2b2.data/Release_1-8/.DS_Store
 
 **/.DS_Store
+**/.vscode
+**/.idea
+**/db-*.properties
+**/rsa_key.p8
