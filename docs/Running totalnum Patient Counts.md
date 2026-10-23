@@ -264,7 +264,7 @@ BEGIN
   RunTotalnum(
     observationTable => 'observation_fact',
     schemaName       => 'OMOPDEMO',
-    mode             => 'omop'
+    totalnum_mode    => 'omop'
   );
 END;
 /
@@ -336,7 +336,7 @@ BEGIN
   RunTotalnum(
     observationTable => 'observation_fact',
     schemaName       => 'I2B2DEMODATA',
-    mode             => 'classic'
+    totalnum_mode    => 'classic'
   );
 END;
 /

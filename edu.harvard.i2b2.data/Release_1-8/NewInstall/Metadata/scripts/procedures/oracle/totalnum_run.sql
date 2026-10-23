@@ -1,13 +1,13 @@
 -- Compatibility wrapper for totalnum counting.
 -- Defaults to the fast i2b2 totalnum workflow while preserving the legacy runtotalnum procedure name.
--- Use mode => 'omop' for fast ACT-OMOP prep or mode => 'classic' to force the legacy/classic implementation.
+-- Use totalnum_mode => 'omop' for fast ACT-OMOP prep or totalnum_mode => 'classic' for classic counting.
 -- Use run_prep => 0 to reuse existing prepared structures; the default of 1 rebuilds them.
 
 create or replace PROCEDURE runtotalnum (
   observationTable IN VARCHAR,
   schemaName IN VARCHAR,
   tableName IN VARCHAR DEFAULT '@',
-  mode IN VARCHAR DEFAULT 'fast',
+  totalnum_mode IN VARCHAR DEFAULT 'fast',
   run_prep IN NUMBER DEFAULT 1
 )
 AUTHID CURRENT_USER
@@ -16,7 +16,7 @@ IS
   source_mode VARCHAR2(20);
   prepared_object_count NUMBER;
 BEGIN
-  mode_norm := LOWER(NVL(NULLIF(mode, ''), 'fast'));
+  mode_norm := LOWER(NVL(NULLIF(totalnum_mode, ''), 'fast'));
 
   IF mode_norm = 'classic' THEN
     RunTotalnumClassic(observationTable, schemaName, tableName);
