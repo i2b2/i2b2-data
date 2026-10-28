@@ -79,6 +79,13 @@ by another schema, grant `SELECT` on source tables and views directly to the
 procedure owner. Grant direct `UPDATE` and `INSERT` on output objects owned
 by another schema.
 
+Install `RunTotalnum` in the metadata procedure schema with
+`RunTotalnumClassic`, `FastTotalnumPrep`, `FastTotalnumCount`, and
+`FastTotalnumOutput`. The `schemaName` argument names the data schema; it does
+not change where the procedures are installed. Oracle's wrapper parameter is
+`totalnum_mode` (for example, `totalnum_mode => 'omop'`), since `MODE` is a
+reserved word in PL/SQL.
+
 ### PostgreSQL search path
 
 When metadata and data objects are in different schemas, make both visible to
@@ -162,8 +169,8 @@ EXEC dbo.RunTotalnum @schemaname = 'dbo', @mode = 'omop', @run_prep = 0;
 ```sql
 -- Oracle
 BEGIN
-  RunTotalnum('observation_fact', 'OMOPDEMO', mode => 'omop');
-  RunTotalnum('observation_fact', 'OMOPDEMO', mode => 'omop', run_prep => 0);
+  RunTotalnum('observation_fact', 'OMOPDEMO', totalnum_mode => 'omop');
+  RunTotalnum('observation_fact', 'OMOPDEMO', totalnum_mode => 'omop', run_prep => 0);
 END;
 /
 ```
@@ -251,7 +258,7 @@ EXEC dbo.RunTotalnum @mode = 'classic';
 ```sql
 -- Oracle
 BEGIN
-  RunTotalnum('observation_fact', 'I2B2DEMODATA', mode => 'classic');
+  RunTotalnum('observation_fact', 'I2B2DEMODATA', totalnum_mode => 'classic');
 END;
 /
 ```
