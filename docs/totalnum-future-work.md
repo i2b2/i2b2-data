@@ -72,6 +72,46 @@ runs in one metadata schema are not currently isolated.
   a report procedure absent or failing.
 - Test upgrades where old `TOTALNUM` rows have `RUN_ID IS NULL`.
 
+## Align PF/PA selection across fast outputs
+
+**Status:** Open. These are narrower consistency issues than run identity;
+fixing them would not by itself prevent stale rows from older runs.
+
+All three fast output procedures use only `PF` in `act` mode. In `all` mode,
+they use `PF` for the `ACT_DEMO` ontology and allow `PF` or `PA` for other
+ontology tables. Where both flags qualify for a path, output sorts by
+`AGG_DATE` first and prefers `PA` only on a tie. PostgreSQL's date-only
+`AGG_DATE` makes same-day ties routine; Oracle has second precision, while
+SQL Server has finer timestamp precision.
+
+Two platform differences can make the published counts disagree:
+
+- SQL Server passes `PF` or `P[FA]` to its fast report, but the report ranks
+  rows only by `AGG_DATE`. On a tie, ontology output can select `PA` while
+  `TOTALNUM_REPORT` selects `PF`. Add the same explicit tie-break to the
+  report, and test the report against ontology output for a tied path.
+- Oracle and PostgreSQL copy counts from each ontology into `TABLE_ACCESS`,
+  then do another, global refresh from `TOTALNUM`. That refresh accepts
+  `PF`/`PA` in `all` mode without checking whether a `TABLE_ACCESS` row
+  belongs to the ACT ontology. A path shared by ACT and a non-ACT table can
+  therefore leave `TABLE_ACCESS` inconsistent with the ACT table's `PF`-only
+  output. Make the final refresh use each row's ontology ownership and the
+  same flag rule as per-table output, or remove it after verifying that the
+  per-table copy covers every intended root.
+
+Fast reports on all three platforms also rank globally by `C_FULLNAME`, not
+by ontology ownership. Define the desired behavior for a path shared by ACT
+and non-ACT ontologies before aligning report selection: a report with one
+row per path cannot represent two different counts for that same path. Keep
+the direct, legacy two-argument report calls compatible; their `P%` default
+is separate from the fast wrapper's mode-specific filtering.
+
+Validation should cover a same-day `PF`/`PA` tie, a `PA` row newer than a
+`PF` row, and the same path present in ACT and non-ACT ontologies. Compare
+the ontology `C_TOTALNUM`, matching `TABLE_ACCESS.C_TOTALNUM`, and
+`TOTALNUM_REPORT` after both `act` and `all` runs. The run-ID work above is
+still needed to make those comparisons reliably about the current run.
+
 ## Complete all-demographics parity
 
 **Status:** The non-ACT `patient_dimension` supplement is implemented on all
