@@ -15,8 +15,9 @@ CREATE OR REPLACE FUNCTION runtotalnum(
     schemaName text,
     tableName text default '@',
     mode text default 'fast',
-    run_prep boolean default true,
-    demographics_mode text default 'act'
+    demographics_mode text default 'act',
+    run_prep boolean default true
+
 )
   RETURNS void AS
 $BODY$

@@ -8,8 +8,8 @@ create or replace PROCEDURE runtotalnum (
   schemaName IN VARCHAR,
   tableName IN VARCHAR DEFAULT '@',
   totalnum_mode IN VARCHAR DEFAULT 'fast',
-  run_prep IN NUMBER DEFAULT 1,
-  demographics_mode IN VARCHAR2 DEFAULT 'act'
+  demographics_mode IN VARCHAR2 DEFAULT 'act',
+  run_prep IN NUMBER DEFAULT 1
 )
 AUTHID CURRENT_USER
 IS
