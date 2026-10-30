@@ -37,3 +37,37 @@ BEGIN
 END;
 $BODY$
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+
+-- Fast-mode report: restrict history to fast rows and prefer PA on a date tie.
+CREATE OR REPLACE FUNCTION BuildTotalnumReport(threshold int, sigma float, demographics_mode text)
+RETURNS void AS
+$BODY$
+BEGIN
+    IF lower(demographics_mode) NOT IN ('act', 'all') THEN
+        RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    END IF;
+
+    TRUNCATE TABLE totalnum_report;
+    INSERT INTO totalnum_report(c_fullname, agg_count, agg_date)
+    SELECT c_fullname,
+           CASE sign(agg_count - threshold + 1)
+             WHEN 1 THEN (round(agg_count / 5.0, 0) * 5)
+                           + round(random_normal(0, sigma, threshold))
+             ELSE -1 END,
+           to_char(agg_date, 'YYYY-MM-DD')
+    FROM (
+        SELECT row_number() OVER (
+                   PARTITION BY c_fullname
+                   ORDER BY agg_date DESC,
+                            CASE WHEN typeflag_cd = 'PA' THEN 1 ELSE 0 END DESC) rn,
+               c_fullname, agg_count, agg_date
+        FROM totalnum
+        WHERE typeflag_cd = 'PF'
+           OR (lower(demographics_mode) = 'all' AND typeflag_cd = 'PA')
+    ) ranked
+    WHERE rn = 1;
+
+    UPDATE totalnum_report SET agg_count = -1 WHERE agg_count < threshold;
+END;
+$BODY$
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER;

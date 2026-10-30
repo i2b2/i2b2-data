@@ -25,8 +25,9 @@ Acknowledgement:
 */
 -- Remove the unused source_mode signature if it was installed by an upgrade.
 DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text, text);
+DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text);
 
-CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@')
+CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@', demographics_mode text DEFAULT 'act')
 LANGUAGE plpgsql
 AS $sql$
 DECLARE
@@ -35,7 +36,16 @@ DECLARE
     rec record;
     start_time timestamp;
     row_count integer;
+    mode_norm text;
+    act_demo_table text;
+    count_predicate text;
 BEGIN
+    mode_norm := lower(coalesce(nullif(demographics_mode, ''), 'act'));
+    IF mode_norm NOT IN ('act', 'all') THEN
+      RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    END IF;
+    SELECT max(c_table_name) INTO act_demo_table FROM table_access
+      WHERE upper(c_table_cd) = 'ACT_DEMO';
     start_time := now();
     -- Iterate through each distinct ontology table from table_access (with c_visualattributes like '%A%')
     FOR rec IN
@@ -43,6 +53,8 @@ BEGIN
     LOOP
       sqltext := rec.c_table_name;
       IF tablename = '@' OR tablename = sqltext THEN
+        count_predicate := CASE WHEN mode_norm = 'all' AND sqltext IS DISTINCT FROM act_demo_table
+                                THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END;
         PERFORM endtime(start_time, sqltext, 'ready to go');
         start_time := now();
         
@@ -64,8 +76,8 @@ BEGIN
         -- Update counts in the ontology table using the latest record from totalnum.
         sqlstr := 'UPDATE ' || sqltext || ' o SET c_totalnum = t.agg_count ' ||
                   'FROM ( ' ||
-                  '  SELECT c_fullname, agg_count, row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) as rn ' ||
-                  '  FROM totalnum WHERE typeflag_cd LIKE ''P%'' ' ||
+                  '  SELECT c_fullname, agg_count, row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) as rn ' ||
+                  '  FROM totalnum WHERE typeflag_cd ' || count_predicate || ' ' ||
                   ') t ' ||
                   'WHERE o.c_fullname = t.c_fullname AND t.rn = 1';
         RAISE NOTICE '%', sqlstr;
@@ -95,8 +107,9 @@ BEGIN
     -- Refresh top-level table_access counts directly from the latest totalnum rows.
     sqlstr := 'UPDATE table_access t SET c_totalnum = x.agg_count ' ||
               'FROM ( ' ||
-              '  SELECT c_fullname, agg_count, row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) AS rn ' ||
-              '  FROM totalnum WHERE typeflag_cd LIKE ''P%'' ' ||
+              '  SELECT c_fullname, agg_count, row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) AS rn ' ||
+              '  FROM totalnum WHERE typeflag_cd ' ||
+              CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END || ' ' ||
               ') x ' ||
               'WHERE x.c_fullname = t.c_fullname AND x.rn = 1';
     RAISE NOTICE '%', sqlstr;
@@ -129,10 +142,10 @@ BEGIN
     -- Build the report table by calling the BuildTotalnumReport procedure with parameters 10 and 6.5.
     BEGIN
       RAISE NOTICE 'Calling buildtotalnumreport(10, 6.5::float)';
-      PERFORM buildtotalnumreport(10, 6.5::float);
+      PERFORM buildtotalnumreport(10, 6.5::float, mode_norm);
     EXCEPTION
       WHEN undefined_function THEN
-        RAISE NOTICE 'Skipping totalnum_report build: buildtotalnumreport(int, float) is not loaded.';
+        RAISE NOTICE 'Skipping totalnum_report build: buildtotalnumreport(int, float, text) is not loaded.';
       WHEN undefined_table THEN
         RAISE NOTICE 'Skipping totalnum_report build: totalnum_report is not visible.';
     END;

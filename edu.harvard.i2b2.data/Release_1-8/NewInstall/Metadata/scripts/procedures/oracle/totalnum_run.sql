@@ -8,12 +8,14 @@ create or replace PROCEDURE runtotalnum (
   schemaName IN VARCHAR,
   tableName IN VARCHAR DEFAULT '@',
   totalnum_mode IN VARCHAR DEFAULT 'fast',
-  run_prep IN NUMBER DEFAULT 1
+  run_prep IN NUMBER DEFAULT 1,
+  demographics_mode IN VARCHAR2 DEFAULT 'act'
 )
 AUTHID CURRENT_USER
 IS
   mode_norm VARCHAR2(20);
   source_mode VARCHAR2(20);
+  demographics_mode_norm VARCHAR2(20);
   prepared_object_count NUMBER;
 BEGIN
   mode_norm := LOWER(NVL(NULLIF(totalnum_mode, ''), 'fast'));
@@ -34,6 +36,10 @@ BEGIN
   END IF;
 
   source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
+  demographics_mode_norm := LOWER(NVL(NULLIF(demographics_mode, ''), 'act'));
+  IF demographics_mode_norm NOT IN ('act', 'all') THEN
+    RAISE_APPLICATION_ERROR(-20006, 'Invalid demographics_mode. Use act or all.');
+  END IF;
 
   IF NVL(run_prep, 1) <> 0 THEN
     FastTotalnumPrep(schemaName, source_mode);
@@ -54,5 +60,8 @@ BEGIN
   END IF;
 
   FastTotalnumCount;
-  FastTotalnumOutput(schemaName, tableName);
+  IF demographics_mode_norm = 'all' THEN
+    FastTotalnumAdditionalDimensions(schemaName, tableName);
+  END IF;
+  FastTotalnumOutput(schemaName, tableName, demographics_mode_norm);
 END;

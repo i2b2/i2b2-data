@@ -6,6 +6,7 @@
 -----------------------------------------------------------------------------------------------------------------
 
 DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text, boolean);
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text, boolean, text);
 DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text);
 DROP FUNCTION IF EXISTS runtotalnum(text, text, text);
 
@@ -14,13 +15,15 @@ CREATE OR REPLACE FUNCTION runtotalnum(
     schemaName text,
     tableName text default '@',
     mode text default 'fast',
-    run_prep boolean default true
+    run_prep boolean default true,
+    demographics_mode text default 'act'
 )
   RETURNS void AS
 $BODY$
 DECLARE
     mode_norm text;
     source_mode text;
+    demographics_mode_norm text;
 BEGIN
     mode_norm := lower(coalesce(nullif(mode, ''), 'fast'));
 
@@ -40,6 +43,10 @@ BEGIN
     END IF;
 
     source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
+    demographics_mode_norm := lower(coalesce(nullif(demographics_mode, ''), 'act'));
+    IF demographics_mode_norm NOT IN ('act', 'all') THEN
+        RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    END IF;
 
     IF coalesce(run_prep, true) THEN
         PERFORM fasttotalnumprep(schemaName, source_mode);
@@ -54,7 +61,10 @@ BEGIN
     END IF;
 
     CALL fasttotalnumcount();
-    CALL fasttotalnumoutput(schemaName, tableName);
+    IF demographics_mode_norm = 'all' THEN
+        CALL fasttotalnumadditionaldimensions(schemaName, tableName);
+    END IF;
+    CALL fasttotalnumoutput(schemaName, tableName, demographics_mode_norm);
 END;
 $BODY$
   LANGUAGE plpgsql VOLATILE SECURITY DEFINER
