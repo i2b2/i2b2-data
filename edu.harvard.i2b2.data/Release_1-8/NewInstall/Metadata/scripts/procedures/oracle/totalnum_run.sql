@@ -62,6 +62,11 @@ BEGIN
   FastTotalnumCount;
   IF demographics_mode_norm = 'all' THEN
     FastTotalnumAdditionalDimensions(schemaName, tableName);
+  FastTotalnumConstrainedFacts(
+        schemaName,
+        tableName,
+        source_mode
+    );
   END IF;
   FastTotalnumOutput(schemaName, tableName, demographics_mode_norm);
 END;
