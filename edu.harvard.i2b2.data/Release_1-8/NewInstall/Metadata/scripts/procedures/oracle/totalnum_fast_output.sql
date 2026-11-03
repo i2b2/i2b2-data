@@ -39,13 +39,17 @@ This Oracle conversion was assisted by ChatGPT.
 
 CREATE OR REPLACE PROCEDURE FastTotalnumOutput(
   schemaname IN VARCHAR2 DEFAULT 'i2b2',
-  tablename  IN VARCHAR2 DEFAULT '@'
+  tablename  IN VARCHAR2 DEFAULT '@',
+  demographics_mode IN VARCHAR2 DEFAULT 'act'
 )
 AUTHID CURRENT_USER
 IS
   sqlstr  VARCHAR2(4000);
   sqltext VARCHAR2(4000);
   start_time DATE;
+  mode_norm VARCHAR2(20);
+  count_source VARCHAR2(1000);
+  act_demo_table VARCHAR2(255);
   PROCEDURE run_sql(p_sql IN VARCHAR2) IS
   BEGIN
     DBMS_OUTPUT.PUT_LINE(p_sql);
@@ -58,6 +62,12 @@ IS
       RAISE;
   END;
 BEGIN
+  mode_norm := LOWER(NVL(NULLIF(demographics_mode, ''), 'act'));
+  IF mode_norm NOT IN ('act', 'all') THEN
+    RAISE_APPLICATION_ERROR(-20006, 'Invalid demographics_mode. Use act or all.');
+  END IF;
+  SELECT MAX(c_table_name) INTO act_demo_table FROM table_access
+   WHERE UPPER(c_table_cd) = 'ACT_DEMO';
   start_time := SYSDATE;
   ---------------------------------------------------------------------------
   -- Iterate through each ontology table specified in TABLE_ACCESS (those
@@ -69,6 +79,11 @@ BEGIN
     sqltext := rec.c_table_name;  -- current table name from TABLE_ACCESS
     -- Process if running on all tables (tablename='@') or only on a specified table.
     IF tablename = '@' OR tablename = sqltext THEN
+      count_source := 'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, ' ||
+        'CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) rn, c_fullname, agg_count ' ||
+        'FROM totalnum WHERE typeflag_cd ' ||
+        CASE WHEN mode_norm = 'all' AND (act_demo_table IS NULL OR sqltext <> act_demo_table)
+             THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END;
       -- Output a timing message using the EndTime helper (assumed converted separately)
       EndTime(start_time, sqltext, 'ready to go');
       start_time := SYSDATE;
@@ -96,15 +111,11 @@ BEGIN
       sqlstr :=
        'UPDATE ' || sqltext || ' o SET c_totalnum = (' ||
          'SELECT agg_count FROM (' ||
-            'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) rn, ' ||
-                   'c_fullname, agg_count, agg_date ' ||
-            'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
+            count_source ||
          ') t WHERE t.c_fullname = o.c_fullname AND rn = 1' ||
        ') WHERE EXISTS (' ||
          'SELECT 1 FROM (' ||
-            'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) rn, ' ||
-                   'c_fullname, agg_count, agg_date ' ||
-            'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
+            count_source ||
          ') t WHERE t.c_fullname = o.c_fullname AND rn = 1' ||
        ')';
       run_sql(sqlstr);
@@ -142,15 +153,17 @@ BEGIN
   sqlstr :=
    'UPDATE table_access t SET c_totalnum = (' ||
      'SELECT agg_count FROM (' ||
-        'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) rn, ' ||
-               'c_fullname, agg_count, agg_date ' ||
-        'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
+        'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, ' ||
+        'CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) rn, c_fullname, agg_count ' ||
+        'FROM totalnum WHERE typeflag_cd ' ||
+        CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END ||
      ') x WHERE x.c_fullname = t.c_fullname AND rn = 1' ||
    ') WHERE EXISTS (' ||
      'SELECT 1 FROM (' ||
-        'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC) rn, ' ||
-               'c_fullname, agg_count, agg_date ' ||
-        'FROM totalnum WHERE typeflag_cd LIKE ''P%''' ||
+        'SELECT row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, ' ||
+        'CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) rn, c_fullname, agg_count ' ||
+        'FROM totalnum WHERE typeflag_cd ' ||
+        CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END ||
      ') x WHERE x.c_fullname = t.c_fullname AND rn = 1' ||
    ')';
   run_sql(sqlstr);
@@ -187,7 +200,7 @@ BEGIN
   ---------------------------------------------------------------------------
   BEGIN
     DBMS_OUTPUT.PUT_LINE('Calling BuildTotalnumReport(10, 6.5)');
-    EXECUTE IMMEDIATE 'BEGIN BuildTotalnumReport(10, 6.5); END;';
+    EXECUTE IMMEDIATE 'BEGIN BuildTotalnumReport(10, 6.5, :mode); END;' USING mode_norm;
   EXCEPTION
     WHEN OTHERS THEN
       DBMS_OUTPUT.PUT_LINE('Skipping totalnum report build. Verify BuildTotalnumReport and TOTALNUM_REPORT are available.');

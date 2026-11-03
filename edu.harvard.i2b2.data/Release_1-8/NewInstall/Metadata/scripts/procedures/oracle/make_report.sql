@@ -22,15 +22,23 @@
      --  Else
      -- The rounded result
 
-CREATE OR REPLACE PROCEDURE BuildTotalnumReport(threshold in number, sigma in number) AUTHID CURRENT_USER IS
+CREATE OR REPLACE PROCEDURE BuildTotalnumReport(threshold in number, sigma in number,
+  demographics_mode IN VARCHAR2 DEFAULT 'legacy') AUTHID CURRENT_USER IS
+    type_predicate VARCHAR2(100);
 BEGIN
+
+    type_predicate := CASE LOWER(NVL(demographics_mode, 'legacy'))
+      WHEN 'act' THEN 'typeflag_cd = ''PF'''
+      WHEN 'all' THEN 'typeflag_cd IN (''PF'', ''PA'')'
+      ELSE 'typeflag_cd LIKE ''P%'''
+    END;
 
     execute immediate 'truncate table totalnum_report';
 
     execute immediate 'insert into totalnum_report(c_fullname, agg_count, agg_date)
      select c_fullname, case sign(agg_count - '||threshold||' + 1) when 1 then (round(agg_count/5.0,0)*5)+greatest(-1*'||threshold||',least(round(dbms_random.normal*'||sigma||',0),'||threshold||')) else -1 end agg_count, 
        to_char(agg_date,''YYYY-MM-DD'') from 
-       (select row_number() over (partition by c_fullname order by agg_date desc) rn,c_fullname, agg_count,agg_date from totalnum where typeflag_cd like ''P%'') x where rn=1';
+       (select row_number() over (partition by c_fullname order by agg_date desc, case when typeflag_cd = ''PA'' then 1 else 0 end desc) rn,c_fullname, agg_count,agg_date from totalnum where ' || type_predicate || ') x where rn=1';
 
     execute immediate 'update totalnum_report set agg_count=-1 where agg_count<'||threshold;
 
