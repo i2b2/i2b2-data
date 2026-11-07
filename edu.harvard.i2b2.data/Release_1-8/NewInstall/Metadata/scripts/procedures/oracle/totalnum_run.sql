@@ -1,3 +1,4 @@
+
 -- Compatibility wrapper for totalnum counting.
 -- Defaults to the fast i2b2 totalnum workflow while preserving the legacy runtotalnum procedure name.
 -- Use totalnum_mode => 'omop' for fast ACT-OMOP prep or totalnum_mode => 'classic' for classic counting.
@@ -7,6 +8,7 @@ create or replace PROCEDURE runtotalnum (
   observationTable IN VARCHAR,
   schemaName IN VARCHAR,
   tableName IN VARCHAR DEFAULT '@',
+  wildcard_factcolumn IN VARCHAR2 DEFAULT 'N',
   totalnum_mode IN VARCHAR DEFAULT 'fast',
   demographics_mode IN VARCHAR2 DEFAULT 'act',
   run_prep IN NUMBER DEFAULT 1
@@ -21,52 +23,113 @@ BEGIN
   mode_norm := LOWER(NVL(NULLIF(totalnum_mode, ''), 'fast'));
 
   IF mode_norm = 'classic' THEN
-    RunTotalnumClassic(observationTable, schemaName, tableName);
+    RunTotalnumClassic(
+      observationTable,
+      schemaName,
+      tableName,
+      wildcard_factcolumn
+    );
     RETURN;
   END IF;
 
-  IF mode_norm IN ('fast','i2b2') AND LOWER(observationTable) <> 'observation_fact' THEN
-    DBMS_OUTPUT.PUT_LINE('runtotalnum compatibility mode: custom fact table requested, using RunTotalnumClassic.');
-    RunTotalnumClassic(observationTable, schemaName, tableName);
+  IF mode_norm IN ('fast', 'i2b2')
+     AND (LOWER(observationTable) <> 'observation_fact'
+          OR UPPER(NVL(wildcard_factcolumn, 'N')) = 'Y') THEN
+
+    DBMS_OUTPUT.PUT_LINE(
+      'runtotalnum compatibility mode: custom fact table or wildcard flag requested, using RunTotalnumClassic.'
+    );
+
+    RunTotalnumClassic(
+      observationTable,
+      schemaName,
+      tableName,
+      wildcard_factcolumn
+    );
     RETURN;
   END IF;
 
-  IF mode_norm NOT IN ('fast','i2b2','omop') THEN
-    RAISE_APPLICATION_ERROR(-20004, 'Invalid totalnum mode. Use fast, i2b2, omop, or classic.');
+  IF mode_norm NOT IN ('fast', 'i2b2', 'omop') THEN
+    RAISE_APPLICATION_ERROR(
+      -20004,
+      'Invalid totalnum mode. Use fast, i2b2, omop, or classic.'
+    );
   END IF;
 
-  source_mode := CASE WHEN mode_norm = 'omop' THEN 'omop' ELSE 'i2b2' END;
-  demographics_mode_norm := LOWER(NVL(NULLIF(demographics_mode, ''), 'act'));
+  source_mode := CASE
+                   WHEN mode_norm = 'omop' THEN 'omop'
+                   ELSE 'i2b2'
+                 END;
+
+  -- Normalize demographics_mode.
+  -- Handle SQL NULL, empty strings, whitespace, and literal 'null'.
+  demographics_mode_norm := LOWER(TRIM(demographics_mode));
+
+  IF demographics_mode_norm IS NULL
+     OR demographics_mode_norm = 'null' THEN
+    demographics_mode_norm := 'act';
+  END IF;
+
   IF demographics_mode_norm NOT IN ('act', 'all') THEN
-    RAISE_APPLICATION_ERROR(-20006, 'Invalid demographics_mode. Use act or all.');
+    RAISE_APPLICATION_ERROR(
+      -20006,
+      'Invalid demographics_mode. Use act or all.'
+    );
   END IF;
 
   IF NVL(run_prep, 1) <> 0 THEN
     FastTotalnumPrep(schemaName, source_mode);
   ELSE
-    DBMS_OUTPUT.PUT_LINE('Skipping FastTotalnumPrep; using existing OBSFACT_PAIRS, TNUM_ONTOLOGY, and CONCEPT_CLOSURE. Rerun prep after ontology changes or when switching source mode.');
+    DBMS_OUTPUT.PUT_LINE(
+      'Skipping FastTotalnumPrep; using existing OBSFACT_PAIRS, TNUM_ONTOLOGY, and CONCEPT_CLOSURE. Rerun prep after ontology changes or when switching source mode.'
+    );
 
     SELECT COUNT(DISTINCT object_name)
       INTO prepared_object_count
       FROM user_objects
-     WHERE object_name IN ('OBSFACT_PAIRS', 'TNUM_ONTOLOGY', 'CONCEPT_CLOSURE')
+     WHERE object_name IN (
+             'OBSFACT_PAIRS',
+             'TNUM_ONTOLOGY',
+             'CONCEPT_CLOSURE'
+           )
        AND status = 'VALID'
-       AND ((object_name = 'OBSFACT_PAIRS' AND object_type IN ('VIEW', 'TABLE'))
-         OR (object_name IN ('TNUM_ONTOLOGY', 'CONCEPT_CLOSURE') AND object_type = 'TABLE'));
+       AND (
+            (object_name = 'OBSFACT_PAIRS'
+             AND object_type IN ('VIEW', 'TABLE'))
+            OR
+            (object_name IN ('TNUM_ONTOLOGY', 'CONCEPT_CLOSURE')
+             AND object_type = 'TABLE')
+           );
 
     IF prepared_object_count <> 3 THEN
-      RAISE_APPLICATION_ERROR(-20005, 'Cannot skip FastTotalnumPrep because one or more prepared objects are missing or invalid.');
+      RAISE_APPLICATION_ERROR(
+        -20005,
+        'Cannot skip FastTotalnumPrep because one or more prepared objects are missing or invalid.'
+      );
     END IF;
   END IF;
 
   FastTotalnumCount;
+
   IF demographics_mode_norm = 'all' THEN
-    FastTotalnumAdditionalDimensions(schemaName, tableName);
-  FastTotalnumConstrainedFacts(
-        schemaName,
-        tableName,
-        source_mode
+    FastTotalnumAdditionalDimensions(
+      schemaName,
+      tableName
+    );
+
+    FastTotalnumConstrainedFacts(
+      schemaName,
+      tableName,
+      source_mode
     );
   END IF;
-  FastTotalnumOutput(schemaName, tableName, demographics_mode_norm);
-END;
+
+  FastTotalnumOutput(
+    schemaName,
+    tableName,
+    demographics_mode_norm
+  );
+
+END runtotalnum;
+/
+
