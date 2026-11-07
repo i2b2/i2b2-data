@@ -1,5 +1,6 @@
 -- Supplemental non-ACT patient_dimension counts for fast all-demographics mode.
-CREATE OR REPLACE PROCEDURE FastTotalnumAdditionalDimensions(
+
+create or replace PROCEDURE FastTotalnumAdditionalDimensions(
   schemaName IN VARCHAR2,
   tableName IN VARCHAR2 DEFAULT '@'
 ) AUTHID CURRENT_USER IS
@@ -67,3 +68,5 @@ BEGIN
     END;
   END LOOP;
 END FastTotalnumAdditionalDimensions;
+/
+
