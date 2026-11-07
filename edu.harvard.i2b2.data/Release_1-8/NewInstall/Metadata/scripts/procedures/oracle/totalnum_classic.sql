@@ -23,118 +23,235 @@
 --      e.g., RunTotalnumClassic('observation_fact_view','i2b2demodata');
 --    Note this approach does not work if you have conflicting concept_cds across fact tables.
 
-create or replace PROCEDURE                           RunTotalnumClassic  (observationTable IN VARCHAR, schemaName in VARCHAR, tableName IN VARCHAR DEFAULT '@')
+create or replace PROCEDURE RunTotalnumClassic (
+    observationTable IN VARCHAR2 DEFAULT 'observation_fact',
+    schemaName IN VARCHAR2 DEFAULT 'dbo',
+    tableName IN VARCHAR2 DEFAULT '@',
+    wildcard_factcolumn IN VARCHAR2 DEFAULT 'N'
+)
 AUTHID CURRENT_USER
-IS
-
-
- TYPE distinctTableCurTyp IS REF CURSOR;
- curRecord   distinctTableCurTyp;
- sql_stmt  varchar2(2000);
- dis_c_table_name varchar2(700);
- denom int;
-errorMsg VARCHAR2(700);
-    v_startime timestamp;
-    v_duration varchar2(30);
-    c int;
-
+AS
+    sqlstr VARCHAR2(4000);
+    sqltext VARCHAR2(4000);
+    startime DATE;
+    derived_facttablecolumn VARCHAR2(4000);
+    facttablecolumn_prefix VARCHAR2(4000);
+    v_count NUMBER;
+    v_observation_table VARCHAR2(300);
+    v_metadata_table VARCHAR2(300);
+    v_errormsg VARCHAR2(4000);
 BEGIN
+    v_observation_table :=
+        DBMS_ASSERT.QUALIFIED_SQL_NAME(schemaName || '.' || observationTable);
 
- -- Cleanup in case last run was unsuccessful
-   select count(*) into c from user_tables where table_name = upper('dimCountOnt');
-   if c = 1 then
-      execute immediate 'drop table dimCountOnt';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('finalDimCounts');
-   if c = 1 then
-      execute immediate 'drop table finalDimCounts';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('dimOntWithFolders');
-   if c = 1 then
-      execute immediate 'drop table dimOntWithFolders';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('ontPatVisitDims');
-   if c = 1 then
-      execute immediate 'drop table ontPatVisitDims';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('Path2Num');
-   if c = 1 then
-      execute immediate 'drop table Path2Num';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('ConceptPath');
-   if c = 1 then
-      execute immediate 'drop table ConceptPath';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('PathCounts');
-   if c = 1 then
-      execute immediate 'drop table PathCounts';
-   end if;
-   select count(*) into c from user_tables where table_name = upper('finalDimCounts');
-   if c = 1 then
-      execute immediate 'drop table finalDimCounts';
-   end if;
-   
- sql_stmt := 'select distinct c_table_name from TABLE_ACCESS where c_visualattributes like ''%A%''  ';
- 
+    /* 03-22: DWH - build concept patient table once here, rather than in each call to count */
+    SELECT COUNT(*)
+      INTO v_count
+      FROM USER_TABLES
+     WHERE TABLE_NAME = 'TNUM_CONCEPTPATIENT';
 
-    -- rather than creating cursor and fetching rows into local variables, instead using record variable type to 
-    -- access each element of the current row of the cursor
- open curRecord for sql_stmt ;
- 
-   loop
-    FETCH curRecord INTO dis_c_table_name;
-      EXIT WHEN curRecord%NOTFOUND;
- 
-      --DBMS_OUTPUT.PUT_LINE(dis_c_table_name);
-IF tableName='@' OR tableName=dis_c_table_name THEN
+    IF v_count > 0 THEN
+        EXECUTE IMMEDIATE 'DROP TABLE TNUM_CONCEPTPATIENT';
+    END IF;
 
- EXECUTE IMMEDIATE 'update ' || dis_c_table_name || ' set c_totalnum=null';
- v_startime := CURRENT_TIMESTAMP;
- PAT_COUNT_VISITS( dis_c_table_name , schemaName ,errorMsg  );
- v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
- DBMS_OUTPUT.PUT_LINE('(BENCH) '||dis_c_table_name||',PAT_COUNT_VISITS,'||v_duration); 
- v_startime := CURRENT_TIMESTAMP;
- 
- PAT_COUNT_DIMENSIONS( dis_c_table_name , schemaName, observationTable ,  'concept_cd', 'concept_dimension', 'concept_path', errorMsg  );
- v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
- DBMS_OUTPUT.PUT_LINE('(BENCH) '||dis_c_table_name||',PAT_COUNT_concept_dimension,'||v_duration); 
- v_startime := CURRENT_TIMESTAMP;
- 
- PAT_COUNT_DIMENSIONS( dis_c_table_name , schemaName,  observationTable ,  'provider_id', 'provider_dimension', 'provider_path', errorMsg  );
- v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
- DBMS_OUTPUT.PUT_LINE('(BENCH) '||dis_c_table_name||',PAT_COUNT_provider_dimension,'||v_duration); 
- v_startime := CURRENT_TIMESTAMP;
- 
- PAT_COUNT_DIMENSIONS( dis_c_table_name , schemaName, observationTable ,  'modifier_cd', 'modifier_dimension', 'modifier_path', errorMsg  );
- v_duration := ((extract(minute from current_timestamp)-extract(minute from v_startime))*60+extract(second from current_timestamp)-extract(second from v_startime))*1000;
- DBMS_OUTPUT.PUT_LINE('(BENCH) '||dis_c_table_name||',PAT_COUNT_modifier_dimension,'||v_duration); 
- v_startime := CURRENT_TIMESTAMP;
- 
- -- New 11/20 - update counts in top levels (table_access) at the end
- BEGIN
-    execute immediate 'update table_access set c_totalnum=(select c_totalnum from ' || dis_c_table_name || ' x where x.c_fullname=table_access.c_fullname)';
- exception
-  WHEN TOO_MANY_ROWS then CONTINUE;
-  when others then CONTINUE;
-  -- when others then dbms_output.put_line(sqlerrm);
-   END;
- -- Null out cases that are actually 0 [1/21]
-execute immediate 'update  ' || dis_c_table_name || ' set c_totalnum=null where c_totalnum=0 and c_visualattributes like ''C%''';
+    DBMS_OUTPUT.PUT_LINE('Building tnum_ConceptPatient');
 
-END IF;
+    /* CREATE TABLE WITH CONSTRAINTS AND INSERT */
+    EXECUTE IMMEDIATE '
+        CREATE TABLE TNUM_CONCEPTPATIENT (
+            PATIENT_NUM NUMBER(10) NOT NULL,
+            CONCEPT_CD VARCHAR2(50) NOT NULL,
+            CONSTRAINT PKCONPAT PRIMARY KEY (CONCEPT_CD, PATIENT_NUM)
+        )';
 
- END LOOP;
- 
-  -- Cleanup (1/21)
-  update table_access set c_totalnum=null where c_totalnum=0;
-  -- Denominator (1/21)
-  SELECT count(*) into denom from totalnum where c_fullname='\denominator\facts\' and trunc(agg_date)=trunc(CURRENT_DATE);
-  IF denom = 0
-  THEN
-      execute immediate 'insert into totalnum(c_fullname,agg_date,agg_count,typeflag_cd)
-          select ''\denominator\facts\'',CURRENT_DATE,count(distinct patient_num),''PX'' from ' || schemaName || '.' || observationTable;
-  END IF;
+    sqlstr :=
+        'INSERT INTO TNUM_CONCEPTPATIENT (concept_cd, patient_num) ' ||
+        'SELECT DISTINCT concept_cd, patient_num ' ||
+        'FROM ' || v_observation_table || ' f';
 
- BuildTotalnumReport(10, 6.5);
- -- :ERRORMSG := ERRORMSG;
-END;
+    EXECUTE IMMEDIATE sqlstr;
+
+    FOR rec IN (
+        SELECT DISTINCT c_table_name
+          FROM TABLE_ACCESS
+         WHERE c_visualattributes LIKE '%A%'
+    )
+    LOOP
+        sqltext := rec.c_table_name;
+        v_metadata_table := DBMS_ASSERT.QUALIFIED_SQL_NAME(sqltext);
+
+        IF LOWER(observationTable) = 'observation_fact' THEN
+            derived_facttablecolumn := '';
+        ELSE
+            derived_facttablecolumn := observationTable || '.';
+        END IF;
+
+        IF UPPER(NVL(wildcard_factcolumn, 'N')) = 'Y' THEN
+            facttablecolumn_prefix := '%';
+        ELSIF LOWER(observationTable) = 'observation_fact' THEN
+            facttablecolumn_prefix := '';
+        ELSE
+            facttablecolumn_prefix := observationTable || '.';
+        END IF;
+
+        IF tableName = '@' OR tableName = sqltext THEN
+
+            DBMS_OUTPUT.PUT_LINE(sqltext);
+
+            sqlstr := 'UPDATE ' || v_metadata_table ||
+                      ' SET c_totalnum = NULL';
+
+            EXECUTE IMMEDIATE sqlstr;
+
+            IF derived_facttablecolumn IS NULL THEN
+                startime := SYSDATE;
+
+                v_errormsg := NULL;
+                PAT_COUNT_VISITS(sqltext, schemaName, v_errormsg);
+
+                IF v_errormsg IS NOT NULL THEN
+                    DBMS_OUTPUT.PUT_LINE('PAT_COUNT_VISITS: ' || v_errormsg);
+                END IF;
+
+                EndTime(startime, sqltext, 'PAT_COUNT_VISITS');
+            END IF;
+
+            startime := SYSDATE;
+
+            derived_facttablecolumn :=
+                facttablecolumn_prefix || 'concept_cd';
+
+            v_errormsg := NULL;
+            PAT_COUNT_DIMENSIONS(
+                sqltext,
+                schemaName,
+                observationTable,
+                derived_facttablecolumn,
+                'concept_dimension',
+                'concept_path',
+                v_errormsg
+            );
+
+            IF v_errormsg IS NOT NULL THEN
+                DBMS_OUTPUT.PUT_LINE('PAT_COUNT_concept_dimension: ' || v_errormsg);
+            END IF;
+
+            EndTime(startime, sqltext, 'PAT_COUNT_concept_dimension');
+
+            startime := SYSDATE;
+
+            derived_facttablecolumn :=
+                facttablecolumn_prefix || 'provider_id';
+
+            v_errormsg := NULL;
+            PAT_COUNT_DIMENSIONS(
+                sqltext,
+                schemaName,
+                observationTable,
+                derived_facttablecolumn,
+                'provider_dimension',
+                'provider_path',
+                v_errormsg
+            );
+
+            IF v_errormsg IS NOT NULL THEN
+                DBMS_OUTPUT.PUT_LINE('PAT_COUNT_provider_dimension: ' || v_errormsg);
+            END IF;
+
+            EndTime(startime, sqltext, 'PAT_COUNT_provider_dimension');
+
+            startime := SYSDATE;
+
+            derived_facttablecolumn :=
+                facttablecolumn_prefix || 'modifier_cd';
+
+            v_errormsg := NULL;
+            PAT_COUNT_DIMENSIONS(
+                sqltext,
+                schemaName,
+                observationTable,
+                derived_facttablecolumn,
+                'modifier_dimension',
+                'modifier_path',
+                v_errormsg
+            );
+
+            IF v_errormsg IS NOT NULL THEN
+                DBMS_OUTPUT.PUT_LINE('PAT_COUNT_modifier_dimension: ' || v_errormsg);
+            END IF;
+
+            EndTime(startime, sqltext, 'PAT_COUNT_modifier_dimension');
+
+            startime := SYSDATE;
+
+            -- New 11/20 - update counts in top levels (table_access) at the end
+            sqlstr :=
+                'UPDATE TABLE_ACCESS t ' ||
+                'SET c_totalnum = ( ' ||
+                '    SELECT MAX(x.c_totalnum) ' ||
+                '    FROM ' || v_metadata_table || ' x ' ||
+                '    WHERE x.c_fullname = t.c_fullname ' ||
+                ') ' ||
+                'WHERE EXISTS ( ' ||
+                '    SELECT 1 FROM ' || v_metadata_table || ' x ' ||
+                '    WHERE x.c_fullname = t.c_fullname ' ||
+                ')';
+
+            EXECUTE IMMEDIATE sqlstr;
+
+            -- Null out cases that are actually 0 [1/21]
+            sqlstr :=
+                'UPDATE ' || v_metadata_table ||
+                ' SET c_totalnum = NULL ' ||
+                'WHERE c_totalnum = 0 ' ||
+                'AND c_visualattributes LIKE ''C%''';
+
+            EXECUTE IMMEDIATE sqlstr;
+
+        END IF;
+    END LOOP;
+
+    -- Cleanup (1/21)
+    UPDATE TABLE_ACCESS
+       SET c_totalnum = NULL
+     WHERE c_totalnum = 0;
+
+    -- Denominator (1/21)
+    SELECT COUNT(*)
+      INTO v_count
+      FROM TOTALNUM
+     WHERE c_fullname = '\denominator\facts\'
+       AND TRUNC(agg_date) = TRUNC(SYSDATE);
+
+    IF v_count = 0 THEN
+        sqlstr :=
+            'INSERT INTO TOTALNUM ' ||
+            '(c_fullname, agg_date, agg_count, typeflag_cd) ' ||
+            'SELECT ''\denominator\facts\'', ' ||
+            'SYSDATE, COUNT(DISTINCT patient_num), ''PX'' ' ||
+            'FROM ' || v_observation_table;
+
+        EXECUTE IMMEDIATE sqlstr;
+    END IF;
+
+    -- Drop temporary working table
+    SELECT COUNT(*)
+      INTO v_count
+      FROM USER_TABLES
+     WHERE TABLE_NAME = 'TNUM_CONCEPTPATIENT';
+
+    IF v_count > 0 THEN
+        EXECUTE IMMEDIATE 'DROP TABLE TNUM_CONCEPTPATIENT';
+    END IF;
+
+    BuildTotalnumReport(10, 6.5);
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE(
+            'RunTotalnumClassic failed: ' || SQLERRM
+        );
+        RAISE;
+END RunTotalnumClassic;
+/
+
