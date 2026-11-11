@@ -1,4 +1,4 @@
---------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------
 Oracle Version: FastTotalnumPrep Procedure
 by Darren Henderson (UKY) and Jeff Klann, PhD (MGB) 
 This Oracle conversion was assisted by ChatGPT.
@@ -15,6 +15,7 @@ Description:
        where the descendant represents 'fruit' and the ancestor represents 'apple'.
        
 --------------------------------------------------------------------------------
+*/
 
 create or replace PROCEDURE FastTotalnumPrep (
   schemaname IN VARCHAR2 DEFAULT 'DBO',
