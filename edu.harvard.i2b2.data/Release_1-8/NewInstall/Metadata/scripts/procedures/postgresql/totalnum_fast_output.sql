@@ -23,132 +23,234 @@ Acknowledgement:
   This Postgres conversion was assisted by ChatGPT.
 --------------------------------------------------------------------------------
 */
--- Remove the unused source_mode signature if it was installed by an upgrade.
-DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text, text);
-DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text);
+-- Preserves the ontology updates, PF/PA selection, conflict checks,
+-- denominator calculation, and optional obfuscated report.
+-- Assumes ordinary unquoted/lowercase PostgreSQL table and column names.
 
-CREATE OR REPLACE PROCEDURE fasttotalnumoutput(schemaname text DEFAULT 'public', tablename text DEFAULT '@', demographics_mode text DEFAULT 'act')
+CREATE OR REPLACE PROCEDURE public.fasttotalnumoutput(
+    IN schemaname VARCHAR DEFAULT 'public',
+    IN tablename VARCHAR DEFAULT '@',
+    IN demographics_mode VARCHAR DEFAULT 'act'
+)
 LANGUAGE plpgsql
-AS $sql$
+AS $procedure$
 DECLARE
-    sqlstr text;
-    sqltext text;
-    rec record;
-    start_time timestamp;
-    row_count integer;
-    mode_norm text;
-    act_demo_table text;
-    count_predicate text;
+    sqlstr TEXT;
+    count_source TEXT;
+    start_time TIMESTAMP;
+    mode_norm TEXT;
+    act_demo_table TEXT;
+    conflict_count BIGINT;
+    metadata_object TEXT;
+    rec RECORD;
+    cnt BIGINT;
+    affected BIGINT;
+    schema_ident TEXT;
+    access_table TEXT;
+    totalnum_table TEXT;
+    pairs_view TEXT;
 BEGIN
-    mode_norm := lower(coalesce(nullif(demographics_mode, ''), 'act'));
-    IF mode_norm NOT IN ('act', 'all') THEN
-      RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    IF schemaname IS NULL OR btrim(schemaname) = '' THEN
+        RAISE EXCEPTION 'schemaname must not be empty';
     END IF;
-    SELECT max(c_table_name) INTO act_demo_table FROM table_access
-      WHERE upper(c_table_cd) = 'ACT_DEMO';
-    start_time := now();
-    -- Iterate through each distinct ontology table from table_access (with c_visualattributes like '%A%')
-    FOR rec IN
-      SELECT DISTINCT c_table_name FROM table_access WHERE c_visualattributes LIKE '%A%'
+
+    schemaname := lower(btrim(schemaname));
+    schema_ident := format('%I', schemaname);
+    access_table := format('%I.table_access', schemaname);
+    totalnum_table := format('%I.totalnum', schemaname);
+    pairs_view := format('%I.obsfact_pairs', schemaname);
+
+    mode_norm := lower(coalesce(nullif(btrim(demographics_mode), ''), 'act'));
+    IF mode_norm NOT IN ('act', 'all') THEN
+        RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    END IF;
+
+    EXECUTE format(
+        'SELECT max(c_table_name) FROM %s WHERE upper(c_table_cd) = ''ACT_DEMO''',
+        access_table
+    ) INTO act_demo_table;
+
+    start_time := clock_timestamp();
+
+    -- Process ontology tables registered in TABLE_ACCESS.
+    FOR rec IN EXECUTE format(
+        'SELECT DISTINCT c_table_name FROM %s
+          WHERE c_visualattributes LIKE ''%%A%%''
+            AND c_table_name IS NOT NULL
+            AND c_table_name <> ''@''
+            AND ($1 = ''@'' OR lower(c_table_name) = lower($1))',
+        access_table
+    ) USING tablename
     LOOP
-      sqltext := rec.c_table_name;
-      IF tablename = '@' OR tablename = sqltext THEN
-        count_predicate := CASE WHEN mode_norm = 'all' AND sqltext IS DISTINCT FROM act_demo_table
-                                THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END;
-        PERFORM endtime(start_time, sqltext, 'ready to go');
-        start_time := now();
-        
-        -- Null the counts in the ontology table
-        sqlstr := 'UPDATE ' || sqltext || ' SET c_totalnum = NULL';
-        RAISE NOTICE '%', sqlstr;
+        -- Oracle metadata may use uppercase names; physical PG tables are lowercase.
+        -- Accept either table_name or schema.table_name from TABLE_ACCESS.
+        IF strpos(rec.c_table_name, '.') > 0 THEN
+            IF split_part(rec.c_table_name, '.', 1) = ''
+               OR split_part(rec.c_table_name, '.', 2) = ''
+               OR split_part(rec.c_table_name, '.', 3) <> '' THEN
+                RAISE EXCEPTION 'Invalid ontology table name: %', rec.c_table_name;
+            END IF;
+            metadata_object := format('%I.%I',
+                lower(split_part(rec.c_table_name, '.', 1)),
+                lower(split_part(rec.c_table_name, '.', 2)));
+        ELSE
+            metadata_object := format('%I.%I', schemaname, lower(rec.c_table_name));
+        END IF;
+        IF to_regclass(metadata_object) IS NULL THEN
+            RAISE EXCEPTION 'Ontology table % does not exist (TABLE_ACCESS C_TABLE_NAME: %)',
+                metadata_object, rec.c_table_name;
+        END IF;
+        RAISE NOTICE 'Processing ontology table: %', metadata_object;
+
+        count_source := format(
+            'SELECT row_number() OVER (
+                PARTITION BY c_fullname
+                ORDER BY agg_date DESC,
+                         CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC,
+                         agg_count DESC
+             ) AS rn, c_fullname, agg_count
+             FROM %s WHERE typeflag_cd %s',
+            totalnum_table,
+            CASE WHEN mode_norm = 'all'
+                      AND (act_demo_table IS NULL OR lower(rec.c_table_name) <> lower(act_demo_table))
+                 THEN 'IN (''PF'', ''PA'')'
+                 ELSE '= ''PF''' END
+        );
+
+        RAISE NOTICE 'Ready to process % (elapsed: %)',
+            metadata_object, clock_timestamp() - start_time;
+        start_time := clock_timestamp();
+
+        -- Step 1: Clear existing ontology counts.
+        sqlstr := format('UPDATE %s SET c_totalnum = NULL', metadata_object);
         EXECUTE sqlstr;
-        GET DIAGNOSTICS row_count = ROW_COUNT;
-        RAISE NOTICE 'Rows affected: %', row_count;
-        
-        -- Set zero counts where c_operator = ''LIKE'' and c_visualattributes LIKE '%A%'
-        sqlstr := 'UPDATE ' || sqltext ||
-                  ' SET c_totalnum = 0 WHERE c_operator = ''LIKE'' AND c_visualattributes LIKE ''%A%''';
-        RAISE NOTICE '%', sqlstr;
+        GET DIAGNOSTICS affected = ROW_COUNT;
+        RAISE NOTICE 'Rows affected (clear): %', affected;
+
+        -- Step 2: Initialize eligible ontology counts to zero.
+        sqlstr := format(
+            'UPDATE %s SET c_totalnum = 0
+             WHERE c_operator = ''LIKE'' AND c_visualattributes LIKE ''%%A%%''',
+            metadata_object
+        );
         EXECUTE sqlstr;
-        GET DIAGNOSTICS row_count = ROW_COUNT;
-        RAISE NOTICE 'Rows affected: %', row_count;
-        
-        -- Update counts in the ontology table using the latest record from totalnum.
-        sqlstr := 'UPDATE ' || sqltext || ' o SET c_totalnum = t.agg_count ' ||
-                  'FROM ( ' ||
-                  '  SELECT c_fullname, agg_count, row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) as rn ' ||
-                  '  FROM totalnum WHERE typeflag_cd ' || count_predicate || ' ' ||
-                  ') t ' ||
-                  'WHERE o.c_fullname = t.c_fullname AND t.rn = 1';
-        RAISE NOTICE '%', sqlstr;
+        GET DIAGNOSTICS affected = ROW_COUNT;
+        RAISE NOTICE 'Rows affected (initialize): %', affected;
+
+        -- Step 3: Apply the latest count per full name.
+        sqlstr := format(
+            'UPDATE %s AS o SET c_totalnum = t.agg_count
+             FROM (%s) AS t
+             WHERE t.c_fullname = o.c_fullname AND t.rn = 1',
+            metadata_object, count_source
+        );
         EXECUTE sqlstr;
-        GET DIAGNOSTICS row_count = ROW_COUNT;
-        RAISE NOTICE 'Rows affected: %', row_count;
-        
-        -- Update counts in table_access from the ontology table.
-        sqlstr := 'UPDATE table_access t SET c_totalnum = x.c_totalnum ' ||
-                  'FROM ' || sqltext || ' x ' ||
-                  'WHERE x.c_fullname = t.c_fullname';
-        RAISE NOTICE '%', sqlstr;
+        GET DIAGNOSTICS affected = ROW_COUNT;
+        RAISE NOTICE 'Rows affected (counts): %', affected;
+
+        -- Step 4: Reject conflicting duplicate ontology counts.
+        sqlstr := format(
+            'SELECT count(*) FROM (
+                 SELECT c_fullname FROM %s
+                 GROUP BY c_fullname
+                 HAVING count(DISTINCT c_totalnum) > 1
+             ) AS conflicts', metadata_object
+        );
+        EXECUTE sqlstr INTO conflict_count;
+        IF conflict_count > 0 THEN
+            RAISE EXCEPTION
+                'Conflicting C_TOTALNUM values found in % for % C_FULLNAME values.',
+                metadata_object, conflict_count;
+        END IF;
+
+        -- Step 5: Update TABLE_ACCESS from this ontology table.
+        sqlstr := format(
+            'UPDATE %s AS t SET c_totalnum = (
+                 SELECT max(x.c_totalnum) FROM %s AS x
+                 WHERE x.c_fullname = t.c_fullname
+             ) WHERE EXISTS (
+                 SELECT 1 FROM %s AS x WHERE x.c_fullname = t.c_fullname
+             )',
+            access_table, metadata_object, metadata_object
+        );
         EXECUTE sqlstr;
-        GET DIAGNOSTICS row_count = ROW_COUNT;
-        RAISE NOTICE 'Rows affected: %', row_count;
-        
-        -- Null out cases that are actually 0 where c_visualattributes LIKE ''C%''
-        sqlstr := 'UPDATE ' || sqltext ||
-                  ' SET c_totalnum = NULL WHERE c_totalnum = 0 AND c_visualattributes LIKE ''C%''';
-        RAISE NOTICE '%', sqlstr;
+        GET DIAGNOSTICS affected = ROW_COUNT;
+        RAISE NOTICE 'Rows affected (table_access): %', affected;
+
+        -- Step 6: Suppress zero counts on C% ontology attributes.
+        sqlstr := format(
+            'UPDATE %s SET c_totalnum = NULL
+             WHERE c_totalnum = 0 AND c_visualattributes LIKE ''C%%''',
+            metadata_object
+        );
         EXECUTE sqlstr;
-        GET DIAGNOSTICS row_count = ROW_COUNT;
-        RAISE NOTICE 'Rows affected: %', row_count;
-      END IF;
     END LOOP;
 
-    -- Refresh top-level table_access counts directly from the latest totalnum rows.
-    sqlstr := 'UPDATE table_access t SET c_totalnum = x.agg_count ' ||
-              'FROM ( ' ||
-              '  SELECT c_fullname, agg_count, row_number() OVER (PARTITION BY c_fullname ORDER BY agg_date DESC, CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC) AS rn ' ||
-              '  FROM totalnum WHERE typeflag_cd ' ||
-              CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')' ELSE '= ''PF''' END || ' ' ||
-              ') x ' ||
-              'WHERE x.c_fullname = t.c_fullname AND x.rn = 1';
-    RAISE NOTICE '%', sqlstr;
+    -- Step 7: Refresh TABLE_ACCESS directly from TOTALNUM.
+    count_source := format(
+        'SELECT row_number() OVER (
+             PARTITION BY c_fullname
+             ORDER BY agg_date DESC,
+                      CASE WHEN typeflag_cd = ''PA'' THEN 1 ELSE 0 END DESC,
+                      agg_count DESC
+         ) AS rn, c_fullname, agg_count
+         FROM %s WHERE typeflag_cd %s',
+        totalnum_table,
+        CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')'
+             ELSE '= ''PF''' END
+    );
+    sqlstr := format(
+        'UPDATE %s AS t SET c_totalnum = x.agg_count
+         FROM (%s) AS x
+         WHERE x.c_fullname = t.c_fullname AND x.rn = 1',
+        access_table, count_source
+    );
     EXECUTE sqlstr;
-    GET DIAGNOSTICS row_count = ROW_COUNT;
-    RAISE NOTICE 'Rows affected: %', row_count;
-    
-    -- Cleanup: set c_totalnum to NULL in table_access where the value is 0.
-    sqlstr := 'UPDATE table_access SET c_totalnum = NULL WHERE c_totalnum = 0';
-    RAISE NOTICE '%', sqlstr;
-    EXECUTE sqlstr;
-    GET DIAGNOSTICS row_count = ROW_COUNT;
-    RAISE NOTICE 'Rows affected: %', row_count;
-    
-    -- Denominator: if no row exists in totalnum for c_fullname = ''\denominator\facts\'' today, then insert one.
-    IF (SELECT COUNT(*) FROM totalnum 
-        WHERE c_fullname = E'\denominator\\facts\\' 
-          AND agg_date::date = current_date) = 0 THEN
-      sqlstr := 'INSERT INTO totalnum(c_fullname, agg_date, agg_count, typeflag_cd) ' ||
-                'SELECT E''\denominator\\facts\\'', now(), COUNT(DISTINCT patient_num), ''PX'' ' ||
-                'FROM obsfact_pairs';
-      RAISE NOTICE '%', sqlstr;
-      BEGIN
-        EXECUTE sqlstr;
-        GET DIAGNOSTICS row_count = ROW_COUNT;
-        RAISE NOTICE 'Rows affected: %', row_count;
-      END;
+    GET DIAGNOSTICS affected = ROW_COUNT;
+    RAISE NOTICE 'Rows affected (direct table_access refresh): %', affected;
+
+    -- Step 8: Suppress zero counts in TABLE_ACCESS.
+    EXECUTE format(
+        'UPDATE %s SET c_totalnum = NULL WHERE c_totalnum = 0',
+        access_table
+    );
+
+    -- Step 9: Add today's denominator if it does not exist.
+    EXECUTE format(
+        'SELECT count(*) FROM %s
+         WHERE c_fullname = $1 AND agg_date >= current_date
+           AND agg_date < current_date + INTERVAL ''1 day''',
+        totalnum_table
+    ) INTO cnt USING E'\\denominator\\facts\\';
+
+    IF cnt = 0 THEN
+        EXECUTE format(
+            'INSERT INTO %s (c_fullname, agg_date, agg_count, typeflag_cd)
+             SELECT $1, clock_timestamp(), count(DISTINCT patient_num), ''PX''
+             FROM %s',
+            totalnum_table, pairs_view
+        ) USING E'\\denominator\\facts\\';
     END IF;
-    
-    -- Build the report table by calling the BuildTotalnumReport procedure with parameters 10 and 6.5.
+
+    -- Step 10: Optional obfuscated report.
+    -- Requires a PostgreSQL procedure buildtotalnumreport(numeric, numeric, text).
     BEGIN
-      RAISE NOTICE 'Calling buildtotalnumreport(10, 6.5::float)';
-      PERFORM buildtotalnumreport(10, 6.5::float, mode_norm);
-    EXCEPTION
-      WHEN undefined_function THEN
-        RAISE NOTICE 'Skipping totalnum_report build: buildtotalnumreport(int, float, text) is not loaded.';
-      WHEN undefined_table THEN
-        RAISE NOTICE 'Skipping totalnum_report build: totalnum_report is not visible.';
+        RAISE NOTICE 'Calling BuildTotalnumReport(10, 6.5, %) ', mode_norm;
+        EXECUTE format('CALL %I.buildtotalnumreport($1, $2, $3)', schemaname)
+            USING 10::numeric, 6.5::numeric, mode_norm;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'Skipping totalnum report build. Verify BuildTotalnumReport and TOTALNUM_REPORT. Error: %', SQLERRM;
     END;
-    
+
+    -- No COMMIT/ROLLBACK here: transaction is controlled by the caller.
+    RAISE NOTICE 'FastTotalnumOutput completed successfully.';
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'ERROR in FastTotalnumOutput: %', SQLERRM;
+    RAISE;
 END;
-$sql$;
+$procedure$;
+GO
+
+-- Example:
+-- CALL public.fasttotalnumoutput('public', '@', 'act');
+-- CALL public.fasttotalnumoutput('public', '@', 'all');
