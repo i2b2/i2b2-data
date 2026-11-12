@@ -123,10 +123,12 @@ AS
     v_source_mode_norm VARCHAR2(20) := LOWER(NVL(NULLIF(p_source_mode,''),'i2b2'));
     v_exists NUMBER;
 BEGIN
-    IF v_source_mode_norm <> 'i2b2' THEN
-        DBMS_OUTPUT.PUT_LINE('Skipping constrained fact totals: only the i2b2 OBSERVATION_FACT source is currently supported.');
-        RETURN;
+    IF v_source_mode_norm NOT IN ('i2b2', 'omop') THEN
+        RAISE_APPLICATION_ERROR(-20020, 'Unsupported source_mode: ' || v_source_mode_norm || '. Use i2b2 or omop.');
     END IF;
+    -- OMOP is exposed through the i2b2-compatible OBSERVATION_FACT view.
+    -- Both modes use PATIENT_NUM, CONCEPT_CD and NVAL_NUM.
+    DBMS_OUTPUT.PUT_LINE('Constrained facts source: ' || v_source_mode_norm);
 
     -- Validate the identifier components before constructing dynamic SQL.
     v_fact_object := DBMS_ASSERT.SIMPLE_SQL_NAME(UPPER(p_schemaname)) || '.OBSERVATION_FACT';
@@ -136,8 +138,7 @@ BEGIN
       AND OBJECT_NAME = 'OBSERVATION_FACT'
       AND OBJECT_TYPE IN ('TABLE','VIEW');
     IF v_exists = 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Skipping constrained fact totals: ' || v_fact_object || ' is not visible.');
-        RETURN;
+        RAISE_APPLICATION_ERROR(-20021, 'OBSERVATION_FACT table/view not visible: ' || v_fact_object);
     END IF;
 
     -- Clear previous session-local rows (GTT definitions remain installed).
