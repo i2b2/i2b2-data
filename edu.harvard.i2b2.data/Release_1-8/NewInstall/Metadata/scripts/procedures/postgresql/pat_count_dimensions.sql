@@ -1,165 +1,163 @@
-
-
 -- By Mike Mendis, Partners Healthcare
 -- Performance improvements by Jeff Green, Prognosis Data Corp; Jeff Klann, PhD; and Griffin Weber, MD, PhD
 -- Based on code from Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
-
 -- Usage example:
 --     select PAT_COUNT_DIMENSIONS( 'I2B2' ,'public' , 'observation_fact' ,  'concept_cd', 'concept_dimension', 'concept_path'  )
 --   (replace 'public' by the schema name for the fact table)
 
-CREATE OR REPLACE FUNCTION pat_count_dimensions(metadataTable character varying, schemaName character varying, observationTable character varying, facttablecolumn character varying,tablename character varying,columnname character varying )
-  RETURNS void AS
-$BODY$
-declare 
-        -- select PAT_COUNT_DIMENSIONS( 'I2B2' ,'public' , 'observation_fact' ,  'concept_cd', 'concept_dimension', 'concept_path'  )
-    v_sqlstr text;
-    v_num integer;
-    curRecord RECORD;
-    v_startime timestamp;
-    v_duration text = '';
+
+-- Requires trusted metadata values for table/column identifiers.
+CREATE OR REPLACE PROCEDURE pat_count_dimensions(
+    IN metadataTable VARCHAR,
+    IN schemaName VARCHAR,
+    IN observationTable VARCHAR,
+    IN facttablecolumn VARCHAR,
+    IN tablename VARCHAR,
+    IN columnname VARCHAR,
+    INOUT errorMsg VARCHAR
+)
+LANGUAGE plpgsql
+AS $procedure$
+DECLARE
+    v_metadata TEXT;
+    v_observation TEXT;
+    v_fact_column TEXT;
+    v_startime TIMESTAMPTZ;
+    v_duration NUMERIC;
+    v_fact_filter TEXT;
 BEGIN
-    raise info 'At %, running PAT_COUNT_DIMENSIONS(''%'')',clock_timestamp(), metadataTable;
+    errorMsg := NULL;
     v_startime := clock_timestamp();
 
-    DISCARD TEMP;
-    -- Modify this query to select a list of all your ontology paths and basecodes.
+    -- Resolve table identifiers without interpolating untrusted SQL.
+    IF strpos(metadataTable, '.') > 0 THEN
+        v_metadata := format('%I.%I', split_part(metadataTable,'.',1), split_part(metadataTable,'.',2));
+    ELSE
+        v_metadata := format('%I.%I', schemaName, metadataTable);
+    END IF;
+    IF strpos(observationTable, '.') > 0 THEN
+        v_observation := format('%I.%I', split_part(observationTable,'.',1), split_part(observationTable,'.',2));
+    ELSE
+        v_observation := format('%I.%I', schemaName, observationTable);
+    END IF;
 
-    v_sqlstr := 'create temp table dimCountOnt AS '
-             || ' select c_fullname, c_basecode, c_hlevel '
-             || ' from ' || metadataTable  
-             || ' where lower(c_facttablecolumn) like ''%'||facttablecolumn||''' '
-             || ' and lower(c_tablename) = '''|| tablename || ''' '
-             || ' and lower(c_columnname) = '''|| columnname || ''' '
-             || ' and lower(c_synonym_cd) = ''n'' '
-             || ' and lower(c_columndatatype) = ''t'' '
-             || ' and lower(c_operator) = ''like'' '
-             || ' and m_applied_path = ''@'' '
-		     || ' and coalesce(c_fullname, '''') <> '''' '
-		     || ' and (c_visualattributes not like ''L%'' or  c_basecode in (select distinct concept_cd from ' || lower(schemaName) || '.'|| observationTable || ')) ';
-		-- NEW: Sparsify the working ontology by eliminating leaves with no data. HUGE win in ACT meds ontology (10x speedup).
-        -- From 1.47M entries to 300k entries!
-           
-    raise info 'SQL: %',v_sqlstr;
-    execute v_sqlstr;
+    -- Classic wrapper may supply observationTable.concept_cd (or %.concept_cd).
+    -- The physical fact table column is the last identifier component.
+    v_fact_column := split_part(facttablecolumn, '.', array_length(string_to_array(facttablecolumn, '.'), 1));
+    IF v_fact_column NOT IN ('concept_cd', 'provider_id', 'modifier_cd') THEN
+        RAISE EXCEPTION 'Unsupported facttablecolumn: %', facttablecolumn;
+    END IF;
+    v_fact_filter := '%' || lower(facttablecolumn);
 
-    create index dimCountOntA on dimCountOnt using spgist (c_fullname);
-    CREATE INDEX dimCountOntB ON dimCountOnt(c_fullname text_pattern_ops);
+    DROP TABLE IF EXISTS pg_temp.dimcountont;
+    DROP TABLE IF EXISTS pg_temp.dimontwithfolders;
+    DROP TABLE IF EXISTS pg_temp.path2num;
+    DROP TABLE IF EXISTS pg_temp.conceptpath;
+    DROP TABLE IF EXISTS pg_temp.pathcounts;
+    DROP TABLE IF EXISTS pg_temp.finaldimcounts;
 
-    create temp table dimOntWithFolders AS
-        select distinct p1.c_fullname, p1.c_basecode
-        from dimCountOnt p1
-        where 1=0;
-        
-    CREATE INDEX dimOntWithFoldersIndex ON dimOntWithFolders using btree(c_basecode);
+    EXECUTE format($sql$
+        CREATE TEMP TABLE dimcountont ON COMMIT PRESERVE ROWS AS
+        SELECT o.c_fullname, o.c_basecode, o.c_hlevel
+        FROM %s o
+        LEFT JOIN (SELECT DISTINCT %I AS fact_cd FROM %s) f
+          ON f.fact_cd = o.c_basecode
+        WHERE trim(lower(o.c_facttablecolumn)) LIKE %L
+          AND trim(lower(o.c_tablename)) = lower(%L)
+          AND trim(lower(o.c_columnname)) = lower(%L)
+          AND trim(lower(o.c_synonym_cd)) = 'n'
+          AND trim(lower(o.c_columndatatype)) = 't'
+          AND trim(lower(o.c_operator)) = 'like'
+          AND trim(o.m_applied_path) = '@'
+          AND o.c_fullname IS NOT NULL
+          AND (o.c_visualattributes NOT LIKE 'L%%' OR f.fact_cd IS NOT NULL)
+    $sql$, v_metadata, v_fact_column, v_observation,
+          v_fact_filter, tablename, columnname);
 
+    CREATE INDEX dim_fullname ON pg_temp.dimcountont (c_fullname);
 
-For curRecord IN 
-		select c_fullname,c_table_name from table_access 
-    LOOP 
-if metadataTable = curRecord.c_table_name then
---v_sqlstr := 'insert into dimOntWithFolders select distinct  c_fullname , c_basecode  from  provider_ont where c_fullname like ''' || replace(curRecord.c_fullname,'\','\\') || '%'' ';
+    -- Recursive hierarchy: strip the final path component, preserving the
+    -- trailing backslash of each ancestor, until the root is reached.
+    CREATE TEMP TABLE dimontwithfolders ON COMMIT PRESERVE ROWS AS
+    WITH RECURSIVE concepts(c_fullname, c_hlevel, c_basecode) AS (
+        SELECT c_fullname::text, c_hlevel::integer, c_basecode
+        FROM pg_temp.dimcountont
+        UNION ALL
+        SELECT left(c_fullname,
+                    length(c_fullname) - strpos(reverse(left(c_fullname, length(c_fullname)-1)), E'\\')
+                   )::text,
+               c_hlevel - 1,
+               c_basecode
+        FROM concepts
+        WHERE c_hlevel >= 0
+          AND length(c_fullname) > 1
+          AND strpos(reverse(left(c_fullname, length(c_fullname)-1)), E'\\') > 0
+    )
+    SELECT DISTINCT c_fullname, c_basecode FROM concepts;
 
---v_sqlstr := 'insert into dimOntWithFolders '
---       || '   select distinct p1.c_fullname, p2.c_basecode '
---       || '   from dimCountOnt p1 '
---       || '   inner join dimCountOnt p2 '
---       || '     on p2.c_fullname like p1.c_fullname || ''%''  '
---       || '     where p2.c_fullname like  ''' || replace(curRecord.c_fullname,'\','\\') || '%'' '
---       || '       and p1.c_fullname like  ''' || replace(curRecord.c_fullname,'\','\\') || '%'' ';
+    CREATE INDEX dimfldbasecode ON pg_temp.dimontwithfolders(c_basecode);
+    v_duration := round((extract(epoch FROM clock_timestamp() - v_startime) * 1000)::numeric, 0);
+    RAISE NOTICE '(BENCH) %,collected ontology,% ms', metadataTable, v_duration;
+    v_startime := clock_timestamp();
 
+    CREATE TEMP TABLE path2num ON COMMIT PRESERVE ROWS AS
+    SELECT c_fullname, row_number() OVER (ORDER BY c_fullname) AS path_num
+    FROM (SELECT DISTINCT c_fullname FROM pg_temp.dimontwithfolders) t;
+    CREATE INDEX path2num_idx ON pg_temp.path2num(c_fullname);
 
--- Jeff Green's version
-v_sqlstr := 'with recursive concepts (c_fullname, c_hlevel, c_basecode) as ('
-	|| ' select c_fullname, c_hlevel, c_basecode '
-	|| '  from dimCountOnt '
-	|| '  where c_fullname like ''' || replace(curRecord.c_fullname,'\','\\') || '%'' '
-	|| ' union all ' 
-	|| ' select cast( '
-	|| '  	left(c_fullname, length(c_fullname)-position(''\'' in right(reverse(c_fullname), length(c_fullname)-1))) '
-	|| '	   	as varchar(700) '
-	|| '	) c_fullname, ' 
-	|| ' c_hlevel-1 c_hlevel, c_basecode '
-	|| ' from concepts '
-	|| ' where concepts.c_hlevel>0 '
-	|| ' ) '
-|| ' insert into dimOntWithFolders '
-|| ' select distinct c_fullname, c_basecode '
-|| '  from concepts '
-|| '  where c_fullname like ''' || replace(curRecord.c_fullname,'\','\\') || '%'' '
-|| '  order by c_fullname, c_basecode ';
-    raise info 'SQL_dimOntWithFolders: %',v_sqlstr;
-	execute v_sqlstr;
-	--raise notice 'At %, collected concepts for % %',clock_timestamp(),curRecord.c_table_name,curRecord.c_fullname;
-	v_duration := clock_timestamp()-v_startime;
-	raise info '(BENCH) %,collected_concepts,%',curRecord,v_duration;
-	v_startime := clock_timestamp();
- end if;
-    END LOOP;
-    -- Too slow version
-    --v_sqlstr := ' create temp table finalDimCounts AS '
-    --    || ' select p1.c_fullname, count(distinct patient_num) as num_patients '
-    --    || ' from dimOntWithFolders p1 '
-    --    || ' left join ' || schemaName ||'.'|| observationtable ||  '  o '
-    --    || '     on p1.c_basecode = o.' || facttablecolumn  --provider id
-    --    || '     and coalesce(p1.c_basecode, '''') <> '''' '
-    --    || ' group by p1.c_fullname';
-    
-    -- 10-20x faster version (based on MSSQL optimizations) 
-    
-    -- Assign a number to each path and use this for the join to the fact table!
-    create temp table Path2Num as
-    select c_fullname, row_number() over (order by c_fullname) path_num
-        from (
-            select distinct c_fullname c_fullname
-            from dimOntWithFolders
-            where c_fullname is not null and c_fullname<>''
-        ) t;
-    
-    alter table Path2Num add primary key (c_fullname);
-    
-    create temp table ConceptPath as
-    select path_num,c_basecode from Path2Num n inner join dimontwithfolders o on o.c_fullname=n.c_fullname
-    where o.c_fullname is not null and c_basecode is not null;
-    
-    alter table ConceptPath add primary key (c_basecode, path_num);
-    
-  --  create temp table PathCounts as
+    CREATE TEMP TABLE conceptpath ON COMMIT PRESERVE ROWS AS
+    SELECT DISTINCT n.path_num, o.c_basecode
+    FROM pg_temp.path2num n
+    JOIN pg_temp.dimontwithfolders o ON o.c_fullname = n.c_fullname
+    WHERE o.c_fullname IS NOT NULL AND o.c_basecode IS NOT NULL;
+    ALTER TABLE pg_temp.conceptpath ADD PRIMARY KEY (c_basecode, path_num);
 
-    v_sqlstr := 'create temp table PathCounts as select p1.path_num, count(distinct patient_num) as num_patients  from ConceptPath p1  left join ' || lower(schemaName) || '.'|| observationTable || '  o      on p1.c_basecode = o.concept_cd     and coalesce(p1.c_basecode, '''') <> ''''  group by p1.path_num';
-    
+    EXECUTE format($sql$
+        CREATE TEMP TABLE pathcounts ON COMMIT PRESERVE ROWS AS
+        SELECT p.path_num, count(DISTINCT o.patient_num) AS num_patients
+        FROM pg_temp.conceptpath p
+        LEFT JOIN %s o ON p.c_basecode = o.%I
+        GROUP BY p.path_num
+    $sql$, v_observation, v_fact_column);
+    ALTER TABLE pg_temp.pathcounts ADD PRIMARY KEY (path_num);
 
-	execute v_sqlstr;
+    CREATE TEMP TABLE finaldimcounts ON COMMIT PRESERVE ROWS AS
+    SELECT p.c_fullname, c.num_patients
+    FROM pg_temp.pathcounts c
+    JOIN pg_temp.path2num p ON p.path_num = c.path_num;
+    CREATE INDEX finaldimcounts_fullname ON pg_temp.finaldimcounts(c_fullname);
 
-    alter table PathCounts add primary key (path_num);
-    
-    create temp table finalCountsbyConcept as
-    select p.c_fullname, c.num_patients num_patients 
-        from PathCounts c
-          inner join Path2Num p
-           on p.path_num=c.path_num
-        order by p.c_fullname;
-    --raise notice 'At %, done counting.',clock_timestamp();
-	v_duration := clock_timestamp()-v_startime;
-	raise info '(BENCH) %,counted_concepts,%',curRecord,v_duration;
-	v_startime := clock_timestamp();
-    create index on finalCountsbyConcept using btree (c_fullname);
-    v_sqlstr := ' update ' || metadataTable || ' a set c_totalnum=b.num_patients '
-             || ' from finalCountsbyConcept b '
-             || ' where a.c_fullname=b.c_fullname '
-            || ' and lower(a.c_facttablecolumn) like ''%' || facttablecolumn || ''' '
-		    || ' and lower(a.c_tablename) = ''' || tablename || ''' '
-		    || ' and lower(a.c_columnname) = ''' || columnname || ''' ';
-    select count(*) into v_num from finalCountsByConcept where num_patients is not null and num_patients <> 0;
-    raise info 'At %, updating c_totalnum in % %',clock_timestamp(), metadataTable, v_num;
-    
-	execute v_sqlstr;
-	
-	-- New 4/2020 - Update the totalnum reporting table as well
-	insert into totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
-	select c_fullname, current_date, num_patients, 'PF' from finalCountsByConcept where num_patients>0;
-    discard temp;
-END; 
-$BODY$
-  LANGUAGE plpgsql VOLATILE SECURITY DEFINER
-  COST 100;
+    v_duration := round((extract(epoch FROM clock_timestamp() - v_startime) * 1000)::numeric, 0);
+    RAISE NOTICE '(BENCH) %,counted facts,% ms', metadataTable, v_duration;
+    v_startime := clock_timestamp();
+
+    EXECUTE format($sql$
+        UPDATE %s a SET c_totalnum = (
+            SELECT b.num_patients FROM pg_temp.finaldimcounts b
+            WHERE b.c_fullname = a.c_fullname
+        )
+        WHERE lower(a.c_facttablecolumn) LIKE %L
+          AND lower(a.c_tablename) = lower(%L)
+          AND lower(a.c_columnname) = lower(%L)
+    $sql$, v_metadata, v_fact_filter, tablename, columnname);
+
+    INSERT INTO totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+    SELECT c_fullname, CURRENT_DATE, num_patients, 'PF'
+    FROM pg_temp.finaldimcounts
+    WHERE num_patients > 0;
+
+    DROP TABLE pg_temp.dimcountont;
+    DROP TABLE pg_temp.dimontwithfolders;
+    DROP TABLE pg_temp.path2num;
+    DROP TABLE pg_temp.conceptpath;
+    DROP TABLE pg_temp.pathcounts;
+    DROP TABLE pg_temp.finaldimcounts;
+
+    v_duration := round((extract(epoch FROM clock_timestamp() - v_startime) * 1000)::numeric, 0);
+    RAISE NOTICE '(BENCH) %,cleanup,% ms', metadataTable, v_duration;
+EXCEPTION WHEN OTHERS THEN
+    errorMsg := SQLERRM;
+    RAISE NOTICE 'PAT_COUNT_DIMENSIONS failed for %: %', metadataTable, SQLERRM;
+END;
+$procedure$;
+GO
