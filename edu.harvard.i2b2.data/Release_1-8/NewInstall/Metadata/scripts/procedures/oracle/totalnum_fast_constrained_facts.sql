@@ -21,8 +21,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Created TNUM_CONSTRAINT_CANDIDATES');
   END IF;
 END;
-/
-
+GO
 DECLARE
   v_exists NUMBER;
 BEGIN
@@ -39,8 +38,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Created TNUM_PARSED_CONSTRAINTS');
   END IF;
 END;
-/
-
+GO
 DECLARE
   v_exists NUMBER;
 BEGIN
@@ -57,8 +55,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Created TNUM_PREPARED_CONSTRAINTS');
   END IF;
 END;
-/
-
+GO
 DECLARE
   v_exists NUMBER;
 BEGIN
@@ -72,8 +69,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Created TNUM_AFFECTED_ANCESTORS');
   END IF;
 END;
-/
-
+GO
 DECLARE
   v_exists NUMBER;
 BEGIN
@@ -87,8 +83,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Created TNUM_AFFECTED_DESCENDANTS');
   END IF;
 END;
-/
-
+GO
 DECLARE
   v_exists NUMBER;
 BEGIN
@@ -104,8 +99,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Created TNUM_MATCHED_DESCENDANTS');
   END IF;
 END;
-/
-
+GO
 CREATE OR REPLACE PROCEDURE FastTotalnumConstrainedFacts (
     p_schemaname IN VARCHAR2 DEFAULT 'DBO',
     p_tablename IN VARCHAR2 DEFAULT '@',
@@ -322,16 +316,5 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('FastTotalnumConstrainedFacts failed: ' || SQLERRM);
         RAISE;
 END FastTotalnumConstrainedFacts;
-/
 
--- Inspect compile errors after deployment:
--- SELECT line, position, text
--- FROM user_errors
--- WHERE name = 'FASTTOTALNUMCONSTRAINEDFACTS'
--- ORDER BY sequence;
---
--- Example:
--- BEGIN
---   FastTotalnumConstrainedFacts('I2B2SYNTHEA3', '@', 'i2b2');
--- END;
--- /
+
