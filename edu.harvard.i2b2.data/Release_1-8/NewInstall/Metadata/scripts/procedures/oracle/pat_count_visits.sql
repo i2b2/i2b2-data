@@ -145,5 +145,5 @@ execute immediate	'insert into totalnum(c_fullname, agg_date, agg_count, typefla
  EXECUTE IMMEDIATE 'drop table ontPatVisitDims';
 
 END;
-/
+
 
