@@ -58,7 +58,7 @@ EXCEPTION
     );
     RAISE;
 END;
-/
+GO
 
 -- Create or replace FastTotalnumCount procedure.
 
@@ -350,4 +350,4 @@ EXCEPTION
     RAISE;
 
 END FastTotalnumCount;
-/
+
