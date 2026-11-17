@@ -112,18 +112,19 @@ the ontology `C_TOTALNUM`, matching `TABLE_ACCESS.C_TOTALNUM`, and
 `TOTALNUM_REPORT` after both `act` and `other` runs. The run-ID work above is
 still needed to make those comparisons reliably about the current run.
 
-## Complete supplemental demographics parity
+## Validate constrained-fact source parity
 
-**Status:** The non-ACT `patient_dimension` supplement is implemented on all
-three platforms. SQL Server alone also handles supported constrained numeric
-facts in `other` mode.
+**Status:** All three platforms implement the non-ACT `patient_dimension`
+and constrained-fact supplements in `other` mode. SQL Server skips constrained
+facts in OMOP mode; Oracle and PostgreSQL require an i2b2-compatible
+`observation_fact` table or view for that step.
 
-The Oracle and PostgreSQL implementations keep the ACT fast path and add a
-patient-only counter that writes `PA` in `other` mode. The wrappers default to
-`act`. The full classic patient/visit counter remains separate because it also
-handles visits, writes `PD`, and has different side effects. If constrained
-numeric-fact parity is needed, implement and test it separately on Oracle and
-PostgreSQL.
+Ordinary OMOP fact pairs come from the ACT-OMOP prep views, while constrained
+matches come from `observation_fact`. Validate that both sources represent the
+same facts, or align their source selection before relying on the corrected
+totals. Decide whether an absent compatible relation should skip only the
+constrained-fact supplement instead of failing `other`, especially when there
+are no constrained nodes. See the [current prerequisites](totalnum.md#numeric-value-constrained-facts).
 
 The run-identity work above remains open. Adding `PA` makes existing date ties
 more likely to produce incorrect or inconsistent demographics counts.

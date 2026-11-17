@@ -13,22 +13,28 @@ for compatibility and specialized fact-table configurations.
 | Fast ACT-OMOP (`omop`) | Yes | Yes | Yes |
 | Fast ACT-only demographics (default) | `@demographics_mode = 'act'` | `demographics_mode => 'act'` | `demographics_mode => 'act'` |
 | Fast with supplemental demographics, including non-ACT `patient_dimension` rows | `@demographics_mode = 'other'` | `demographics_mode => 'other'` | `demographics_mode => 'other'` |
-| Numeric-value constrained facts in fast `other` mode | Yes, i2b2 source only | No | No |
+| Numeric-value constrained facts in fast `other` mode | i2b2 only | i2b2; OMOP requires a compatible fact view | i2b2; OMOP requires a compatible fact view |
 | Fast count without rebuilding prep | `@run_prep = 0` | `run_prep => 0` | `run_prep => 0` |
-| Fast output for one ontology table | `@tablename` | `tableName` | Third argument |
+| Fast output for one ontology table | `@tablename` | `tableName` | `tablename` |
 | Classic counting (`classic`) for custom or union fact tables | Yes | Yes | Yes |
-| Classic wildcard fact-column matching | `@wildcard_factcolumn = 'Y'` | No | No |
+| Classic wildcard fact-column matching | `@wildcard_factcolumn = 'Y'` | Flag exists; not reliable | Flag exists; not reliable |
 
 Use wildcard matching only on SQL Server; the Oracle and PostgreSQL wrappers
 expose the flag, but their wildcard counting paths have known limitations.
 All platforms retain the optimized ACT demographic path in both fast
 demographics modes.
 
+Use `@mode` on SQL Server and `totalnum_mode` on Oracle and PostgreSQL.
+All three wrappers take the same positional arguments: fact table, data
+schema, ontology table, wildcard flag, mode, demographics mode, and prep flag.
+Prefer named arguments for optional settings.
+
 ## Install and prepare
 
 Configure the connection and database platform in
-`edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata/db.properties`. From
-`NewInstall/Metadata`, load the procedures with:
+`edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata/db.properties` (use
+`db.type=postgresql` for PostgreSQL). From `NewInstall/Metadata`, load or reload
+the routines without running a count:
 
 ```sh
 ant -f data_build.xml create_metadata_procedures_release_1-8
@@ -36,9 +42,13 @@ ant -f data_build.xml create_metadata_procedures_release_1-8
 
 The loader processes the top-level `.sql` files in
 `scripts/procedures/sqlserver`, `scripts/procedures/oracle`, or
-`scripts/procedures/postgresql` in filename order. If installing manually,
-load all files in the selected directory in that order. Check the install
-output: the Ant target continues after SQL errors. The historical
+`scripts/procedures/postgresql` in filename order. Prefer Ant for installation.
+If installing manually, preserve file order and use your client's batch
+syntax. In particular, Oracle's files use Ant's `GO` separators where needed,
+not SQL*Plus or SQL Developer Run Script terminators; use standalone `/`
+after each executable PL/SQL block in those clients. PostgreSQL clients such
+as `psql` do not accept the Ant `GO` lines. Check the install output: the Ant
+target continues after SQL errors. The historical
 `FastTotalnumWrapper` files are retained as commented references; use
 `RunTotalnum` or `runtotalnum` for new calls.
 
@@ -53,8 +63,9 @@ ant -f data_build.xml db_metadata_run_total_count_postgresql
 
 Fast prep reads active ontology tables from `TABLE_ACCESS`. It resolves the
 physical ACT visit and demographic tables from `C_TABLE_NAME` where
-`C_TABLE_CD` is `ACT_VISIT` or `ACT_DEMO`. Missing mappings produce a notice
-and skip the corresponding supplement. Check that the remaining
+`C_TABLE_CD` is `ACT_VISIT` or `ACT_DEMO`. Missing mappings produce a notice.
+SQL Server can load either supplement independently; the combined Oracle and
+PostgreSQL ACT load runs only when both mappings exist. Check that the remaining
 `TABLE_ACCESS.C_TABLE_NAME` values point to real ontology tables and that the
 database user can read the selected fact source and update the metadata tables.
 Investigate unexpected missing-ACT notices; they may indicate incorrect
@@ -101,9 +112,10 @@ SET search_path TO i2b2metadata, public;
 Run the wrapper as the metadata owner or a role with the required read,
 write, and prep DDL privileges; the wrapper runs with the caller's privileges.
 Use `CALL runtotalnum(...)`, not `SELECT`: the core server and Ant both use
-the PostgreSQL procedure. The server passes its configured schema as both
-the routine's schema and the data schema; for a split-schema installation,
-use the manual or Ant call to supply the separate data schema.
+the PostgreSQL procedure. For Ant, connect with the metadata schema first on
+the session search path and set `db.schemaname` to the data schema. The core
+server passes its configured schema as both the routine's schema and the data
+schema; for a split-schema installation, use the manual or Ant call.
 
 ## Run fast counts
 
@@ -227,17 +239,27 @@ CALL runtotalnum('observation_fact', 'public', run_prep => 0,
                    demographics_mode => 'other');
 ```
 
-The patient-dimension supplement works with i2b2 and OMOP sources. In i2b2
-mode on SQL Server, `other` also counts fact metadata using the strict
-`nval_num = number AND concept_cd` form. It rebuilds affected fact-only
-hierarchy branches so constrained leaves and shortcut folders agree; mixed
-higher roots retain the ordinary fast count. This constrained-fact supplement
-is skipped with a message in OMOP mode. Oracle and PostgreSQL do not have the
-constrained-fact supplement. Non-ACT `visit_dimension` metadata is not added
-by `other` on any platform.
+The patient-dimension supplement works with i2b2 and OMOP sources. Non-ACT
+`visit_dimension` metadata is not added by `other` on any platform.
 
-Supplemental patient counts use `TOTALNUM.TYPEFLAG_CD = 'PA'`; fast ACT counts
-use `PF`. Output chooses the appropriate rows for the mode. This option is
+### Numeric-value constrained facts
+
+The `other` wrapper also checks for concept leaves with the strict
+`nval_num = number AND concept_cd` expression in `C_COLUMNNAME`. It rebuilds
+eligible fact-only branches; mixed higher roots retain the ordinary fast count.
+
+- **SQL Server:** Runs the supplement with i2b2 and skips it with a notice in OMOP.
+- **Oracle and PostgreSQL:** Run the supplement in either source mode and
+  require a visible `schemaName.observation_fact` table or view, even if no
+  constrained nodes exist. For OMOP, ensure this relation exposes
+  `PATIENT_NUM`, `CONCEPT_CD`, and `NVAL_NUM` for the same facts represented
+  by the ACT-OMOP prep views. Otherwise, use `act`, or run the patient-dimension
+  supplement manually without invoking the constrained-fact procedure.
+- **Oracle installation:** The constrained-fact script installs six working
+  tables and uses numeric conversion syntax that requires Oracle 12.2 or newer.
+
+Supplemental counts use `TOTALNUM.TYPEFLAG_CD = 'PA'`; ordinary fast counts
+use `PF`. Output selects the applicable rows for the mode. This option is
 slower than ACT-only counting, but avoids the full classic concept, provider,
 and modifier workflow.
 
@@ -256,11 +278,12 @@ on a test installation before enabling `other` in production.
 
 ## Limit output to one ontology table
 
-Use the table's physical name from `TABLE_ACCESS.C_TABLE_NAME`. The fast prep
-and count steps still build shared structures; only output is limited to the
-selected table. In `other` mode, the patient-dimension supplement is also
-limited to that table; SQL Server additionally limits its constrained-fact
-supplement. Oracle and PostgreSQL table names are case-sensitive.
+Use the name listed in `TABLE_ACCESS.C_TABLE_NAME`. Fast prep and the base
+count still work across the ontology. The table filter scopes the ontology
+output and both supplemental searches, but does not make the report or all
+`TABLE_ACCESS` updates table-local. Use the spelling from `TABLE_ACCESS`;
+Oracle compares it exactly, and PostgreSQL fast output matches it
+case-insensitively.
 
 ```sql
 -- SQL Server
@@ -335,7 +358,9 @@ EXEC dbo.RunTotalnumClassic
 ```
 
 Passing `@wildcard_factcolumn = 'Y'` to the SQL Server wrapper also routes
-fast/i2b2 calls to classic. Oracle and PostgreSQL do not have this flag.
+fast/i2b2 calls to classic. The Oracle and PostgreSQL wrappers also accept the
+flag and route to classic when it is `Y`, but leave it at `N` because wildcard
+counting is not reliable on those platforms.
 
 ## Run the fast steps manually
 
@@ -382,19 +407,23 @@ EXEC dbo.FastTotalnumOutput @schemaname = 'dbo', @tablename = '@',
 With OMOP, pass `@source_mode = 'omop'` to the constrained-fact procedure; it
 will report that it is skipping that supplement.
 
-For `other` mode on Oracle or PostgreSQL, insert the supplemental step between
-count and output, and pass `other` to output:
+For `other` mode on Oracle or PostgreSQL, run both supplemental steps between
+count and output. Omit the constrained-fact step if you only want additional
+patient-dimension counts. Pass `omop` instead of `i2b2` to the constrained-fact
+step only when its OMOP prerequisites are met:
 
 ```sql
 -- Oracle
 BEGIN
   FastTotalnumAdditionalDimensions('I2B2DEMODATA', '@');
+  FastTotalnumConstrainedFacts('I2B2DEMODATA', '@', 'i2b2');
   FastTotalnumOutput('I2B2DEMODATA', '@', 'other');
 END;
 /
 
 -- PostgreSQL
 CALL fasttotalnumadditionaldimensions('public', '@');
+CALL fasttotalnumconstrainedfacts('public', '@', 'i2b2');
 CALL fasttotalnumoutput('public', '@', 'other');
 ```
 
@@ -417,12 +446,14 @@ For fast runs, the `\denominator\facts\` count comes from the prepared
 | Fast runs required separate prep, count, and output calls | The wrapper runs all three by default | Use the wrapper; disable prep when its structures are current |
 | Classic used the common procedure name or `run_all_counts.sql` | The implementation is `RunTotalnumClassic`/`runtotalnumclassic` in `totalnum_classic.sql` | Update direct classic calls |
 | i2b2 and OMOP prep could require separate script variants | One prep accepts `source_mode` | Pass `omop` for ACT-OMOP views |
-| ACT table names could be hardcoded | Prep resolves `ACT_VISIT` and `ACT_DEMO` via `TABLE_ACCESS` | Keep those mappings current; missing entries are skipped with a notice |
-| Fast counts covered ACT demographics only | All platforms can opt into `demographics_mode = 'other'` for non-ACT patient dimensions | Choose `other` when those counts are needed; constrained numeric facts remain SQL Server-only |
+| ACT table names could be hardcoded | Prep resolves `ACT_VISIT` and `ACT_DEMO` via `TABLE_ACCESS` | Keep both mappings current; check notices for missing entries |
+| Fast counts covered ACT demographics only; the supplemental option was called `all` where available | All platforms support `demographics_mode = 'other'` | Replace `all` with `other` and check the constrained-fact prerequisites |
+| PostgreSQL used `SELECT runtotalnum(...)`, `mode`, or boolean prep values in earlier versions | The wrapper is a procedure with `totalnum_mode` and integer `run_prep` | Use `CALL` and `0`/`1`. Direct `SELECT fasttotalnumprep(...)` still works |
 | Some output SQL had to be run manually | Output procedures execute the updates | Do not rerun printed updates |
 
 The Ant count targets call the common wrapper, so they now run fast. The
-common two-argument calls still work, but sites that require classic behavior
-must request it explicitly. SQL Server's legacy `PAT_COUNT_VISITS` remains
+common two-argument calls still work with the current invocation syntax, but
+sites that require classic behavior must request it explicitly. SQL Server's
+legacy `PAT_COUNT_VISITS` remains
 available and delegates to a shared metadata-dimension evaluator. Classic
 patient/visit counts use `TOTALNUM.TYPEFLAG_CD = 'PD'`.
