@@ -9,7 +9,7 @@ features that are already available.
 
 **Status:** Open. Relevant to Oracle and PostgreSQL now, and worth addressing
 on SQL Server for consistency. This is especially important now that fast
-`demographics_mode = 'all'` is available on Oracle and PostgreSQL.
+`demographics_mode = 'other'` is available on Oracle and PostgreSQL.
 
 `TOTALNUM` is an append-only count history. Fast ACT counts have type `PF`;
 supplemental non-ACT patient-dimension counts have type `PA`;
@@ -40,7 +40,7 @@ run's identity. Existing rows can retain `NULL` IDs; no backfill is needed to
 make new fast runs deterministic.
 
 For a given run, output should query only rows with its `RUN_ID`. In ACT-only
-mode, select `PF`. In all-demographics mode, select `PF` for the ACT
+mode, select `PF`. In supplemental demographics mode, select `PF` for the ACT
 ontology and prefer `PA` over `PF` where the non-ACT supplement owns a path.
 Use the same rules in report generation; do not let a report silently choose
 counts from an older run. Define the ownership/priority explicitly rather
@@ -77,7 +77,7 @@ runs in one metadata schema are not currently isolated.
 **Status:** Open. These are narrower consistency issues than run identity;
 fixing them would not by itself prevent stale rows from older runs.
 
-All three fast output procedures use only `PF` in `act` mode. In `all` mode,
+All three fast output procedures use only `PF` in `act` mode. In `other` mode,
 they use `PF` for the `ACT_DEMO` ontology and allow `PF` or `PA` for other
 ontology tables. Where both flags qualify for a path, output sorts by
 `AGG_DATE` first and prefers `PA` only on a tie. PostgreSQL's date-only
@@ -92,7 +92,7 @@ Two platform differences can make the published counts disagree:
   report, and test the report against ontology output for a tied path.
 - Oracle and PostgreSQL copy counts from each ontology into `TABLE_ACCESS`,
   then do another, global refresh from `TOTALNUM`. That refresh accepts
-  `PF`/`PA` in `all` mode without checking whether a `TABLE_ACCESS` row
+  `PF`/`PA` in `other` mode without checking whether a `TABLE_ACCESS` row
   belongs to the ACT ontology. A path shared by ACT and a non-ACT table can
   therefore leave `TABLE_ACCESS` inconsistent with the ACT table's `PF`-only
   output. Make the final refresh use each row's ontology ownership and the
@@ -109,17 +109,17 @@ is separate from the fast wrapper's mode-specific filtering.
 Validation should cover a same-day `PF`/`PA` tie, a `PA` row newer than a
 `PF` row, and the same path present in ACT and non-ACT ontologies. Compare
 the ontology `C_TOTALNUM`, matching `TABLE_ACCESS.C_TOTALNUM`, and
-`TOTALNUM_REPORT` after both `act` and `all` runs. The run-ID work above is
+`TOTALNUM_REPORT` after both `act` and `other` runs. The run-ID work above is
 still needed to make those comparisons reliably about the current run.
 
-## Complete all-demographics parity
+## Complete supplemental demographics parity
 
 **Status:** The non-ACT `patient_dimension` supplement is implemented on all
 three platforms. SQL Server alone also handles supported constrained numeric
-facts in `all` mode.
+facts in `other` mode.
 
 The Oracle and PostgreSQL implementations keep the ACT fast path and add a
-patient-only counter that writes `PA` in `all` mode. The wrappers default to
+patient-only counter that writes `PA` in `other` mode. The wrappers default to
 `act`. The full classic patient/visit counter remains separate because it also
 handles visits, writes `PD`, and has different side effects. If constrained
 numeric-fact parity is needed, implement and test it separately on Oracle and

@@ -26,15 +26,15 @@ SQL Server, Oracle, and PostgreSQL are supported. The entry point is `RunTotalnu
 | --- | --- | --- | --- |
 | Fast i2b2 (`fast` or `i2b2`; default) | Yes | Yes | Yes |
 | Fast ACT-OMOP (`omop`) | Yes | Yes | Yes |
-| Fast count reusing existing prep | `@run_prep = 0` | `run_prep => 0` | `run_prep => false` |
+| Fast count reusing existing prep | `@run_prep = 0` | `run_prep => 0` | `run_prep => 0` |
 | Fast output for one ontology table | `@tablename` | `tableName` | third argument |
 | Classic counting (`classic`) | Yes | Yes | Yes |
 | Fast ACT-only demographics | `@demographics_mode = 'act'` (default) | Built in | Built in |
-| Fast all demographics (non-ACT `patient_dimension` rows) | `@demographics_mode = 'all'` | No | No |
-| Numeric-value constrained facts (within fast `all`) | i2b2 source only | No | No |
+| Fast with supplemental demographics (non-ACT `patient_dimension` rows) | `@demographics_mode = 'other'` | No | No |
+| Numeric-value constrained facts (within fast `other`) | i2b2 source only | No | No |
 | Classic wildcard fact-column matching | `@wildcard_factcolumn = 'Y'` | No | No |
 
-`demographics_mode` and `wildcard_factcolumn` are SQL Server-only parameters. Oracle and PostgreSQL always use the optimized ACT demographic path in fast mode.
+All platforms retain the optimized ACT demographic path in fast mode. Use wildcard matching only on SQL Server; the Oracle and PostgreSQL wrappers expose the flag, but their wildcard counting paths have known limitations.
 
 ### Parameter names by platform
 
@@ -95,7 +95,7 @@ ant -f data_build.xml db_metadata_run_total_count_oracle
 ant -f data_build.xml db_metadata_run_total_count_postgresql
 ```
 
-These targets use the wrapper's defaults: fast counting, i2b2 source, ACT-only demographics, prep enabled. For OMOP, classic, a single ontology table, prep reuse, or SQL Server all-demographics mode, run SQL directly.
+These targets use the wrapper's defaults: fast counting, i2b2 source, ACT-only demographics, prep enabled. For OMOP, classic, a single ontology table, prep reuse, or SQL Server supplemental demographics mode, run SQL directly.
 
 ## 4. Prerequisites
 
@@ -177,7 +177,7 @@ END;
 **PostgreSQL**
 
 ```sql
-SELECT runtotalnum('observation_fact', 'public');
+CALL runtotalnum('observation_fact', 'public');
 ```
 
 ### 5.2 Reusing prepared structures
@@ -208,7 +208,7 @@ END;
 **PostgreSQL**
 
 ```sql
-SELECT runtotalnum('observation_fact', 'public', run_prep => false);
+CALL runtotalnum('observation_fact', 'public', run_prep => 0);
 ```
 
 The wrapper checks only that the three prep objects exist (on Oracle, that they are also valid, in the executing metadata schema; on PostgreSQL, that they are visible on the current search path). **It cannot tell whether their content is stale.**
@@ -244,10 +244,10 @@ END;
 
 ```sql
 -- PostgreSQL (case-sensitive)
-SELECT runtotalnum('observation_fact', 'public', 'my_ontology');
+CALL runtotalnum('observation_fact', 'public', 'my_ontology');
 ```
 
-On SQL Server with `demographics_mode = 'all'`, the supplemental demographics are limited to that table as well.
+On SQL Server with `demographics_mode = 'other'`, the supplemental demographics are limited to that table as well.
 
 ### 5.4 ACT-OMOP
 
@@ -272,19 +272,19 @@ END;
 
 ```sql
 -- PostgreSQL
-SELECT runtotalnum('observation_fact', 'public', mode => 'omop');
+CALL runtotalnum('observation_fact', 'public', totalnum_mode => 'omop');
 ```
 
 Re-run prep whenever you switch between i2b2 and OMOP.
 
-### 5.5 SQL Server: all demographics
+### 5.5 SQL Server: supplemental demographics
 
-By default, fast mode counts only the ACT demographic tables. On SQL Server, `demographics_mode = 'all'` keeps that fast path and adds metadata-defined demographics from other ontology tables:
+By default, fast mode counts only the ACT demographic tables. On SQL Server, `demographics_mode = 'other'` keeps that fast path and adds metadata-defined demographics from other ontology tables:
 
 ```sql
 EXEC dbo.RunTotalnum
     @schemaname = 'dbo',
-    @demographics_mode = 'all';
+    @demographics_mode = 'other';
 ```
 
 It works with OMOP source mode and with prep reuse:
@@ -293,11 +293,11 @@ It works with OMOP source mode and with prep reuse:
 EXEC dbo.RunTotalnum
     @schemaname = 'dbo',
     @mode = 'omop',
-    @demographics_mode = 'all';
+    @demographics_mode = 'other';
 
 EXEC dbo.RunTotalnum
     @schemaname = 'dbo',
-    @demographics_mode = 'all',
+    @demographics_mode = 'other',
     @run_prep = 0;
 ```
 
@@ -344,7 +344,7 @@ END;
 
 ```sql
 -- PostgreSQL
-SELECT runtotalnum('observation_fact', 'public', mode => 'classic');
+CALL runtotalnum('observation_fact', 'public', totalnum_mode => 'classic');
 ```
 
 Or call the classic implementation directly:
@@ -415,7 +415,7 @@ EXEC dbo.FastTotalnumOutput
     @demographics_mode = 'act';
 ```
 
-For all demographics, add two supplemental steps between count and output, and pass `'all'` to output:
+For supplemental demographics, add two supplemental steps between count and output, and pass `'other'` to output:
 
 ```sql
 EXEC dbo.FastTotalnumAdditionalDimensions
@@ -456,7 +456,7 @@ The output procedures execute their updates directly. Do not re-run any printed 
 | Type | Meaning |
 | --- | --- |
 | `PF` | Fast patient counts (SQL Server) |
-| `PA` | Supplemental all-demographics counts (SQL Server, `demographics_mode = 'all'`) |
+| `PA` | Supplemental supplemental demographics counts (SQL Server, `demographics_mode = 'other'`) |
 | `PD` | Classic patient and visit counts |
 
 Output and report generation select the appropriate types for the requested mode.
@@ -480,7 +480,7 @@ Output and report generation select the appropriate types for the requested mode
 | Separate i2b2 and OMOP prep variants | One `FastTotalnumPrep` with `source_mode` | Pass `omop` instead of maintaining a separate copy |
 | ACT table names could be hardcoded | Resolved through `ACT_VISIT` and `ACT_DEMO` rows in `TABLE_ACCESS` | Maintain correct mappings |
 | Missing ACT tables could stop prep | Missing mappings are skipped with a notice | Review the notice |
-| No fast all-demographics mode | SQL Server supports `demographics_mode = 'all'` | Keep `act` for maximum speed, or opt in to `all` |
+| No fast supplemental demographics mode | SQL Server supports `demographics_mode = 'other'` | Keep `act` for maximum speed, or opt in to `other` |
 | Some output SQL was diagnostic/manual | Output procedures run their updates directly | Do not re-run printed updates manually |
 
 The switch is source-compatible but not behaviorally identical. Common two-argument calls (such as those in the Ant targets) still work, calls with custom fact tables are routed to classic where needed, and existing direct classic report calls remain valid because the new report parameters are optional. On SQL Server, the legacy `PAT_COUNT_VISITS` entry point remains and now delegates to a shared metadata-dimension evaluator.
