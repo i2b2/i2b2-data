@@ -18,6 +18,8 @@ Acknowledgement:
 --------------------------------------------------------------------------------
 
 */
+DROP PROCEDURE IF EXISTS fasttotalnumcount();
+
 CREATE OR REPLACE PROCEDURE fasttotalnumcount(
     IN schemaname varchar DEFAULT 'public',
     IN source_mode varchar DEFAULT 'i2b2'
@@ -27,6 +29,8 @@ AS $procedure$
 DECLARE
     source_mode_norm text;
     start_time timestamptz;
+    data_schema text := coalesce(nullif(btrim(schemaname), ''), 'public');
+    metadata_schema text := current_schema();
 BEGIN
     start_time := clock_timestamp();
     source_mode_norm := lower(coalesce(nullif(source_mode, ''), 'i2b2'));
@@ -43,6 +47,7 @@ BEGIN
     ) ON COMMIT PRESERVE ROWS;
     TRUNCATE TABLE pg_temp.pv_fact_pairs;
 
+    EXECUTE format($count$
     WITH patient_visit_prelim AS (
         SELECT
             p.patient_num,
@@ -66,8 +71,8 @@ BEGIN
             'visit_dimension|inout_cd:' || v.inout_cd AS inout_cd,
             'DEM|RACE:' || p.race_cd AS race_cd,
             'DEM|SEX:' || p.sex_cd AS sex_cd
-        FROM patient_dimension p
-        JOIN visit_dimension v ON p.patient_num = v.patient_num
+        FROM %1$I.patient_dimension p
+        JOIN %1$I.visit_dimension v ON p.patient_num = v.patient_num
     ),
     derived AS (
         SELECT
@@ -99,23 +104,26 @@ BEGIN
         (d.age_visit_gte90), (d.length_of_stay), (d.length_of_stay_gte10),
         (d.inout_cd), (d.race_cd), (d.sex_cd)
     ) AS vals(val)
-    WHERE vals.val IS NOT NULL AND d.patient_num IS NOT NULL;
+    WHERE vals.val IS NOT NULL AND d.patient_num IS NOT NULL
+    $count$, data_schema);
 
-    INSERT INTO totalnum (c_fullname, agg_count, agg_date, typeflag_cd)
+    EXECUTE format($count$
+    INSERT INTO %1$I.totalnum (c_fullname, agg_count, agg_date, typeflag_cd)
     WITH cte_fact_pairs AS (
         SELECT patient_num, concept_cd FROM pg_temp.pv_fact_pairs
         UNION ALL
-        SELECT patient_num, concept_cd FROM obsfact_pairs
+        SELECT patient_num, concept_cd FROM %1$I.obsfact_pairs
     )
     SELECT DISTINCT oanc.c_fullname, counts.agg_count, CURRENT_TIMESTAMP, 'PF'
     FROM (
         SELECT cc.ancestor, count(DISTINCT f.patient_num) AS agg_count
-        FROM concept_closure cc
-        JOIN tnum_ontology o ON cc.descendant = o.path_num
+        FROM %1$I.concept_closure cc
+        JOIN %1$I.tnum_ontology o ON cc.descendant = o.path_num
         JOIN cte_fact_pairs f ON o.c_basecode = f.concept_cd
         GROUP BY cc.ancestor
     ) counts
-    JOIN tnum_ontology oanc ON counts.ancestor = oanc.path_num;
+    JOIN %1$I.tnum_ontology oanc ON counts.ancestor = oanc.path_num
+    $count$, metadata_schema);
 
     -- Optional timing helper (if installed as a PostgreSQL procedure):
     -- CALL endtime(start_time, 'all ontologies', 'counting');

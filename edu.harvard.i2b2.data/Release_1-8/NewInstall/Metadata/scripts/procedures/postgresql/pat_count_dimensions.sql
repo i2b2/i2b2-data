@@ -30,10 +30,9 @@ BEGIN
     v_startime := clock_timestamp();
 
     -- Resolve table identifiers without interpolating untrusted SQL.
-    IF strpos(metadataTable, '.') > 0 THEN
-        v_metadata := format('%I.%I', split_part(metadataTable,'.',1), split_part(metadataTable,'.',2));
-    ELSE
-        v_metadata := format('%I.%I', schemaName, metadataTable);
+    v_metadata := to_regclass(metadataTable);
+    IF v_metadata IS NULL THEN
+        RAISE EXCEPTION 'Ontology table % does not exist', metadataTable;
     END IF;
     IF strpos(observationTable, '.') > 0 THEN
         v_observation := format('%I.%I', split_part(observationTable,'.',1), split_part(observationTable,'.',2));

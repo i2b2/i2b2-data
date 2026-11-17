@@ -1,11 +1,10 @@
 -- CALL public.fasttotalnumconstrainedfacts('public', '@', 'omop');
 -- CALL public.fasttotalnumconstrainedfacts('public', '@', 'i2b2');
--- Prerequisites in p_schemaname: table_access, tnum_ontology,
--- concept_closure, obsfact_pairs, totalnum, observation_fact (table/view).
+-- observation_fact is in p_schemaname; other relations are in the metadata schema.
 -- Requires PostgreSQL 11+ for CREATE PROCEDURE and CALL.
 -- The procedure creates session-local temporary tables automatically.
 
-CREATE OR REPLACE PROCEDURE public.fasttotalnumconstrainedfacts(
+CREATE OR REPLACE PROCEDURE fasttotalnumconstrainedfacts(
     IN p_schemaname text DEFAULT 'public',
     IN p_tablename text DEFAULT '@',
     IN p_source_mode text DEFAULT 'i2b2'
@@ -14,6 +13,7 @@ LANGUAGE plpgsql
 AS $procedure$
 DECLARE
     v_schema text := COALESCE(NULLIF(btrim(p_schemaname), ''), 'public');
+    v_metadata_schema text := current_schema();
     v_mode text := lower(COALESCE(NULLIF(btrim(p_source_mode), ''), 'i2b2'));
     v_metadata_table text;
     v_metadata_oid regclass;
@@ -82,20 +82,20 @@ BEGIN
         FROM %I.table_access ta
         WHERE ta.c_visualattributes LIKE '%%A%%'
           AND ta.c_table_name IS NOT NULL
-          AND ($1 = '@' OR ta.c_table_name = $1)
+          AND ($1 = '@' OR lower(ta.c_table_name) = lower($1))
           AND NOT EXISTS (
               SELECT 1 FROM %I.table_access act
               WHERE upper(act.c_table_cd) = 'ACT_DEMO'
                 AND act.c_table_name = ta.c_table_name
           )
-    $q$, v_schema, v_schema) USING p_tablename
+    $q$, v_metadata_schema, v_metadata_schema) USING p_tablename
     LOOP
         -- Names in table_access may be schema-qualified. Unqualified names
-        -- are resolved within p_schemaname rather than the session search_path.
+        -- are resolved within the metadata schema.
         IF strpos(v_metadata_table, '.') > 0 THEN
             v_metadata_oid := to_regclass(v_metadata_table);
         ELSE
-            v_metadata_oid := to_regclass(format('%I.%I', v_schema, v_metadata_table));
+            v_metadata_oid := to_regclass(format('%I.%I', v_metadata_schema, lower(v_metadata_table)));
         END IF;
         IF v_metadata_oid IS NULL THEN
             RAISE NOTICE 'Skipping metadata table %: not found', v_metadata_table;
@@ -161,7 +161,7 @@ BEGIN
                                AND o.c_basecode = p.concept_cd
                                AND o.c_visualattributes LIKE 'L%%'
         ON CONFLICT DO NOTHING
-    $q$, v_schema);
+    $q$, v_metadata_schema);
 
     SELECT count(*) INTO v_prepared FROM pg_temp.tnum_prepared_constraints;
     IF v_prepared = 0 THEN
@@ -197,7 +197,7 @@ BEGIN
               )
         )
         ON CONFLICT DO NOTHING
-    $q$, v_schema);
+    $q$, v_metadata_schema);
     GET DIAGNOSTICS v_affected = ROW_COUNT;
     IF v_affected = 0 THEN
         RAISE NOTICE 'No constrained paths found in CONCEPT_CLOSURE; rerun FastTotalnumPrep.';
@@ -212,7 +212,7 @@ BEGIN
         JOIN %1$I.tnum_ontology o ON o.path_num = cc.descendant
         WHERE o.c_visualattributes LIKE 'L%%' AND o.c_basecode IS NOT NULL
         ON CONFLICT DO NOTHING
-    $q$, v_schema);
+    $q$, v_metadata_schema);
 
     EXECUTE format($q$
         INSERT INTO pg_temp.tnum_matched_descendants(patient_num, path_num)
@@ -226,7 +226,7 @@ BEGIN
               WHERE r.path_num = o.path_num
           )
         ON CONFLICT DO NOTHING
-    $q$, v_schema);
+    $q$, v_metadata_schema);
 
     EXECUTE format($q$
         INSERT INTO pg_temp.tnum_matched_descendants(patient_num, path_num)
@@ -246,7 +246,7 @@ BEGIN
         LEFT JOIN %1$I.concept_closure cc ON cc.ancestor = a.path_num
         LEFT JOIN pg_temp.tnum_matched_descendants m ON m.path_num = cc.descendant
         GROUP BY o.c_fullname
-    $q$, v_schema);
+    $q$, v_metadata_schema);
 
     RAISE NOTICE 'Constrained facts source %, prepared %, affected ancestors %',
         v_mode, v_prepared, v_affected;

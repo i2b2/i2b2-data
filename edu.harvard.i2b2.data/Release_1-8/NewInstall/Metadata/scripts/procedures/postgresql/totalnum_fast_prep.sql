@@ -36,14 +36,19 @@ Acknowledgements:
 -- Assumes physical PostgreSQL ontology tables use lowercase identifiers.
 -- TABLE_ACCESS names such as ACT_DEM_V42 are normalized to act_dem_v42.
 
-CREATE OR REPLACE PROCEDURE fasttotalnumprep(
-    IN schemaname varchar DEFAULT 'public',
-    IN source_mode varchar DEFAULT 'i2b2'
+DROP PROCEDURE IF EXISTS fasttotalnumprep(varchar, varchar);
+DROP ROUTINE IF EXISTS fasttotalnumprep(text);
+
+CREATE OR REPLACE FUNCTION fasttotalnumprep(
+    schemaname text DEFAULT 'public',
+    source_mode text DEFAULT 'i2b2'
 )
+RETURNS void
 LANGUAGE plpgsql
 AS $procedure$
 DECLARE
     v_schema text := COALESCE(NULLIF(btrim(schemaname), ''), 'public');
+    v_metadata_schema text := current_schema();
     source_mode_norm text := lower(COALESCE(NULLIF(btrim(source_mode), ''), 'i2b2'));
     visit_table text;
     demo_table text;
@@ -72,10 +77,7 @@ BEGIN
         RAISE EXCEPTION 'Schema % does not exist', v_schema USING ERRCODE = '3F000';
     END IF;
 
-    -- Use the target schema for unqualified table references inside the procedure.
-    PERFORM set_config('search_path', format('%I, pg_catalog', v_schema), true);
-
-    SELECT max(c_table_name)
+     SELECT max(c_table_name)
       INTO visit_table
       FROM table_access WHERE upper(c_table_cd) = 'ACT_VISIT';
     SELECT max(c_table_name) INTO demo_table
@@ -106,7 +108,7 @@ BEGIN
         );
     END IF;
 
-    EXECUTE format('CREATE OR REPLACE VIEW %I.obsfact_pairs AS %s', v_schema, v_view_definition);
+    EXECUTE format('CREATE OR REPLACE VIEW %I.obsfact_pairs AS %s', v_metadata_schema, v_view_definition);
     RAISE NOTICE 'OBSFACT_PAIRS view prepared for source_mode=%', source_mode_norm;
     RAISE NOTICE 'Observation pairs prepared in % ms',
         round(extract(epoch FROM clock_timestamp() - startime) * 1000);
@@ -129,28 +131,28 @@ BEGIN
             c_dimcode varchar(700) NOT NULL,
             m_applied_path varchar(900) NOT NULL
         )
-    $ddl$, v_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_ont_items ON %I.tnum_ontology (c_fullname)', v_schema);
+    $ddl$, v_metadata_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_ont_items ON %I.tnum_ontology (c_fullname)', v_metadata_schema);
 
     -- 3. Clear closure before ontology (TRUNCATE in PostgreSQL takes
     -- ACCESS EXCLUSIVE locks; do not run concurrently with other readers).
-    IF to_regclass(format('%I.concept_closure', v_schema)) IS NOT NULL THEN
-        EXECUTE format('TRUNCATE TABLE %I.concept_closure', v_schema);
+    IF to_regclass(format('%I.concept_closure', v_metadata_schema)) IS NOT NULL THEN
+        EXECUTE format('TRUNCATE TABLE %I.concept_closure', v_metadata_schema);
     END IF;
-    EXECUTE format('TRUNCATE TABLE %I.tnum_ontology RESTART IDENTITY', v_schema);
+    EXECUTE format('TRUNCATE TABLE %I.tnum_ontology RESTART IDENTITY', v_metadata_schema);
 
     -- 4. Load metadata tables listed by TABLE_ACCESS.
     FOR rec IN
         SELECT c_table_name, c_fullname AS path
           FROM table_access
-         WHERE c_table_cd NOT IN ('ACT_DEMO', 'ACT_VISIT')
+         WHERE upper(c_table_cd) NOT IN ('ACT_DEMO', 'ACT_VISIT')
            AND c_visualattributes LIKE '%A%'
     LOOP
         -- c_table_name is a metadata-provided identifier, not raw SQL.
         -- Accept either table or schema.table; reject other forms.
         v_parts := string_to_array(btrim(rec.c_table_name), '.');
         IF array_length(v_parts, 1) = 1 THEN
-            v_relation := format('%I.%I', v_schema, lower(v_parts[1]));
+            v_relation := format('%I.%I', v_metadata_schema, lower(v_parts[1]));
         ELSIF array_length(v_parts, 1) = 2 THEN
             v_relation := format('%I.%I', lower(v_parts[1]), lower(v_parts[2]));
         ELSE
@@ -169,7 +171,7 @@ BEGIN
                 c_columndatatype, c_operator, c_dimcode, m_applied_path
             FROM %s
             WHERE left(c_fullname, length($1)) = $1
-        $query$, v_schema, v_relation);
+        $query$, v_metadata_schema, v_relation);
         EXECUTE v_sql USING rec.path;
     END LOOP;
     RAISE NOTICE 'Ontology prepared in % ms',
@@ -180,7 +182,7 @@ BEGIN
     IF visit_table IS NOT NULL AND demo_table IS NOT NULL THEN
         v_parts := string_to_array(btrim(visit_table), '.');
         IF array_length(v_parts, 1) = 1 THEN
-            v_visit_relation := format('%I.%I', v_schema, lower(v_parts[1]));
+            v_visit_relation := format('%I.%I', v_metadata_schema, lower(v_parts[1]));
         ELSIF array_length(v_parts, 1) = 2 THEN
             v_visit_relation := format('%I.%I', lower(v_parts[1]), lower(v_parts[2]));
         ELSE
@@ -188,7 +190,7 @@ BEGIN
         END IF;
         v_parts := string_to_array(btrim(demo_table), '.');
         IF array_length(v_parts, 1) = 1 THEN
-            v_demo_relation := format('%I.%I', v_schema, lower(v_parts[1]));
+            v_demo_relation := format('%I.%I', v_metadata_schema, lower(v_parts[1]));
         ELSIF array_length(v_parts, 1) = 2 THEN
             v_demo_relation := format('%I.%I', lower(v_parts[1]), lower(v_parts[2]));
         ELSE
@@ -241,7 +243,7 @@ BEGIN
                    m.c_columndatatype, m.c_operator, m.c_dimcode, m.m_applied_path
             FROM m LEFT JOIN cte_basecode_override bo ON m.c_fullname = bo.c_fullname
             WHERE m.c_facttablecolumn <> 'concept_cd'
-        $query$, v_schema, v_visit_relation, v_demo_relation);
+        $query$, v_metadata_schema, v_visit_relation, v_demo_relation);
         EXECUTE v_sql;
     END IF;
 
@@ -253,8 +255,8 @@ BEGIN
             c_basecode varchar(50),
             CONSTRAINT pk_concept_closure PRIMARY KEY (ancestor, descendant)
         )
-    $ddl$, v_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_descn ON %I.concept_closure (descendant)', v_schema);
+    $ddl$, v_metadata_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_descn ON %I.concept_closure (descendant)', v_metadata_schema);
 
     -- Recursive step strips the final path component using the same
     -- length/reverse/position arithmetic as the Oracle source.
@@ -277,7 +279,7 @@ BEGIN
         SELECT DISTINCT o.path_num, c.descendant, c.c_basecode
           FROM concepts c
           JOIN %I.tnum_ontology o ON c.c_fullname = o.c_fullname
-    $query$, v_schema, v_schema, v_schema);
+    $query$, v_metadata_schema, v_metadata_schema, v_metadata_schema);
 
     RAISE NOTICE 'Concept closure prepared in % ms',
         round(extract(epoch FROM clock_timestamp() - startime) * 1000);
@@ -286,5 +288,5 @@ $procedure$;
 GO
 
 -- Example:
--- CALL public.fasttotalnumprep('public', 'i2b2');
--- CALL public.fasttotalnumprep('public', 'omop');
+-- SELECT fasttotalnumprep('public', 'i2b2');
+-- SELECT fasttotalnumprep('public', 'omop');

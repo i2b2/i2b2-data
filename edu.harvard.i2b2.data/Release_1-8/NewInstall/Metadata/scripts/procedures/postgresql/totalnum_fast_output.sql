@@ -27,10 +27,14 @@ Acknowledgement:
 -- denominator calculation, and optional obfuscated report.
 -- Assumes ordinary unquoted/lowercase PostgreSQL table and column names.
 
-CREATE OR REPLACE PROCEDURE public.fasttotalnumoutput(
-    IN schemaname VARCHAR DEFAULT 'public',
-    IN tablename VARCHAR DEFAULT '@',
-    IN demographics_mode VARCHAR DEFAULT 'act'
+DROP PROCEDURE IF EXISTS fasttotalnumoutput(varchar, varchar, varchar);
+DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text);
+DROP ROUTINE IF EXISTS fasttotalnumoutput(text, text, text);
+
+CREATE OR REPLACE PROCEDURE fasttotalnumoutput(
+    IN schemaname text DEFAULT 'public',
+    IN tablename text DEFAULT '@',
+    IN demographics_mode text DEFAULT 'act'
 )
 LANGUAGE plpgsql
 AS $procedure$
@@ -45,24 +49,18 @@ DECLARE
     rec RECORD;
     cnt BIGINT;
     affected BIGINT;
-    schema_ident TEXT;
+    metadata_schema text := current_schema();
     access_table TEXT;
     totalnum_table TEXT;
     pairs_view TEXT;
 BEGIN
-    IF schemaname IS NULL OR btrim(schemaname) = '' THEN
-        RAISE EXCEPTION 'schemaname must not be empty';
-    END IF;
-
-    schemaname := lower(btrim(schemaname));
-    schema_ident := format('%I', schemaname);
-    access_table := format('%I.table_access', schemaname);
-    totalnum_table := format('%I.totalnum', schemaname);
-    pairs_view := format('%I.obsfact_pairs', schemaname);
+    access_table := format('%I.table_access', metadata_schema);
+    totalnum_table := format('%I.totalnum', metadata_schema);
+    pairs_view := format('%I.obsfact_pairs', metadata_schema);
 
     mode_norm := lower(coalesce(nullif(btrim(demographics_mode), ''), 'act'));
-    IF mode_norm NOT IN ('act', 'all') THEN
-        RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    IF mode_norm NOT IN ('act', 'other') THEN
+        RAISE EXCEPTION 'Invalid demographics_mode. Use act or other.';
     END IF;
 
     EXECUTE format(
@@ -94,7 +92,7 @@ BEGIN
                 lower(split_part(rec.c_table_name, '.', 1)),
                 lower(split_part(rec.c_table_name, '.', 2)));
         ELSE
-            metadata_object := format('%I.%I', schemaname, lower(rec.c_table_name));
+            metadata_object := format('%I.%I', metadata_schema, lower(rec.c_table_name));
         END IF;
         IF to_regclass(metadata_object) IS NULL THEN
             RAISE EXCEPTION 'Ontology table % does not exist (TABLE_ACCESS C_TABLE_NAME: %)',
@@ -111,7 +109,7 @@ BEGIN
              ) AS rn, c_fullname, agg_count
              FROM %s WHERE typeflag_cd %s',
             totalnum_table,
-            CASE WHEN mode_norm = 'all'
+            CASE WHEN mode_norm = 'other'
                       AND (act_demo_table IS NULL OR lower(rec.c_table_name) <> lower(act_demo_table))
                  THEN 'IN (''PF'', ''PA'')'
                  ELSE '= ''PF''' END
@@ -196,7 +194,7 @@ BEGIN
          ) AS rn, c_fullname, agg_count
          FROM %s WHERE typeflag_cd %s',
         totalnum_table,
-        CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')'
+        CASE WHEN mode_norm = 'other' THEN 'IN (''PF'', ''PA'')'
              ELSE '= ''PF''' END
     );
     sqlstr := format(
@@ -233,11 +231,11 @@ BEGIN
     END IF;
 
     -- Step 10: Optional obfuscated report.
-    -- Requires a PostgreSQL procedure buildtotalnumreport(numeric, numeric, text).
+    -- Invoke the installed report function, not a procedure.
     BEGIN
         RAISE NOTICE 'Calling BuildTotalnumReport(10, 6.5, %) ', mode_norm;
-        EXECUTE format('CALL %I.buildtotalnumreport($1, $2, $3)', schemaname)
-            USING 10::numeric, 6.5::numeric, mode_norm;
+        EXECUTE format('SELECT %I.buildtotalnumreport($1, $2, $3)', metadata_schema)
+            USING 10, 6.5::double precision, mode_norm;
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Skipping totalnum report build. Verify BuildTotalnumReport and TOTALNUM_REPORT. Error: %', SQLERRM;
     END;
@@ -253,4 +251,4 @@ GO
 
 -- Example:
 -- CALL public.fasttotalnumoutput('public', '@', 'act');
--- CALL public.fasttotalnumoutput('public', '@', 'all');
+-- CALL public.fasttotalnumoutput('public', '@', 'other');

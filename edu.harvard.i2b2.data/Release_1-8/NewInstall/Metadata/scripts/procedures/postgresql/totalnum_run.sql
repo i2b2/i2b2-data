@@ -1,29 +1,45 @@
 
--- Compatibility wrapper for totalnum counting.
--- Defaults to the fast i2b2 totalnum workflow while preserving
--- the legacy runtotalnum procedure name.
+-- The core server and Ant invoke this wrapper with CALL.
+-- Defaults to the fast i2b2 totalnum workflow.
 --
--- Use totalnum_mode => 'omop' for fast ACT-OMOP prep.
--- Use totalnum_mode => 'classic' for classic counting.
--- Use run_prep => 0 to reuse existing prepared structures.
--- The default run_prep => 1 rebuilds them.
+-- Use totalnum_mode => 'omop' or 'classic', or run_prep => 0 to reuse prep.
+-- A function installed by an earlier revision may have this exact signature.
+DO $upgrade$
+DECLARE
+    signature text := format(
+        '%I.runtotalnum(varchar,varchar,varchar,varchar,varchar,varchar,integer)',
+        current_schema()
+    );
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_proc WHERE oid = to_regprocedure(signature) AND prokind = 'f') THEN
+        EXECUTE 'DROP FUNCTION ' || signature;
+    END IF;
+END;
+$upgrade$;
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text, boolean);
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text, boolean, text);
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text, text, boolean);
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text, text);
+DROP FUNCTION IF EXISTS runtotalnum(text, text, text);
 
 CREATE OR REPLACE PROCEDURE runtotalnum (
-    IN observationTable VARCHAR,
-    IN schemaName VARCHAR,
-    IN tableName VARCHAR DEFAULT '@',
-    IN wildcard_factcolumn VARCHAR DEFAULT 'N',
-    IN totalnum_mode VARCHAR DEFAULT 'fast',
-    IN demographics_mode VARCHAR DEFAULT 'act',
-    IN run_prep INTEGER DEFAULT 1
+    observationTable varchar,
+    schemaName varchar,
+    tableName varchar DEFAULT '@',
+    wildcard_factcolumn varchar DEFAULT 'N',
+    totalnum_mode varchar DEFAULT 'fast',
+    demographics_mode varchar DEFAULT 'act',
+    run_prep integer DEFAULT 1
 )
 LANGUAGE plpgsql
+SECURITY INVOKER
 AS $procedure$
 DECLARE
     mode_norm VARCHAR(20);
     source_mode VARCHAR(20);
     demographics_mode_norm VARCHAR(20);
     prepared_object_count INTEGER;
+    metadata_schema text := current_schema();
 BEGIN
 
     mode_norm := LOWER(
@@ -108,10 +124,10 @@ BEGIN
 
     END IF;
 
-    IF demographics_mode_norm NOT IN ('act', 'all') THEN
+    IF demographics_mode_norm NOT IN ('act', 'other') THEN
 
         RAISE EXCEPTION
-            'Invalid demographics_mode. Use act or all.';
+            'Invalid demographics_mode. Use act or other.';
 
     END IF;
 
@@ -121,9 +137,9 @@ BEGIN
 
     IF COALESCE(run_prep, 1) <> 0 THEN
 
-        CALL FastTotalnumPrep(
-            schemaName,
-            source_mode
+        PERFORM FastTotalnumPrep(
+            schemaName::text,
+            source_mode::text
         );
 
     ELSE
@@ -154,7 +170,7 @@ BEGIN
                     FROM pg_catalog.pg_class c
                     JOIN pg_catalog.pg_namespace n
                       ON n.oid = c.relnamespace
-                    WHERE n.nspname = schemaName
+                    WHERE n.nspname = metadata_schema
                       AND c.relname = required.object_name
                       AND c.relkind IN ('r', 'p', 'v', 'm')
                 )
@@ -170,7 +186,7 @@ BEGIN
                     FROM pg_catalog.pg_class c
                     JOIN pg_catalog.pg_namespace n
                       ON n.oid = c.relnamespace
-                    WHERE n.nspname = schemaName
+                    WHERE n.nspname = metadata_schema
                       AND c.relname = required.object_name
                       AND c.relkind IN ('r', 'p')
                 )
@@ -189,18 +205,18 @@ BEGIN
     -- FAST TOTALNUM COUNT
     ------------------------------------------------------------------
 
-    CALL FastTotalnumCount();
+    CALL FastTotalnumCount(schemaName, source_mode);
 
     ------------------------------------------------------------------
     -- ADDITIONAL DIMENSIONS AND CONSTRAINED FACTS
-    -- Only when demographics_mode = 'all'
+    -- Only when demographics_mode = 'other'
     ------------------------------------------------------------------
 
-    IF demographics_mode_norm = 'all' THEN
+    IF demographics_mode_norm = 'other' THEN
 
         CALL FastTotalnumAdditionalDimensions(
-            schemaName,
-            tableName
+            schemaName::text,
+            tableName::text
         );
 
         CALL FastTotalnumConstrainedFacts(
@@ -216,9 +232,9 @@ BEGIN
     ------------------------------------------------------------------
 
     CALL FastTotalnumOutput(
-        schemaName,
-        tableName,
-        demographics_mode_norm
+        schemaName::text,
+        tableName::text,
+        demographics_mode_norm::text
     );
 
 END;

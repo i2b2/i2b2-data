@@ -3,10 +3,10 @@
 -- adjust the function if a different value is used
 -- By Mike Mendis, Partners Healthcare
 -- Based on code from Dan Vianello, Center for Biomedical Informatics, Washington University in St. Louis
--- Assumes ontology metadata and dimension tables are in schemaName.
+-- schemaName identifies the patient/visit data schema.
 
 
-CREATE OR REPLACE PROCEDURE public.pat_count_visits(
+CREATE OR REPLACE PROCEDURE pat_count_visits(
     IN metadataTable VARCHAR,
     IN schemaName VARCHAR,
     INOUT errorMsg VARCHAR
@@ -28,16 +28,9 @@ BEGIN
         RAISE EXCEPTION 'metadataTable and schemaName are required';
     END IF;
 
-    -- Unqualified ontology tables are resolved in the supplied schema.
-    -- Qualified names may be supplied as schema.table.
-    IF strpos(metadataTable, '.') > 0 THEN
-        IF array_length(string_to_array(metadataTable, '.'), 1) <> 2 THEN
-            RAISE EXCEPTION 'Invalid metadata table name: %', metadataTable;
-        END IF;
-        v_metadata_table := format('%I.%I', split_part(metadataTable, '.', 1),
-                                             split_part(metadataTable, '.', 2));
-    ELSE
-        v_metadata_table := format('%I.%I', schemaName, metadataTable);
+    v_metadata_table := to_regclass(metadataTable);
+    IF v_metadata_table IS NULL THEN
+        RAISE EXCEPTION 'Ontology table % does not exist', metadataTable;
     END IF;
 
     -- A session-local table avoids collisions between concurrent executions.
@@ -106,7 +99,7 @@ BEGIN
         INSERT INTO %I.totalnum (c_fullname, agg_date, agg_count, typeflag_cd)
         SELECT c_fullname, CURRENT_DATE, numpats, 'PD'
         FROM pg_temp.ontpatvisitdims
-    $sql$, schemaName);
+    $sql$, current_schema());
 
     DROP TABLE IF EXISTS pg_temp.ontpatvisitdims;
     RAISE NOTICE 'PAT_COUNT_VISITS completed for %', v_metadata_table;

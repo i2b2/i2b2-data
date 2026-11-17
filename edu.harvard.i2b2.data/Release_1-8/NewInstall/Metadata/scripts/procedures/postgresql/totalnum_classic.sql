@@ -40,9 +40,10 @@ DECLARE
     v_count bigint;
     v_observation_table text;
     v_metadata_table text;
-    v_errormsg text;
+    v_errormsg varchar;
     rec record;
     v_schema text;
+    metadata_schema text := current_schema();
     v_observation_name text;
     v_selected_table text;
 BEGIN
@@ -68,9 +69,6 @@ BEGIN
         RAISE EXCEPTION 'Observation table % does not exist', v_observation_table;
     END IF;
 
-    -- Resolve unqualified dependency calls and tables in the requested schema.
-    PERFORM set_config('search_path', format('%I, pg_catalog', v_schema), true);
-
     -- A temporary table avoids dropping a permanent shared table.
     CREATE TEMP TABLE IF NOT EXISTS tnum_conceptpatient (
         patient_num bigint NOT NULL,
@@ -93,7 +91,7 @@ BEGIN
         IF position('.' IN rec.c_table_name) > 0 THEN
             v_metadata_table := format('%I.%I', lower(split_part(rec.c_table_name, '.', 1)), lower(split_part(rec.c_table_name, '.', 2)));
         ELSE
-            v_metadata_table := format('%I.%I', v_schema, lower(rec.c_table_name));
+            v_metadata_table := format('%I.%I', metadata_schema, lower(rec.c_table_name));
         END IF;
 
         IF v_observation_name = 'observation_fact' THEN
@@ -123,7 +121,7 @@ BEGIN
             IF derived_facttablecolumn = '' THEN
                 startime := clock_timestamp();
                 v_errormsg := NULL;
-                CALL pat_count_visits(lower(rec.c_table_name), v_schema, v_errormsg);
+                CALL pat_count_visits(v_metadata_table, v_schema, v_errormsg);
                 IF v_errormsg IS NOT NULL THEN
                     RAISE NOTICE 'PAT_COUNT_VISITS: %', v_errormsg;
                 END IF;
@@ -133,7 +131,7 @@ BEGIN
             startime := clock_timestamp();
             derived_facttablecolumn := facttablecolumn_prefix || 'concept_cd';
             v_errormsg := NULL;
-            CALL pat_count_dimensions(lower(rec.c_table_name), v_schema, v_observation_name,
+            CALL pat_count_dimensions(v_metadata_table, v_schema, v_observation_name,
                                       derived_facttablecolumn, 'concept_dimension', 'concept_path', v_errormsg);
             IF v_errormsg IS NOT NULL THEN RAISE NOTICE 'PAT_COUNT_concept_dimension: %', v_errormsg; END IF;
             RAISE NOTICE '% PAT_COUNT_concept_dimension: % seconds', rec.c_table_name, extract(epoch FROM clock_timestamp() - startime);
@@ -141,7 +139,7 @@ BEGIN
             startime := clock_timestamp();
             derived_facttablecolumn := facttablecolumn_prefix || 'provider_id';
             v_errormsg := NULL;
-            CALL pat_count_dimensions(lower(rec.c_table_name), v_schema, v_observation_name,
+            CALL pat_count_dimensions(v_metadata_table, v_schema, v_observation_name,
                                       derived_facttablecolumn, 'provider_dimension', 'provider_path', v_errormsg);
             IF v_errormsg IS NOT NULL THEN RAISE NOTICE 'PAT_COUNT_provider_dimension: %', v_errormsg; END IF;
             RAISE NOTICE '% PAT_COUNT_provider_dimension: % seconds', rec.c_table_name, extract(epoch FROM clock_timestamp() - startime);
@@ -149,33 +147,46 @@ BEGIN
             startime := clock_timestamp();
             derived_facttablecolumn := facttablecolumn_prefix || 'modifier_cd';
             v_errormsg := NULL;
-            CALL pat_count_dimensions(lower(rec.c_table_name), v_schema, v_observation_name,
+            CALL pat_count_dimensions(v_metadata_table, v_schema, v_observation_name,
                                       derived_facttablecolumn, 'modifier_dimension', 'modifier_path', v_errormsg);
             IF v_errormsg IS NOT NULL THEN RAISE NOTICE 'PAT_COUNT_modifier_dimension: %', v_errormsg; END IF;
             RAISE NOTICE '% PAT_COUNT_modifier_dimension: % seconds', rec.c_table_name, extract(epoch FROM clock_timestamp() - startime);
 
             EXECUTE format(
                 'UPDATE %I.table_access t SET c_totalnum = (SELECT MAX(x.c_totalnum) FROM %s x WHERE x.c_fullname = t.c_fullname) WHERE EXISTS (SELECT 1 FROM %s x WHERE x.c_fullname = t.c_fullname)',
-                v_schema, v_metadata_table, v_metadata_table
+                metadata_schema, v_metadata_table, v_metadata_table
             );
             EXECUTE format('UPDATE %s SET c_totalnum = NULL WHERE c_totalnum = 0 AND c_visualattributes LIKE ''C%%''', v_metadata_table);
         END IF;
     END LOOP;
 
-    EXECUTE format('UPDATE %I.table_access SET c_totalnum = NULL WHERE c_totalnum = 0', v_schema);
+    EXECUTE format('UPDATE %I.table_access SET c_totalnum = NULL WHERE c_totalnum = 0', metadata_schema);
 
-    EXECUTE format('SELECT COUNT(*) FROM %I.totalnum WHERE c_fullname = %L AND agg_date::date = CURRENT_DATE', v_schema, E'\\denominator\\facts\\') INTO v_count;
+    EXECUTE format('SELECT COUNT(*) FROM %I.totalnum WHERE c_fullname = %L AND agg_date::date = CURRENT_DATE', metadata_schema, E'\\denominator\\facts\\') INTO v_count;
     IF v_count = 0 THEN
         EXECUTE format('INSERT INTO %I.totalnum (c_fullname, agg_date, agg_count, typeflag_cd) SELECT %L, CURRENT_TIMESTAMP, COUNT(DISTINCT patient_num), ''PX'' FROM %s',
-                       v_schema, E'\\denominator\\facts\\', v_observation_table);
+                       metadata_schema, E'\\denominator\\facts\\', v_observation_table);
     END IF;
 
     DROP TABLE IF EXISTS pg_temp.tnum_conceptpatient;
-    -- Report procedure must exist with compatible numeric argument types.
-    CALL buildtotalnumreport(10, 6.5);
+    PERFORM buildtotalnumreport(10, 6.5::double precision);
 EXCEPTION WHEN OTHERS THEN
     RAISE NOTICE 'RunTotalnumClassic failed: % (SQLSTATE %)', SQLERRM, SQLSTATE;
     RAISE;
 END;
 $procedure$;
+GO
+
+CREATE OR REPLACE FUNCTION runtotalnumclassic(
+    observationTable text,
+    schemaName text,
+    tableName text DEFAULT '@'
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $function$
+BEGIN
+    CALL runtotalnumclassic(observationTable, schemaName, tableName, 'N'::varchar);
+END;
+$function$;
 GO

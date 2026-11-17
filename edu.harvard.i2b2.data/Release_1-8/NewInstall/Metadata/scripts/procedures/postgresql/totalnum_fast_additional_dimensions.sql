@@ -1,7 +1,9 @@
--- Supplemental non-ACT patient_dimension counts for fast all-demographics mode.
-CREATE OR REPLACE PROCEDURE public.fasttotalnumadditionaldimensions(
-    IN schemaname VARCHAR,
-    IN tablename VARCHAR DEFAULT '@'
+-- Supplemental non-ACT patient_dimension counts for fast supplemental demographics mode.
+DROP PROCEDURE IF EXISTS fasttotalnumadditionaldimensions(varchar, varchar);
+
+CREATE OR REPLACE PROCEDURE fasttotalnumadditionaldimensions(
+    IN schemaname text,
+    IN tablename text DEFAULT '@'
 )
 LANGUAGE plpgsql
 AS $procedure$
@@ -13,29 +15,30 @@ DECLARE
     v_sql TEXT;
     v_predicate TEXT;
     v_count BIGINT;
+    metadata_schema text := current_schema();
 BEGIN
-    v_patient_table := format('%I.patient_dimension', schemaname);
+    v_patient_table := format('%I.patient_dimension', coalesce(nullif(btrim(schemaname), ''), 'public'));
 
     FOR t IN
         SELECT DISTINCT ta.c_table_name
-        FROM public.table_access AS ta
+        FROM table_access AS ta
         WHERE ta.c_visualattributes LIKE '%A%'
-          AND (tablename = '@' OR ta.c_table_name = tablename)
+          AND (tablename = '@' OR lower(ta.c_table_name) = lower(tablename))
           AND NOT EXISTS (
               SELECT 1
-              FROM public.table_access AS act
+              FROM table_access AS act
               WHERE UPPER(act.c_table_cd) = 'ACT_DEMO'
                 AND act.c_table_name = ta.c_table_name
           )
     LOOP
         BEGIN
-            -- Resolve ontology table in the specified schema, unless already qualified.
+            -- Match the identifier folding used by prep and output.
             IF strpos(t.c_table_name, '.') > 0 THEN
                 v_metadata_table := format('%I.%I',
-                    split_part(t.c_table_name, '.', 1),
-                    split_part(t.c_table_name, '.', 2));
+                    lower(split_part(t.c_table_name, '.', 1)),
+                    lower(split_part(t.c_table_name, '.', 2)));
             ELSE
-                v_metadata_table := format('%I.%I', schemaname, t.c_table_name);
+                v_metadata_table := format('%I.%I', metadata_schema, lower(t.c_table_name));
             END IF;
 
             v_sql := format(
@@ -84,8 +87,10 @@ BEGIN
 
                     EXECUTE v_sql INTO v_count;
 
-                    INSERT INTO public.totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
-                    VALUES (item.c_fullname, CURRENT_TIMESTAMP, v_count, 'PA');
+                    EXECUTE format(
+                        'INSERT INTO %I.totalnum(c_fullname, agg_date, agg_count, typeflag_cd)
+                         VALUES ($1, CURRENT_TIMESTAMP, $2, ''PA'')', metadata_schema
+                    ) USING item.c_fullname, v_count;
                 EXCEPTION WHEN OTHERS THEN
                     RAISE NOTICE 'Skipping dimension item %: %', item.c_fullname, SQLERRM;
                 END;
