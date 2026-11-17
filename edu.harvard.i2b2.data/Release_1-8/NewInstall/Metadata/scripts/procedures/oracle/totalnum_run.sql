@@ -70,10 +70,10 @@ BEGIN
     demographics_mode_norm := 'act';
   END IF;
 
-  IF demographics_mode_norm NOT IN ('act', 'all') THEN
+  IF demographics_mode_norm NOT IN ('act', 'other') THEN
     RAISE_APPLICATION_ERROR(
       -20006,
-      'Invalid demographics_mode. Use act or all.'
+      'Invalid demographics_mode. Use act or other.'
     );
   END IF;
 
@@ -111,7 +111,7 @@ BEGIN
 
   FastTotalnumCount;
 
-  IF demographics_mode_norm = 'all' THEN
+  IF demographics_mode_norm = 'other' THEN
     FastTotalnumAdditionalDimensions(
       schemaName,
       tableName

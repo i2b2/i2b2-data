@@ -1,4 +1,4 @@
--- Supplemental non-ACT patient_dimension counts for fast all-demographics mode.
+-- Supplemental non-ACT patient_dimension counts for fast supplemental demographics mode.
 
 create or replace PROCEDURE FastTotalnumAdditionalDimensions(
   schemaName IN VARCHAR2,

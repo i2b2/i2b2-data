@@ -4,9 +4,9 @@
 -- Modified for the fast totalnum approach by Darren Henderson
 --
 --
--- Run with: exec FastTotalnumOutput or exec FastTotalnumOutput 'dbo','@','all'
+-- Run with: exec FastTotalnumOutput or exec FastTotalnumOutput 'dbo','@','other'
 --  Optionally you can specify the schemaname, a single table name to run on a single ontology table (or @ for all),
---  and demographics_mode ('act' for PF fast counts only, or 'all' for supplemental non-ACT PA counts).
+--  and demographics_mode ('act' for PF fast counts only, or 'other' for supplemental non-ACT PA counts).
 -- The results are in: c_totalnum column of all ontology tables, the totalnum table (keeps a historical record), and the totalnum_report table (most recent run, obfuscated) 
 --
 -- Prior to this, load the stored procedures, make sure you have run FastTotalnumPrep once, and run FastTotalnum to compute the counts.
@@ -37,7 +37,7 @@ DECLARE @facttablecolumn_prefix NVARCHAR(4000);
 DECLARE @demographics_mode_norm varchar(20) = LOWER(ISNULL(NULLIF(@demographics_mode,''),'act'));
 DECLARE @is_act_demo bit;
 DECLARE @typeflag_predicate varchar(40);
-DECLARE @report_typeflag_pattern varchar(10) = CASE WHEN @demographics_mode_norm = 'all' THEN 'P[FA]' ELSE 'PF' END;
+DECLARE @report_typeflag_pattern varchar(10) = CASE WHEN @demographics_mode_norm = 'other' THEN 'P[FA]' ELSE 'PF' END;
 
 --IF COL_LENGTH('table_access','c_obsfact') is NOT NULL 
 --declare getsql cursor local for
@@ -45,9 +45,9 @@ DECLARE @report_typeflag_pattern varchar(10) = CASE WHEN @demographics_mode_norm
 --ELSE
 -- select distinct 'exec RunTotalnumClassic '+c_table_name+','+@schemaname+','+@obsfact   from TABLE_ACCESS where c_visualattributes like '%A%'
 
-IF @demographics_mode_norm NOT IN ('act','all')
+IF @demographics_mode_norm NOT IN ('act','other')
 BEGIN
-    RAISERROR('Invalid demographics_mode. Use act or all.', 16, 1);
+    RAISERROR('Invalid demographics_mode. Use act or other.', 16, 1);
     RETURN;
 END
 
@@ -86,10 +86,10 @@ BEGIN
 		execute sp_executesql @sqlstr
 
 			-- Update counts from the latest applicable TOTALNUM rows.
-			-- ACT ontologies always use the optimized PF rows. In all mode, other ontologies may
+			-- ACT ontologies always use the optimized PF rows. In other mode, non-ACT ontologies may
 			-- also use supplemental PA rows produced by the metadata-driven counters.
 			set @typeflag_predicate = case
-			    when @demographics_mode_norm = 'all' and @is_act_demo = 0 then 'like ''P[FA]'''
+			    when @demographics_mode_norm = 'other' and @is_act_demo = 0 then 'like ''P[FA]'''
 			    else '= ''PF'''
 			end;
 			set @sqlstr='UPDATE o  set c_totalnum=agg_count from '+ @sqltext+

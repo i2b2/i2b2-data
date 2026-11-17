@@ -58,15 +58,8 @@ BEGIN
   ---------------------------------------------------------------------------
   -- 1. Build the OBSFACT_PAIRS view
   ---------------------------------------------------------------------------
-  -- Avoid dropping the view because dependent procedures may become invalid.
-  -- Replace it only when it does not exist or the source mode changes.
-
-  SELECT COUNT(*) INTO c
-    FROM user_views
-   WHERE view_name = 'OBSFACT_PAIRS';
-
-  IF c = 0 THEN
-    IF source_mode_norm = 'omop' THEN
+  -- Replace in place so rerunning prep switches sources without dropping the view.
+  IF source_mode_norm = 'omop' THEN
       EXECUTE IMMEDIATE
         'CREATE OR REPLACE VIEW OBSFACT_PAIRS AS
          SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM CONDITION_NS_VIEW UNION ALL
@@ -82,14 +75,11 @@ BEGIN
          SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM PROCEDURE_NS_VIEW UNION ALL
          SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM PROCEDURE_VIEW UNION ALL
          SELECT DISTINCT PATIENT_NUM, CONCEPT_CD FROM VISIT_NS_VIEW';
-    ELSE
-      EXECUTE IMMEDIATE
-        'CREATE OR REPLACE VIEW OBSFACT_PAIRS AS
-         SELECT DISTINCT PATIENT_NUM, CONCEPT_CD
-           FROM observation_fact';
-    END IF;
   ELSE
-    DBMS_OUTPUT.PUT_LINE('Reusing existing OBSFACT_PAIRS view.');
+    EXECUTE IMMEDIATE
+      'CREATE OR REPLACE VIEW OBSFACT_PAIRS AS
+       SELECT DISTINCT PATIENT_NUM, CONCEPT_CD
+         FROM observation_fact';
   END IF;
 
   -- (If you have a logging or timing procedure named EndTime, call it here.)

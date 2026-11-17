@@ -3,13 +3,13 @@
 -- Defaults to the fast i2b2 totalnum workflow while preserving the legacy RunTotalnum procedure name.
 -- Use @mode = 'omop' for fast ACT-OMOP prep or @mode = 'classic' to force the legacy/classic implementation.
 -- @demographics_mode = 'act' keeps the optimized ACT-only path (default).
--- @demographics_mode = 'all' adds metadata-driven patient_dimension counts and supported constrained fact counts.
+-- @demographics_mode = 'other' adds metadata-driven patient_dimension counts and supported constrained fact counts.
 -- @run_prep = 0 reuses existing prepared structures; the default of 1 rebuilds them.
 -- Examples:
 --   exec RunTotalnum
 --   exec RunTotalnum 'observation_fact','dbo','@','N','omop'
 --   exec RunTotalnum 'observation_fact','dbo','@','N','classic'
---   exec RunTotalnum @demographics_mode = 'all'
+--   exec RunTotalnum @demographics_mode = 'other'
 --   exec RunTotalnum @run_prep = 0
 -----------------------------------------------------------------------------------------------------------------
 
@@ -54,9 +54,9 @@ BEGIN
         RETURN;
     END
 
-    IF @demographics_mode_norm NOT IN ('act','all')
+    IF @demographics_mode_norm NOT IN ('act','other')
     BEGIN
-        RAISERROR('Invalid demographics_mode. Use act or all.', 16, 1);
+        RAISERROR('Invalid demographics_mode. Use act or other.', 16, 1);
         RETURN;
     END
 
@@ -80,7 +80,7 @@ BEGIN
 
     EXEC FastTotalnumCount;
 
-    IF @demographics_mode_norm = 'all'
+    IF @demographics_mode_norm = 'other'
     BEGIN
         EXEC FastTotalnumAdditionalDimensions @schemaname = @schemaname, @tablename = @tablename;
         EXEC FastTotalnumConstrainedFacts

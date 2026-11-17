@@ -26,10 +26,13 @@ CREATE OR REPLACE PROCEDURE BuildTotalnumReport(threshold in number, sigma in nu
   demographics_mode IN VARCHAR2 DEFAULT 'legacy') AUTHID CURRENT_USER IS
     type_predicate VARCHAR2(100);
 BEGIN
+    IF LOWER(NVL(demographics_mode, 'legacy')) NOT IN ('act', 'other', 'legacy') THEN
+      RAISE_APPLICATION_ERROR(-20006, 'Invalid demographics_mode. Use act or other.');
+    END IF;
 
     type_predicate := CASE LOWER(NVL(demographics_mode, 'legacy'))
       WHEN 'act' THEN 'typeflag_cd = ''PF'''
-      WHEN 'all' THEN 'typeflag_cd IN (''PF'', ''PA'')'
+      WHEN 'other' THEN 'typeflag_cd IN (''PF'', ''PA'')'
       ELSE 'typeflag_cd LIKE ''P%'''
     END;
 

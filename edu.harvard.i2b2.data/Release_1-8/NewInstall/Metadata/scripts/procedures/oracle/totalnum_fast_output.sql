@@ -82,10 +82,10 @@ BEGIN
     mode_norm :=
         LOWER(NVL(TRIM(demographics_mode), 'act'));
 
-    IF mode_norm NOT IN ('act', 'all') THEN
+    IF mode_norm NOT IN ('act', 'other') THEN
         RAISE_APPLICATION_ERROR(
             -20006,
-            'Invalid demographics_mode. Use act or all.'
+            'Invalid demographics_mode. Use act or other.'
         );
     END IF;
 
@@ -138,7 +138,7 @@ BEGIN
             'FROM totalnum WHERE typeflag_cd ' ||
 
             CASE
-                WHEN mode_norm = 'all'
+                WHEN mode_norm = 'other'
                      AND (
                          act_demo_table IS NULL
                          OR sqltext <> act_demo_table
@@ -269,7 +269,7 @@ BEGIN
         'FROM totalnum WHERE typeflag_cd ' ||
 
         CASE
-            WHEN mode_norm = 'all'
+            WHEN mode_norm = 'other'
             THEN 'IN (''PF'', ''PA'')'
             ELSE '= ''PF'''
         END;

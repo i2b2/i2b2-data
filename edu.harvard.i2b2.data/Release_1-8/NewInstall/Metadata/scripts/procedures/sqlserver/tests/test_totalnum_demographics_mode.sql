@@ -9,19 +9,19 @@ Manual preparation:
   1. Load all SQL Server procedure scripts after installing this change.
   2. Confirm TABLE_ACCESS correctly identifies ACT_DEMO in C_TABLE_CD.
   3. Confirm at least one other active ontology contains metadata rows whose
-     C_TABLENAME is patient_dimension. Without one, act and all should match.
+     C_TABLENAME is patient_dimension. Without one, act and other should match.
   4. Set the variables below for the test database.
   5. Keep this query window open for the entire test; temporary comparison tables
      are session-scoped.
 
 Expected behavior:
   - act uses the existing optimized ACT demographic path.
-  - all produces the same ACT_DEMO counts as act.
-  - the all run reuses the structures prepared by the act run, exercising
+  - other produces the same ACT_DEMO counts as act.
+  - the other run reuses the structures prepared by the act run, exercising
     RunTotalnum @run_prep = 0.
-  - all additionally produces PA rows and ontology counts for non-ACT
+  - other additionally produces PA rows and ontology counts for non-ACT
     patient_dimension metadata.
-  - all also invokes the constrained-fact supplement. Validate those rows with
+  - other also invokes the constrained-fact supplement. Validate those rows with
     test_totalnum_constrained_facts.sql.
   - the classic PAT_COUNT_VISITS interface still counts patient and visit metadata.
 */
@@ -34,7 +34,7 @@ DECLARE @ObservationTable varchar(50) = 'observation_fact';
 DECLARE @SourceMode varchar(20) = 'fast'; -- fast/i2b2, or omop
 DECLARE @SingleOntologyTable varchar(255) = NULL; -- Optional focused test
 DECLARE @RunClassicComparison bit = 0; -- Set to 1 only when the slower classic run is desired
-DECLARE @RestoreAllAtEnd bit = 0; -- Set to 1 to leave metadata populated by fast/all
+DECLARE @RestoreAllAtEnd bit = 0; -- Set to 1 to leave metadata populated by fast/other
 DECLARE @StartedAt datetime2;
 DECLARE @Sql nvarchar(max);
 DECLARE @MetadataTable varchar(255);
@@ -171,10 +171,10 @@ EXEC RunTotalnum
     @schemaname = @SchemaName,
     @tablename = '@',
     @mode = @SourceMode,
-    @demographics_mode = 'all',
+    @demographics_mode = 'other',
     @run_prep = 0;
 INSERT INTO #TestTiming
-VALUES ('fast-all', DATEDIFF_BIG(millisecond, @StartedAt, SYSDATETIME()) / 1000.0);
+VALUES ('fast-other', DATEDIFF_BIG(millisecond, @StartedAt, SYSDATETIME()) / 1000.0);
 
 DECLARE capture_all CURSOR LOCAL FAST_FORWARD FOR
     SELECT DISTINCT c_table_name
@@ -207,7 +207,7 @@ WHERE d.is_act_demo = 1
   AND ISNULL(a.c_totalnum, -1) <> ISNULL(x.c_totalnum, -1)
 ORDER BY d.metadata_table, d.c_fullname;
 
-/* These are the non-ACT patient_dimension rows added or changed by all mode. */
+/* These are the non-ACT patient_dimension rows added or changed by other mode. */
 SELECT DISTINCT d.c_table_cd, d.metadata_table, d.c_fullname,
        a.c_totalnum AS act_mode_count,
        x.c_totalnum AS all_mode_count
@@ -281,7 +281,7 @@ BEGIN
         @schemaname = @SchemaName,
         @tablename = @SingleOntologyTable,
         @mode = @SourceMode,
-        @demographics_mode = 'all';
+        @demographics_mode = 'other';
 
     PRINT 'Focused table test completed for ' + @SingleOntologyTable +
           '. Manually verify another ontology table was not changed.';
@@ -290,7 +290,7 @@ END;
 /*
 Optional slow comparison with classic totalnum. This leaves classic counts in the
 ontology unless @RestoreAllAtEnd is set. Compare only non-ACT patient_dimension
-paths: fast/all deliberately keeps ACT_DEMO on the optimized implementation.
+paths: fast/other deliberately keeps ACT_DEMO on the optimized implementation.
 */
 IF @RunClassicComparison = 1
 BEGIN
@@ -342,7 +342,7 @@ BEGIN
         @schemaname = @SchemaName,
         @tablename = '@',
         @mode = @SourceMode,
-        @demographics_mode = 'all';
+        @demographics_mode = 'other';
 END;
 
 SELECT test_name, elapsed_seconds
@@ -356,13 +356,13 @@ Missing ACT_DEMO
   - Begin a transaction.
   - Delete the ACT_DEMO row from TABLE_ACCESS.
   - Run act mode: it should print a skip message and complete.
-  - Run all mode: non-ACT patient_dimension entries should still be counted.
+  - Run other mode: non-ACT patient_dimension entries should still be counted.
   - Roll back the transaction.
 
 Zero and NULL demographics
   - Find a non-ACT patient_dimension ontology leaf matching no patients and one
     matching a NULL/not-recorded value.
-  - Run all mode and compare its C_TOTALNUM with a direct COUNT(DISTINCT patient_num)
+  - Run other mode and compare its C_TOTALNUM with a direct COUNT(DISTINCT patient_num)
     using that row's C_COLUMNNAME, C_OPERATOR, and C_DIMCODE.
   - Re-run after changing a previously populated test value so that it matches no
     patients; verify an old nonzero count does not survive.

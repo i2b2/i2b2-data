@@ -10,10 +10,10 @@ BEGIN
 END;
 /
 
--- 2. All demographics, reusing the prepared structures from step 1.
+-- 2. Supplemental demographics, reusing the prepared structures from step 1.
 BEGIN
   RunTotalnum('observation_fact', 'I2B2DEMODATA', run_prep => 0,
-              demographics_mode => 'all');
+              demographics_mode => 'other');
 END;
 /
 

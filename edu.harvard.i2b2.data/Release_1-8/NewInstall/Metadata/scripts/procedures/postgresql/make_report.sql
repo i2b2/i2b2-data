@@ -43,8 +43,8 @@ CREATE OR REPLACE FUNCTION BuildTotalnumReport(threshold int, sigma float, demog
 RETURNS void AS
 $BODY$
 BEGIN
-    IF lower(demographics_mode) NOT IN ('act', 'all') THEN
-        RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
+    IF lower(demographics_mode) NOT IN ('act', 'other') THEN
+        RAISE EXCEPTION 'Invalid demographics_mode. Use act or other.';
     END IF;
 
     TRUNCATE TABLE totalnum_report;
@@ -63,7 +63,7 @@ BEGIN
                c_fullname, agg_count, agg_date
         FROM totalnum
         WHERE typeflag_cd = 'PF'
-           OR (lower(demographics_mode) = 'all' AND typeflag_cd = 'PA')
+           OR (lower(demographics_mode) = 'other' AND typeflag_cd = 'PA')
     ) ranked
     WHERE rn = 1;
 
