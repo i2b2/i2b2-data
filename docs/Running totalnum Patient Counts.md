@@ -30,8 +30,8 @@ SQL Server, Oracle, and PostgreSQL are supported. The entry point is `RunTotalnu
 | Fast output for one ontology table | `@tablename` | `tableName` | `tablename` |
 | Classic counting (`classic`) | Yes | Yes | Yes |
 | Fast ACT-only demographics (default) | `@demographics_mode = 'act'` | `demographics_mode => 'act'` | `demographics_mode => 'act'` |
-| Fast with supplemental demographics (non-ACT `patient_dimension` rows) | `@demographics_mode = 'other'` | `demographics_mode => 'other'` | `demographics_mode => 'other'` |
-| Numeric-value constrained facts (within fast `other`) | i2b2 only | i2b2; OMOP requires a compatible fact view | i2b2; OMOP requires a compatible fact view |
+| Fast with supplemental demographics (non-ACT `patient_dimension` rows) | `@demographics_mode = 'all'` | `demographics_mode => 'all'` | `demographics_mode => 'all'` |
+| Numeric-value constrained facts (within fast `all`) | i2b2 only | i2b2; OMOP requires a compatible fact view | i2b2; OMOP requires a compatible fact view |
 | Classic wildcard fact-column matching | `@wildcard_factcolumn = 'Y'` | Flag exists; not reliable | Flag exists; not reliable |
 
 All platforms retain the optimized ACT demographic path in fast mode. Use wildcard matching only on SQL Server; the Oracle and PostgreSQL wrappers expose the flag, but their wildcard counting paths have known limitations.
@@ -252,7 +252,7 @@ END;
 CALL runtotalnum('observation_fact', 'public', 'my_ontology');
 ```
 
-With `demographics_mode = 'other'`, the supplemental searches are limited to that table as well. Reporting and all `TABLE_ACCESS` updates are not necessarily table-local.
+With `demographics_mode = 'all'`, the supplemental searches are limited to that table as well. Reporting and all `TABLE_ACCESS` updates are not necessarily table-local.
 
 ### 5.4 ACT-OMOP
 
@@ -284,23 +284,23 @@ Re-run prep whenever you switch between i2b2 and OMOP.
 
 ### 5.5 Supplemental demographics
 
-By default, fast mode counts only ACT demographics. On all three platforms, `demographics_mode = 'other'` keeps that fast path and adds metadata-defined demographics from other ontology tables:
+By default, fast mode counts only ACT demographics. On all three platforms, `demographics_mode = 'all'` keeps that fast path and adds metadata-defined demographics from other ontology tables:
 
 ```sql
 EXEC dbo.RunTotalnum
     @schemaname = 'dbo',
-    @demographics_mode = 'other';
+    @demographics_mode = 'all';
 ```
 
 ```sql
 -- Oracle
 BEGIN
-  RunTotalnum('observation_fact', 'I2B2DEMODATA', demographics_mode => 'other');
+  RunTotalnum('observation_fact', 'I2B2DEMODATA', demographics_mode => 'all');
 END;
 /
 
 -- PostgreSQL
-CALL runtotalnum('observation_fact', 'public', demographics_mode => 'other');
+CALL runtotalnum('observation_fact', 'public', demographics_mode => 'all');
 ```
 
 It works with prep reuse. If using OMOP, check the source prerequisites below.
@@ -310,11 +310,11 @@ SQL Server examples:
 EXEC dbo.RunTotalnum
     @schemaname = 'dbo',
     @mode = 'omop',
-    @demographics_mode = 'other';
+    @demographics_mode = 'all';
 
 EXEC dbo.RunTotalnum
     @schemaname = 'dbo',
-    @demographics_mode = 'other',
+    @demographics_mode = 'all',
     @run_prep = 0;
 ```
 
@@ -432,7 +432,7 @@ EXEC dbo.FastTotalnumOutput
     @demographics_mode = 'act';
 ```
 
-For supplemental demographics, add two supplemental steps between count and output, and pass `'other'` to output:
+For supplemental demographics, add two supplemental steps between count and output, and pass `'all'` to output:
 
 ```sql
 EXEC dbo.FastTotalnumAdditionalDimensions
@@ -464,7 +464,7 @@ CALL fasttotalnumcount('public');
 CALL fasttotalnumoutput('public', '@');
 ```
 
-For Oracle and PostgreSQL `other` runs, see the [manual supplemental calls](totalnum.md#run-the-fast-steps-manually). The output procedures execute their updates directly. Do not re-run any printed update statements by hand.
+For Oracle and PostgreSQL `all` runs, see the [manual supplemental calls](totalnum.md#run-the-fast-steps-manually). The output procedures execute their updates directly. Do not re-run any printed update statements by hand.
 
 ## 6. Count types
 
@@ -473,7 +473,7 @@ For Oracle and PostgreSQL `other` runs, see the [manual supplemental calls](tota
 | Type | Meaning |
 | --- | --- |
 | `PF` | Ordinary fast patient counts |
-| `PA` | Supplemental counts in `demographics_mode = 'other'` |
+| `PA` | Supplemental counts in `demographics_mode = 'all'` |
 | `PD` | Classic patient and visit counts |
 
 Output and report generation select the appropriate types for the requested mode.
@@ -497,7 +497,7 @@ Output and report generation select the appropriate types for the requested mode
 | Separate i2b2 and OMOP prep variants | One `FastTotalnumPrep` with `source_mode` | Pass `omop` instead of maintaining a separate copy |
 | ACT table names could be hardcoded | Resolved through `ACT_VISIT` and `ACT_DEMO` rows in `TABLE_ACCESS` | Maintain correct mappings |
 | Missing ACT tables could stop prep | Missing mappings are skipped with a notice | Review the notice |
-| Supplemental demographics was unavailable or called `all` | All platforms support `demographics_mode = 'other'` | Keep `act` or opt in to `other`; replace existing `all` arguments |
+| Supplemental demographics was unavailable | All platforms support `demographics_mode = 'all'` | Keep `act` or opt in to `all`; replace the temporary value `other` with `all` |
 | Earlier PostgreSQL jobs used a function, `mode`, or boolean prep values | The wrapper is a procedure with `totalnum_mode` and integer `run_prep` | Use `CALL runtotalnum(...)` and `0`/`1`; direct `SELECT fasttotalnumprep(...)` is unchanged |
 | Some output SQL was diagnostic/manual | Output procedures run their updates directly | Do not re-run printed updates manually |
 

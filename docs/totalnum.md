@@ -12,8 +12,8 @@ for compatibility and specialized fact-table configurations.
 | Fast i2b2 (`fast` or `i2b2`; default) | Yes | Yes | Yes |
 | Fast ACT-OMOP (`omop`) | Yes | Yes | Yes |
 | Fast ACT-only demographics (default) | `@demographics_mode = 'act'` | `demographics_mode => 'act'` | `demographics_mode => 'act'` |
-| Fast with supplemental demographics, including non-ACT `patient_dimension` rows | `@demographics_mode = 'other'` | `demographics_mode => 'other'` | `demographics_mode => 'other'` |
-| Numeric-value constrained facts in fast `other` mode | i2b2 only | i2b2; OMOP requires a compatible fact view | i2b2; OMOP requires a compatible fact view |
+| Fast with supplemental demographics, including non-ACT `patient_dimension` rows | `@demographics_mode = 'all'` | `demographics_mode => 'all'` | `demographics_mode => 'all'` |
+| Numeric-value constrained facts in fast `all` mode | i2b2 only | i2b2; OMOP requires a compatible fact view | i2b2; OMOP requires a compatible fact view |
 | Fast count without rebuilding prep | `@run_prep = 0` | `run_prep => 0` | `run_prep => 0` |
 | Fast output for one ontology table | `@tablename` | `tableName` | `tablename` |
 | Classic counting (`classic`) for custom or union fact tables | Yes | Yes | Yes |
@@ -210,41 +210,41 @@ compatibility alias; new automation should use `FastTotalnumPrep` with
 
 ## Include supplemental demographics
 
-`demographics_mode = 'other'` keeps the optimized ACT demographic path and adds
+`demographics_mode = 'all'` keeps the optimized ACT demographic path and adds
 metadata-defined non-ACT `patient_dimension` counts. It evaluates
 `C_COLUMNNAME`, `C_OPERATOR`, and `C_DIMCODE` through metadata-driven
 patient-dimension counters. The default `act` mode skips this extra work.
-Update existing calls that pass `'all'` to pass `'other'` instead.
+Update calls using the temporary value `'other'` to pass `'all'` instead.
 
 ```sql
 -- First run with prep, then reuse it.
-EXEC dbo.RunTotalnum @demographics_mode = 'other';
-EXEC dbo.RunTotalnum @demographics_mode = 'other', @run_prep = 0;
+EXEC dbo.RunTotalnum @demographics_mode = 'all';
+EXEC dbo.RunTotalnum @demographics_mode = 'all', @run_prep = 0;
 ```
 
 ```sql
 -- Oracle
 BEGIN
-  RunTotalnum('observation_fact', 'I2B2DEMODATA', demographics_mode => 'other');
+  RunTotalnum('observation_fact', 'I2B2DEMODATA', demographics_mode => 'all');
   RunTotalnum('observation_fact', 'I2B2DEMODATA', run_prep => 0,
-              demographics_mode => 'other');
+              demographics_mode => 'all');
 END;
 /
 ```
 
 ```sql
 -- PostgreSQL
-CALL runtotalnum('observation_fact', 'public', demographics_mode => 'other');
+CALL runtotalnum('observation_fact', 'public', demographics_mode => 'all');
 CALL runtotalnum('observation_fact', 'public', run_prep => 0,
-                   demographics_mode => 'other');
+                   demographics_mode => 'all');
 ```
 
 The patient-dimension supplement works with i2b2 and OMOP sources. Non-ACT
-`visit_dimension` metadata is not added by `other` on any platform.
+`visit_dimension` metadata is not added by `all` on any platform.
 
 ### Numeric-value constrained facts
 
-The `other` wrapper also checks for concept leaves with the strict
+The `all` wrapper also checks for concept leaves with the strict
 `nval_num = number AND concept_cd` expression in `C_COLUMNNAME`. It rebuilds
 eligible fact-only branches; mixed higher roots retain the ordinary fast count.
 
@@ -269,12 +269,12 @@ and [constrained facts](../edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata
 Run them only in a test database or disposable copy; they update counts and
 append `TOTALNUM` history.
 
-Oracle and PostgreSQL `other` mode also append `PA` rows, including zero counts.
+Oracle and PostgreSQL `all` mode also append `PA` rows, including zero counts.
 The known limitations of date-based history selection are tracked in
 [Totalnum future work](totalnum-future-work.md).
 Use the [Oracle manual validation script](../edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata/scripts/procedures/oracle/tests/test_totalnum_all_dimensions.sql)
 or [PostgreSQL fixture test](../edu.harvard.i2b2.data/Release_1-8/NewInstall/Metadata/scripts/procedures/postgresql/tests/test_totalnum_all_dimensions.sql)
-on a test installation before enabling `other` in production.
+on a test installation before enabling `all` in production.
 
 ## Limit output to one ontology table
 
@@ -392,7 +392,7 @@ CALL fasttotalnumcount('public');
 CALL fasttotalnumoutput('public', '@');
 ```
 
-For OMOP, use `omop` as the prep source. In SQL Server `other` mode, replace the
+For OMOP, use `omop` as the prep source. In SQL Server `all` mode, replace the
 ACT-only output call above with these steps after `FastTotalnumCount`:
 
 ```sql
@@ -401,13 +401,13 @@ EXEC dbo.FastTotalnumAdditionalDimensions @schemaname = 'dbo', @tablename = '@';
 EXEC dbo.FastTotalnumConstrainedFacts @schemaname = 'dbo', @tablename = '@',
     @source_mode = 'i2b2';
 EXEC dbo.FastTotalnumOutput @schemaname = 'dbo', @tablename = '@',
-    @demographics_mode = 'other';
+    @demographics_mode = 'all';
 ```
 
 With OMOP, pass `@source_mode = 'omop'` to the constrained-fact procedure; it
 will report that it is skipping that supplement.
 
-For `other` mode on Oracle or PostgreSQL, run both supplemental steps between
+For `all` mode on Oracle or PostgreSQL, run both supplemental steps between
 count and output. Omit the constrained-fact step if you only want additional
 patient-dimension counts. Pass `omop` instead of `i2b2` to the constrained-fact
 step only when its OMOP prerequisites are met:
@@ -417,14 +417,14 @@ step only when its OMOP prerequisites are met:
 BEGIN
   FastTotalnumAdditionalDimensions('I2B2DEMODATA', '@');
   FastTotalnumConstrainedFacts('I2B2DEMODATA', '@', 'i2b2');
-  FastTotalnumOutput('I2B2DEMODATA', '@', 'other');
+  FastTotalnumOutput('I2B2DEMODATA', '@', 'all');
 END;
 /
 
 -- PostgreSQL
 CALL fasttotalnumadditionaldimensions('public', '@');
 CALL fasttotalnumconstrainedfacts('public', '@', 'i2b2');
-CALL fasttotalnumoutput('public', '@', 'other');
+CALL fasttotalnumoutput('public', '@', 'all');
 ```
 
 ## What the scripts update
@@ -447,7 +447,7 @@ For fast runs, the `\denominator\facts\` count comes from the prepared
 | Classic used the common procedure name or `run_all_counts.sql` | The implementation is `RunTotalnumClassic`/`runtotalnumclassic` in `totalnum_classic.sql` | Update direct classic calls |
 | i2b2 and OMOP prep could require separate script variants | One prep accepts `source_mode` | Pass `omop` for ACT-OMOP views |
 | ACT table names could be hardcoded | Prep resolves `ACT_VISIT` and `ACT_DEMO` via `TABLE_ACCESS` | Keep both mappings current; check notices for missing entries |
-| Fast counts covered ACT demographics only; the supplemental option was called `all` where available | All platforms support `demographics_mode = 'other'` | Replace `all` with `other` and check the constrained-fact prerequisites |
+| Fast counts covered ACT demographics only | All platforms support `demographics_mode = 'all'` | Use `all` for supplemental counts and check the constrained-fact prerequisites |
 | PostgreSQL used `SELECT runtotalnum(...)`, `mode`, or boolean prep values in earlier versions | The wrapper is a procedure with `totalnum_mode` and integer `run_prep` | Use `CALL` and `0`/`1`. Direct `SELECT fasttotalnumprep(...)` still works |
 | Some output SQL had to be run manually | Output procedures execute the updates | Do not rerun printed updates |
 

@@ -13,7 +13,7 @@ END;
 -- 2. Supplemental demographics, reusing the prepared structures from step 1.
 BEGIN
   RunTotalnum('observation_fact', 'I2B2DEMODATA', run_prep => 0,
-              demographics_mode => 'other');
+              demographics_mode => 'all');
 END;
 /
 

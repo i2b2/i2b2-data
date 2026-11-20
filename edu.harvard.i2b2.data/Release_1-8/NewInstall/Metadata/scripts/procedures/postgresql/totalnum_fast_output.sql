@@ -59,8 +59,8 @@ BEGIN
     pairs_view := format('%I.obsfact_pairs', metadata_schema);
 
     mode_norm := lower(coalesce(nullif(btrim(demographics_mode), ''), 'act'));
-    IF mode_norm NOT IN ('act', 'other') THEN
-        RAISE EXCEPTION 'Invalid demographics_mode. Use act or other.';
+    IF mode_norm NOT IN ('act', 'all') THEN
+        RAISE EXCEPTION 'Invalid demographics_mode. Use act or all.';
     END IF;
 
     EXECUTE format(
@@ -109,7 +109,7 @@ BEGIN
              ) AS rn, c_fullname, agg_count
              FROM %s WHERE typeflag_cd %s',
             totalnum_table,
-            CASE WHEN mode_norm = 'other'
+            CASE WHEN mode_norm = 'all'
                       AND (act_demo_table IS NULL OR lower(rec.c_table_name) <> lower(act_demo_table))
                  THEN 'IN (''PF'', ''PA'')'
                  ELSE '= ''PF''' END
@@ -194,7 +194,7 @@ BEGIN
          ) AS rn, c_fullname, agg_count
          FROM %s WHERE typeflag_cd %s',
         totalnum_table,
-        CASE WHEN mode_norm = 'other' THEN 'IN (''PF'', ''PA'')'
+        CASE WHEN mode_norm = 'all' THEN 'IN (''PF'', ''PA'')'
              ELSE '= ''PF''' END
     );
     sqlstr := format(
@@ -251,4 +251,4 @@ GO
 
 -- Example:
 -- CALL public.fasttotalnumoutput('public', '@', 'act');
--- CALL public.fasttotalnumoutput('public', '@', 'other');
+-- CALL public.fasttotalnumoutput('public', '@', 'all');

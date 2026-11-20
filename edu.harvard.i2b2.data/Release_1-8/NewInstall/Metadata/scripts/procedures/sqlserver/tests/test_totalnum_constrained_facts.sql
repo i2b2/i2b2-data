@@ -74,7 +74,7 @@ IF @actual IS NULL OR @actual <> @expected
 
 /*
 Manual hierarchy check:
-  - Run RunTotalnum with @demographics_mode = 'other'.
+  - Run RunTotalnum with @demographics_mode = 'all'.
   - Inspect the selected leaf and its fact-only shortcut folders.
   - Eligible folder counts should be distinct-patient unions across ordinary
     and constrained descendants, not sums of child counts.

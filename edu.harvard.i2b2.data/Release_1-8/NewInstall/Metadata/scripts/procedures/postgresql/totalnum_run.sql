@@ -124,10 +124,10 @@ BEGIN
 
     END IF;
 
-    IF demographics_mode_norm NOT IN ('act', 'other') THEN
+    IF demographics_mode_norm NOT IN ('act', 'all') THEN
 
         RAISE EXCEPTION
-            'Invalid demographics_mode. Use act or other.';
+            'Invalid demographics_mode. Use act or all.';
 
     END IF;
 
@@ -209,10 +209,10 @@ BEGIN
 
     ------------------------------------------------------------------
     -- ADDITIONAL DIMENSIONS AND CONSTRAINED FACTS
-    -- Only when demographics_mode = 'other'
+    -- Only when demographics_mode = 'all'
     ------------------------------------------------------------------
 
-    IF demographics_mode_norm = 'other' THEN
+    IF demographics_mode_norm = 'all' THEN
 
         CALL FastTotalnumAdditionalDimensions(
             schemaName::text,

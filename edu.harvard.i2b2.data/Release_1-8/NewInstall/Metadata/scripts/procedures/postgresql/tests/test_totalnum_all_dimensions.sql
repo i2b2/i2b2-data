@@ -61,7 +61,7 @@ END;
 $test$;
 
 CALL runtotalnum('observation_fact', 'tnum_test_data', run_prep => 0,
-                   demographics_mode => 'other');
+                   demographics_mode => 'all');
 
 DO $test$
 BEGIN
@@ -110,10 +110,10 @@ $test$;
 
 DO $test$
 BEGIN
-    CALL runtotalnum('observation_fact', 'tnum_test_data', demographics_mode => 'all');
+    CALL runtotalnum('observation_fact', 'tnum_test_data', demographics_mode => 'other');
     RAISE EXCEPTION 'Expected the old demographics mode to be rejected';
 EXCEPTION WHEN raise_exception THEN
-    IF SQLERRM <> 'Invalid demographics_mode. Use act or other.' THEN
+    IF SQLERRM <> 'Invalid demographics_mode. Use act or all.' THEN
         RAISE;
     END IF;
 END;

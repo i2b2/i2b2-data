@@ -1,9 +1,9 @@
 -----------------------------------------------------------------------------------------------------------------
 -- Count metadata-defined demographics that are not part of the optimized ACT_DEMO fast path.
--- This procedure is called only when RunTotalnum uses @demographics_mode = 'other'.
+-- This procedure is called only when RunTotalnum uses @demographics_mode = 'all'.
 -- ACT_DEMO is identified through TABLE_ACCESS.C_TABLE_CD; its physical table name is never hardcoded.
 -- For a manual fast run, call this after FastTotalnumCount and then call
--- FastTotalnumOutput with @demographics_mode = 'other'.
+-- FastTotalnumOutput with @demographics_mode = 'all'.
 -----------------------------------------------------------------------------------------------------------------
 
 IF EXISTS ( SELECT *

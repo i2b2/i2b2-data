@@ -9,7 +9,7 @@ features that are already available.
 
 **Status:** Open. Relevant to Oracle and PostgreSQL now, and worth addressing
 on SQL Server for consistency. This is especially important now that fast
-`demographics_mode = 'other'` is available on Oracle and PostgreSQL.
+`demographics_mode = 'all'` is available on Oracle and PostgreSQL.
 
 `TOTALNUM` is an append-only count history. Fast ACT counts have type `PF`;
 supplemental non-ACT patient-dimension counts have type `PA`;
@@ -77,7 +77,7 @@ runs in one metadata schema are not currently isolated.
 **Status:** Open. These are narrower consistency issues than run identity;
 fixing them would not by itself prevent stale rows from older runs.
 
-All three fast output procedures use only `PF` in `act` mode. In `other` mode,
+All three fast output procedures use only `PF` in `act` mode. In `all` mode,
 they use `PF` for the `ACT_DEMO` ontology and allow `PF` or `PA` for other
 ontology tables. Where both flags qualify for a path, output sorts by
 `AGG_DATE` first and prefers `PA` only on a tie. PostgreSQL's date-only
@@ -92,7 +92,7 @@ Two platform differences can make the published counts disagree:
   report, and test the report against ontology output for a tied path.
 - Oracle and PostgreSQL copy counts from each ontology into `TABLE_ACCESS`,
   then do another, global refresh from `TOTALNUM`. That refresh accepts
-  `PF`/`PA` in `other` mode without checking whether a `TABLE_ACCESS` row
+  `PF`/`PA` in `all` mode without checking whether a `TABLE_ACCESS` row
   belongs to the ACT ontology. A path shared by ACT and a non-ACT table can
   therefore leave `TABLE_ACCESS` inconsistent with the ACT table's `PF`-only
   output. Make the final refresh use each row's ontology ownership and the
@@ -109,13 +109,13 @@ is separate from the fast wrapper's mode-specific filtering.
 Validation should cover a same-day `PF`/`PA` tie, a `PA` row newer than a
 `PF` row, and the same path present in ACT and non-ACT ontologies. Compare
 the ontology `C_TOTALNUM`, matching `TABLE_ACCESS.C_TOTALNUM`, and
-`TOTALNUM_REPORT` after both `act` and `other` runs. The run-ID work above is
+`TOTALNUM_REPORT` after both `act` and `all` runs. The run-ID work above is
 still needed to make those comparisons reliably about the current run.
 
 ## Validate constrained-fact source parity
 
 **Status:** All three platforms implement the non-ACT `patient_dimension`
-and constrained-fact supplements in `other` mode. SQL Server skips constrained
+and constrained-fact supplements in `all` mode. SQL Server skips constrained
 facts in OMOP mode; Oracle and PostgreSQL require an i2b2-compatible
 `observation_fact` table or view for that step.
 
@@ -123,7 +123,7 @@ Ordinary OMOP fact pairs come from the ACT-OMOP prep views, while constrained
 matches come from `observation_fact`. Validate that both sources represent the
 same facts, or align their source selection before relying on the corrected
 totals. Decide whether an absent compatible relation should skip only the
-constrained-fact supplement instead of failing `other`, especially when there
+constrained-fact supplement instead of failing `all`, especially when there
 are no constrained nodes. See the [current prerequisites](totalnum.md#numeric-value-constrained-facts).
 
 The run-identity work above remains open. Adding `PA` makes existing date ties
